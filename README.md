@@ -239,7 +239,7 @@ By default ThrottlingTroll will store rate counters in memory, using [MemoryCach
 Other supported options are:
 
 * [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/DistributedCacheCounterStore.cs). Uses [IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) instance taken from DI container. 
-* [RedisCounterStore]. Specifically designed to work with Redis. Prefer this one over [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/DistributedCacheCounterStore.cs) + [Distributed Redis Cache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#distributed-redis-cache).
+* [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/RedisCounterStore.cs). Specifically designed to work with Redis. Prefer this one over [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/DistributedCacheCounterStore.cs) + [Distributed Redis Cache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#distributed-redis-cache).
 
 You can also create your custom Counter Store by implementing the [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) interface.
 
@@ -262,7 +262,7 @@ app.UseThrottlingTroll(options =>
 
 ## Samples
 
-[Here is a sample project, that demonstrates all the above concepts]
+[Here is a sample project, that demonstrates all the above concepts](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb).
 
 ## Contributing
 
