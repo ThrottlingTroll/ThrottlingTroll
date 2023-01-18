@@ -1,0 +1,105 @@
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace ThrottlingTroll
+{
+    /// <summary>
+    /// Main functionality. The same for both ingress and egress.
+    /// </summary>
+    public class ThrottlingTroll : IDisposable
+    {
+        private readonly Action<LogLevel, string> _log;
+        private readonly ICounterStore _counterStore;
+        private Task<ThrottlingTrollConfig> _getConfigTask;
+        private bool _disposed = false;
+
+        public ThrottlingTroll
+        (
+            Action<LogLevel, string> log,
+            ICounterStore counterStore,
+            Func<Task<ThrottlingTrollConfig>> getConfigFunc = null,
+            int intervalToReloadConfigInSeconds = 0
+        )
+        {
+            this._log = log ?? ((l, s) => { });
+            this._counterStore = counterStore;
+
+            this.InitGetConfigTask(getConfigFunc, intervalToReloadConfigInSeconds);
+        }
+
+        public void Dispose()
+        {
+            this._disposed = true;
+        }
+
+        /// <summary>
+        /// Checks if limit of calls is exceeded for a given request.
+        /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
+        /// </summary>
+        internal async Task<int> IsExceededAsync(HttpRequestProxy request)
+        {
+            var results = new List<int>();
+
+            try
+            {
+                var config = await this._getConfigTask;
+
+                if (config.Rules != null)
+                {
+                    // First checking if request whitelisted
+                    if (config.WhiteListRegexes.Any(pattern => pattern.IsMatch(request.Uri)))
+                    {
+                        this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
+                    }
+                    else
+                    {
+                        // Still need to check all limits, so that all counters get updated
+                        foreach (var limit in config.Rules)
+                        {
+                            int retryAfter = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+
+                            results.Add(retryAfter);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+            }
+
+            return results.Count > 0 ? results.Max() : 0;
+        }
+
+        /// <summary>
+        /// Initializes this._getConfigTask and also makes it reinitialized every intervalToReloadConfigInSeconds
+        /// </summary>
+        private void InitGetConfigTask(Func<Task<ThrottlingTrollConfig>> getConfigFunc, int intervalToReloadConfigInSeconds)
+        {
+            if (this._disposed)
+            {
+                return;
+            }
+
+            if (intervalToReloadConfigInSeconds <= 0)
+            {
+                this._getConfigTask = getConfigFunc();
+                return;
+            }
+
+            var task = getConfigFunc();
+
+            task.ContinueWith(async t =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(intervalToReloadConfigInSeconds));
+
+                this.InitGetConfigTask(getConfigFunc, intervalToReloadConfigInSeconds);
+            });
+
+            this._getConfigTask = task;
+        }
+    }
+}
