@@ -43,8 +43,37 @@ If any of the above properties is empty or not specified, this means matching **
 Then each Rule must specify the rate limiting algorithm to be applied for matched requests and its parameters.
 
 The following algorithms are currently supported:
-* **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**.
-* **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`.
+* **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Example:
+```
+  "ThrottlingTrollIngress": {
+    "Rules": [
+      {
+        "RateLimit": {
+          "Algorithm": "FixedWindow",
+          "PermitLimit": 5,
+          "IntervalInSeconds": 10
+        }
+      }
+    ]
+  }
+```
+
+* **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`. Example:
+```
+  "ThrottlingTrollIngress": {
+    "Rules": [
+      {
+        "RateLimit": {
+          "Algorithm": "SlidingWindow",
+          "PermitLimit": 5,
+          "IntervalInSeconds": 15,
+          "NumOfBuckets": 3
+        }
+      }
+    ]
+  }
+```
+
 
 Requests that should be whitelisted (exempt from the above Rules) can be specified via **WhiteList** property:
 ```
