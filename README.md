@@ -2,6 +2,8 @@
 
 Yet another take on rate limiting/throttling in ASP.NET.
 
+[<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll.ThrottlingTroll?label=current%20version">](https://www.nuget.org/profiles/ThrottlingTroll) 
+
 ## Features
 
 * **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware).
