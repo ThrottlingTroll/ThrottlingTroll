@@ -1,0 +1,10 @@
+{
+  "UriPattern": "/sliding-window-7-requests-per-20-seconds-with-4-buckets-configured-dynamically",
+
+  "RateLimit": {
+    "Algorithm": "SlidingWindow",
+    "PermitLimit": 7,
+    "IntervalInSeconds": 20,
+    "NumOfBuckets": 4
+  }
+}
