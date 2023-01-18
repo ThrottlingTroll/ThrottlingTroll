@@ -2,7 +2,7 @@
 
 Yet another take on rate limiting/throttling in ASP.NET.
 
-[<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll.ThrottlingTroll?label=current%20version">](https://www.nuget.org/profiles/ThrottlingTroll) 
+[<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll.ThrottlingTroll?label=current%20version">](https://www.nuget.org/packages/ThrottlingTroll.ThrottlingTroll) 
 
 ## Features
 
