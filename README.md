@@ -94,7 +94,7 @@ Rate limits and other settings can be configured:
 * Programmatically, at service startup.
 * Dynamically, by providing a callback, which ThrottlingTroll will periodically call to get updated values.
 
-See examples for all of these options below.
+See more examples for all of these options below.
 
 ## How to use for Ingress Throttling
 
