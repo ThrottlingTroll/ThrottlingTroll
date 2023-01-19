@@ -267,6 +267,38 @@ builder.Services.AddHttpClient("my-throttled-httpclient").AddThrottlingTrollMess
 var throttledHttpClient = this._httpClientFactory.CreateClient("my-throttled-httpclient");
 ```
 
+### To use with [RestSharp](https://restsharp.dev/)
+
+Configure RestClient as follows:
+```
+var restClientOptions = new RestClientOptions("https://contoso.com/api/values")
+{
+    ConfigureMessageHandler = unused =>
+
+        new ThrottlingTrollHandler
+        (
+            new ThrottlingTrollEgressConfig
+            {
+                Rules = new []
+                {
+                    new ThrottlingTrollRule
+                    {
+                        LimitMethod = new FixedWindowRateLimitMethod
+                        {
+                            PermitLimit = 3,
+                            IntervalInSeconds = 10,
+                        }
+                    }
+                }
+
+            }
+        )
+};
+
+var restClient = new RestClient(restClientOptions);
+```
+
+and then use it as normal.
 
 ## Supported Rate Counter Stores
 
