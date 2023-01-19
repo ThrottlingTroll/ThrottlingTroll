@@ -128,7 +128,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
                     (
                         new ThrottlingTrollEgressConfig
                         {
-                            Rules = new List<ThrottlingTrollRule>
+                            Rules = new[]
                             {
                                 new ThrottlingTrollRule
                                 {
