@@ -205,9 +205,8 @@ NOTE: if your callback throws an exception, ThrottlingTroll will get suspended (
 
     "WhiteList": [
         ... here go whitelisted URIs...
-    ],
-
-    "PropagateToIngress": true
+    ]
+    
   },
 
 ```
@@ -244,9 +243,7 @@ var myThrottledHttpClient = new HttpClient
                         NumOfBuckets = 5
                     }
                 },
-            },
-
-            PropagateToIngress = true
+            }
         }
     )
 );
@@ -278,6 +275,20 @@ builder.Services.AddHttpClient("my-throttled-httpclient").AddThrottlingTrollMess
 ```
 var throttledHttpClient = this._httpClientFactory.CreateClient("my-throttled-httpclient");
 ```
+
+### To propagate from Egress to Ingress
+
+If your service internally makes HTTP requests and you want to automatically propagate `429 TooManyRequests` responses up to your service's clients, set `PropagateToIngress` property to `true`:
+
+```
+  "ThrottlingTrollEgress": {
+
+    "PropagateToIngress": true
+  }
+```
+
+This will make [ThrottlingTrollHandler](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollHandler.cs) throw a dedicated [ThrottlingTrollTooManyRequestsException](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollTooManyRequestsException.cs), which then will be handled by [ThrottlingTrollMiddleware](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollMiddleware.cs).
+
 
 ### To use with [RestSharp](https://restsharp.dev/)
 
