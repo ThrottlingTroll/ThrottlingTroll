@@ -39,7 +39,7 @@ ThrottlingTroll's configuration (both for ingress and egress) is represented by 
 It contains a list of rate limiting Rules and some other settings.
 
 Each Rule defines a pattern that HTTP requests should match. A pattern can include the following properties (all are optional):
-* **UriPattern** - a Regex pattern to match request URI against. Empty string or null means any URI. Note that this value is treated as a Regex, so symbols that have special meaning in Regex language must be escaped (e.g. to match a query string specify `\\?abc=123` instead of `?abc=123`).
+* **UriPattern** - a Regex pattern to match request URI against. Empty string or null means any URI. **Note that this value is treated as a Regex**, so symbols that have special meaning in Regex language must be escaped (e.g. to match a query string specify `\\?abc=123` instead of `?abc=123`).
 * **Method** - request's HTTP method. E.g. `POST`. Empty string or null means any method.
 * **HeaderName** - request's HTTP header to check. If specified, the rule will only apply to requests with this header set to **HeaderValue**.
 * **HeaderValue** - value for HTTP header identified by **HeaderName**. The rule will only apply to requests with that header set to this value. If **HeaderName** is specified and **HeaderValue** is not - that matches requests with any value in that header.
@@ -107,7 +107,7 @@ See more examples for all of these options below.
 
 ### To configure via appsettings.json
 
-1. Add the following section to your config file:
+1. Add the following `ThrottlingTrollIngress` section to your config file:
 ```
   "ThrottlingTrollIngress": {
 
@@ -183,7 +183,7 @@ NOTE: if your callback throws an exception, ThrottlingTroll will get suspended (
 
 ### To configure via appsettings.json
 
-1. Add the following section to your config file:
+1. Add the following `ThrottlingTrollEgress` section to your config file:
 ```
   "ThrottlingTrollEgress": {
 
