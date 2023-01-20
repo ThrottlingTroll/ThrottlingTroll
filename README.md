@@ -11,7 +11,7 @@ dotnet add package ThrottlingTroll
 
 ## Features
 
-* **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware).
+* **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware). 
 * **Egress throttling**, aka limit the number of calls your code is making against some external endpoint. Implemented as an [HttpClient DelegatingHandler](https://learn.microsoft.com/en-us/aspnet/web-api/overview/advanced/httpclient-message-handlers#custom-message-handlers), which produces `429 TooManyRequests` response (without making the actual call) when a limit is exceeded.
 * **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Both [Microsoft.Extensions.Caching.Distributed.IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) and [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/Basics.html) are supported. 
 * **Propagating `429 TooManyRequests` from egress to ingress**, aka when your service internally makes an HTTP request which results in `429 TooManyRequests`, your service can automatically respond with same `429 TooManyRequests` to its calling client.
@@ -36,7 +36,15 @@ Quick example of an ingress config setting:
 ```
 
 ThrottlingTroll's configuration (both for ingress and egress) is represented by [ThrottlingTrollConfig](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollConfig.cs) class.
-It contains a list of rate limiting Rules and some other settings.
+It contains a list of rate limiting Rules and some other settings and it can be configured:
+
+* Statically, via appsettings.json.
+* Programmatically, at service startup.
+* Dynamically, by providing a callback, which ThrottlingTroll will periodically call to get updated values.
+
+See more examples for all of these options below.
+
+### Configuring rules and limits
 
 Each Rule defines a pattern that HTTP requests should match. A pattern can include the following properties (all are optional):
 * **UriPattern** - a Regex pattern to match request URI against. Empty string or null means any URI. **Note that this value is treated as a Regex**, so symbols that have special meaning in Regex language must be escaped (e.g. to match a query string specify `\\?abc=123` instead of `?abc=123`).
@@ -81,6 +89,7 @@ The following algorithms are currently supported:
   }
 ```
 
+### Configuring whitelist
 
 Requests that should be whitelisted (exempt from the above Rules) can be specified via **WhiteList** property:
 ```
@@ -93,15 +102,18 @@ Requests that should be whitelisted (exempt from the above Rules) can be specifi
   },
 ```
 
-When using the same instance of a distributed cache for multiple different services you might also need to specify a value for **UniqueName** property. That value will be used as a prefix for cache keys, so that those multiple services do not corrupt each other's rate counters.
+### Specifying UniqueName property when sharing a distributed cache instance
 
-Rate limits and other settings can be configured:
+When using the same instance of a distributed cache for multiple different services you might also need to specify a value for **UniqueName** property: 
+```
+  "ThrottlingTrollIngress": {
 
-* Statically, via appsettings.json.
-* Programmatically, at service startup.
-* Dynamically, by providing a callback, which ThrottlingTroll will periodically call to get updated values.
+    "UniqueName": "MyThrottledService123"
+  }
+```
 
-See more examples for all of these options below.
+That value will be used as a prefix for cache keys, so that those multiple services do not corrupt each other's rate counters.
+
 
 ## How to use for Ingress Throttling
 
@@ -118,7 +130,7 @@ See more examples for all of these options below.
     "WhiteList": [
         ... here go whitelisted URIs...
     ]
-  },
+  }
 
 ```
 
