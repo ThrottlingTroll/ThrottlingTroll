@@ -262,7 +262,7 @@ builder.Services.AddHttpClient("my-throttled-httpclient").AddThrottlingTrollMess
 });
 ```
 
-2. Get an instance of that HttpClient via IHttpClientFactory:
+2. Get an instance of that HttpClient via [IHttpClientFactory](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-7.0#named-clients):
 ```
 var throttledHttpClient = this._httpClientFactory.CreateClient("my-throttled-httpclient");
 ```
