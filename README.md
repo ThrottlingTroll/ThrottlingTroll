@@ -278,7 +278,7 @@ var throttledHttpClient = this._httpClientFactory.CreateClient("my-throttled-htt
 
 ### To propagate from Egress to Ingress
 
-If your service internally makes HTTP requests and you want to automatically propagate `429 TooManyRequests` responses up to your service's clients, configure your ThrottlingTroll-enabled HttpClient with `PropagateToIngress` property to `true`:
+If your service internally makes HTTP requests and you want to automatically propagate `429 TooManyRequests` responses up to your service's clients, configure your ThrottlingTroll-enabled HttpClient with `PropagateToIngress` property set to `true`:
 
 ```
   "ThrottlingTrollEgress": {
