@@ -63,6 +63,20 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Rate limited to 3 requests per a fixed window of 15 seconds per each identity.
+        /// Query string's 'api-key' parameter is used as identityId.
+        /// Demonstrates how to use identity extractors.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="429">TooManyRequests</response>
+        [HttpGet]
+        [Route("fixed-window-3-requests-per-15-seconds-per-each-api-key")]
+        public string Test5([FromQuery(Name = "api-key")] string apiKey)
+        {
+            return "OK";
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>

@@ -96,24 +96,41 @@ namespace ThrottlingTroll
 
         private string _cacheKey;
 
-        private string CacheKey
+        private string GetUniqueCacheKey(HttpRequestProxy request, string configName)
         {
-            get
+            if (this.IdentityIdExtractor == null)
             {
+                // Our key is static, so calculating its hash only once for optimization purposes
                 if (string.IsNullOrEmpty(this._cacheKey))
                 {
-                    // HashAlgorithm instances should NOT be reused
-                    using (var sha256 = SHA256.Create())
-                    {
-                        string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.IdentityId}>";
+                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.IdentityId}>";
 
-                        var keyBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
-
-                        this._cacheKey = Convert.ToBase64String(keyBytes);
-                    }
+                    this._cacheKey = this.GetHash(key);
                 }
 
-                return this._cacheKey;
+                return $"{configName}|{this._cacheKey}";
+            }
+            else
+            {
+                // If IdentityExtractor is set, then adding request's identityId to the cache key,
+                // so that different identities get different counters.
+
+                string identityId = this.IdentityIdExtractor(request);
+
+                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{identityId}>";
+
+                return $"{configName}|{this.GetHash(key)}";
+            }
+        }
+
+        private string GetHash(string str)
+        {
+            // HashAlgorithm instances should NOT be reused
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(str));
+
+                return Convert.ToBase64String(bytes);
             }
         }
 
@@ -169,7 +186,7 @@ namespace ThrottlingTroll
 
         private bool IsIdentityMatch(HttpRequestProxy request)
         {
-            if (this.IdentityIdExtractor == null)
+            if (this.IdentityIdExtractor == null || string.IsNullOrEmpty(this.IdentityId))
             {
                 return true;
             }
@@ -190,7 +207,7 @@ namespace ThrottlingTroll
                 return 0;
             }
 
-            string uniqueCacheKey = $"{configName}|{this.CacheKey}";
+            string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
             var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, store);
 
