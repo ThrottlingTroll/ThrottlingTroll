@@ -51,7 +51,8 @@ Each Rule defines a pattern that HTTP requests should match. A pattern can inclu
 * **Method** - request's HTTP method. E.g. `POST`. Empty string or null means any method.
 * **HeaderName** - request's HTTP header to check. If specified, the rule will only apply to requests with this header set to **HeaderValue**.
 * **HeaderValue** - value for HTTP header identified by **HeaderName**. The rule will only apply to requests with that header set to this value. If **HeaderName** is specified and **HeaderValue** is not - that matches requests with any value in that header.
-* **IdentityId** - request's custom Identity ID. If specified, the rule will only apply to requests with this Identity ID. When specifying **IdentityId** you will also need to provide a custom identity extraction routine via  **IdentityIdExtractor** setting.
+* **IdentityId** - request's custom Identity ID. If specified, the rule will only apply to requests with this Identity ID. Along with **IdentityId** you will also need to provide a custom identity extraction routine via  **IdentityIdExtractor** setting.
+* **IdentityIdExtractor** - a routine that takes a request object and should return the caller's identityId. Typically what serves as identityId is some api-key (taken from e.g. a header), or the **oid** claim of a JWT token, or something similar. When **IdentityIdExtractor** is specified and **IdentityId** is not - different identityIds will automatically get their own rate counters, one counter per each unique identityId.
 
 If any of the above properties is empty or not specified, this means matching **any** request.
 
