@@ -30,9 +30,19 @@ namespace ThrottlingTroll
         {
             var db = this._redis.GetDatabase();
 
+            /*
+                KeyExpire() with ExpireWhen.HasNoExpiry was introduced in Redis 7.0, so it doesn't work in Azure Redis (which is <= 6.0) yet.
+
+                Initializing the counter with 0 and some TTL _before_ doing StringIncrement() leads to a race:
+                    if that TTL expires before StringIncrement() is called, StringIncrement() will make the key immortal.
+
+                So the only option left is to _first_ set/increment the value and _then_ set its TTL with a conditional LUA script
+            */
+
             var val = await db.StringIncrementAsync(key);
 
-            await db.KeyExpireAsync(key, ttl.UtcDateTime, ExpireWhen.HasNoExpiry);
+            var script = LuaScript.Prepare($"if redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end");
+            db.ScriptEvaluate(script, new { key = (RedisKey)key, absTtlInMs = ttl.ToUnixTimeMilliseconds() });
 
             return val;
         }
