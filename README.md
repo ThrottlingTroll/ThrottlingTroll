@@ -52,7 +52,7 @@ Each Rule defines a pattern that HTTP requests should match. A pattern can inclu
 * **HeaderName** - request's HTTP header to check. If specified, the rule will only apply to requests with this header set to **HeaderValue**.
 * **HeaderValue** - value for HTTP header identified by **HeaderName**. The rule will only apply to requests with that header set to this value. If **HeaderName** is specified and **HeaderValue** is not - that matches requests with any value in that header.
 * **IdentityId** - request's custom Identity ID. If specified, the rule will only apply to requests with this Identity ID. Along with **IdentityId** you will also need to provide a custom identity extraction routine via  **IdentityIdExtractor** setting.
-* **IdentityIdExtractor** - a routine that takes a request object and should return the caller's identityId. Typically what serves as identityId is some api-key (taken from e.g. a header), or the **oid** claim of a JWT token, or something similar. When **IdentityIdExtractor** is specified and **IdentityId** is not - different identityIds will automatically get their own rate counters, one counter per each unique identityId.
+* **IdentityIdExtractor** - a routine that takes a request object and should return the caller's identityId. Typically what serves as identityId is some api-key (taken from e.g. a header), or client's IP address, or the **oid** claim of a JWT token, or something similar. When **IdentityIdExtractor** is specified and **IdentityId** is not - different identityIds will automatically get their own rate counters, one counter per each unique identityId.
 
 If any of the above properties is empty or not specified, this means matching **any** request.
 
@@ -190,7 +190,35 @@ app.UseThrottlingTroll(options =>
 
 NOTE: if your callback throws an exception, ThrottlingTroll will get suspended (will not apply any rules) until the callback succeeds again.
 
+### To limit clients based on their identityId
 
+If you have a custom way to identify your clients and you want to limit their calls individually, specify a custom **IdentityIdExtractor** routine like this:
+```
+app.UseThrottlingTroll(options =>
+{
+    options.Config = new ThrottlingTrollConfig
+    {
+        Rules = new[]
+        {
+            new ThrottlingTrollRule
+            {
+                LimitMethod = new FixedWindowRateLimitMethod
+                {
+                    PermitLimit = 3,
+                    IntervalInSeconds = 15
+                },
+
+                IdentityIdExtractor = (request) =>
+                {
+                    // Identifying clients e.g. by their api-key
+                    return request.IncomingRequest.Query["api-key"];
+                }
+            }
+        }                    
+    };
+});
+```
+Then ThrottlingTroll will count their requests individually.
 
 ## How to use for Egress Throttling
 
