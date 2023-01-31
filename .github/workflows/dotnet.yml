@@ -25,4 +25,4 @@ jobs:
     - name: Build
       run: dotnet build --no-restore ThrottlingTroll
     - name: Test
-      run: dotnet test --no-build --verbosity normal tests/ThrottlingTroll.Tests
+      run: dotnet test --verbosity normal tests/ThrottlingTroll.Tests
