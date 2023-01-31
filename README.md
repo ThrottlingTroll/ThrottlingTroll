@@ -218,7 +218,7 @@ app.UseThrottlingTroll(options =>
     };
 });
 ```
-Then ThrottlingTroll will count their requests individually.
+Then ThrottlingTroll will count their requests on a per-identity basis.
 
 ## How to use for Egress Throttling
 
