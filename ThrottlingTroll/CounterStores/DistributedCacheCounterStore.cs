@@ -85,11 +85,20 @@ namespace ThrottlingTroll
 
                 cacheEntry.Count++;
 
-                await this._cache.SetAsync(
-                    key,
-                    cacheEntry.ToBytes(),
-                    new DistributedCacheEntryOptions { AbsoluteExpiration = cacheEntry.ExpiresAt }
-                );
+                try
+                {
+                    await this._cache.SetAsync(
+                        key,
+                        cacheEntry.ToBytes(),
+                        new DistributedCacheEntryOptions { AbsoluteExpiration = cacheEntry.ExpiresAt }
+                    );
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // This means "The absolute expiration value must be in the future". The solution here is to just drop this counter from cache
+
+                    await this._cache.RemoveAsync(key);
+                }
 
                 return cacheEntry.Count;
             }
