@@ -57,7 +57,7 @@ namespace ThrottlingTroll
     public class ThrottlingTrollEgressConfig : ThrottlingTrollConfig
     {
         /// <summary>
-        /// When set to true, 429 TooManyRequest responses are automatically propagated from 
+        /// When set to true, 429 TooManyRequest responses are automatically propagated from egress to ingress
         /// </summary>
         public bool PropagateToIngress { get; set; }
     }
