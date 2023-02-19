@@ -36,7 +36,9 @@ public class SlidingWindowRateLimitMethodTests
 
         // Assert
 
-        var items = MemoryCache.Default.ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
+        var items = MemoryCache.Default
+            .Where(i => !i.Key.EndsWith("-exceeded"))
+            .ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
 
         Assert.AreEqual(3, items.Count, "There should be exactly three buckets created");
 
@@ -104,7 +106,9 @@ public class SlidingWindowRateLimitMethodTests
 
         // Assert
 
-        var items = MemoryCache.Default.ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
+        var items = MemoryCache.Default
+            .Where(i => !i.Key.EndsWith("-exceeded"))
+            .ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
 
         Trace.WriteLine("Counts: " + String.Join(',', items.Values.Select(v => v.Count)));
 
@@ -151,13 +155,131 @@ public class SlidingWindowRateLimitMethodTests
 
         Trace.WriteLine("Counts: " + string.Join(',', results.Select(r => $"{r.Item1}-{r.Item2}")));
 
-
-        var items = MemoryCache.Default.ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
+        var items = MemoryCache.Default
+            .Where(i => !i.Key.EndsWith("-exceeded"))
+            .ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
 
         Assert.AreEqual(3, items.Count, "There should be exactly three buckets created");
 
-        Assert.IsTrue(results.Take(6).All(r => r.Item2 == 0), "First six requests should not exceed the limit");
+        var firstSixResults = results.Take(6);
+        Assert.IsTrue(firstSixResults.All(r => r.Item2 == 0), "First six requests should not exceed the limit");
 
-        Assert.IsTrue(results.Skip(6).All(r => r.Item2 == 1), "Requests starting from the sixth should exceed the limit");
+        var otherResults = results.Skip(6);
+        Assert.IsTrue(otherResults.All(r => r.Item2 == 1), "Requests starting from the sixth should exceed the limit");
+    }
+
+    [TestMethod]
+    public async Task SlidingWindowWithOneBucketBehavesSameAsFixedWindow()
+    {
+        string key = Guid.NewGuid().ToString();
+
+        var store = new MemoryCacheCounterStore();
+
+        var limiter = new SlidingWindowRateLimitMethod
+        {
+            PermitLimit = 3,
+            IntervalInSeconds = 1,
+            NumOfBuckets = 1,
+        };
+
+        // If too close to the end of current second, need to wait
+        if (DateTime.UtcNow.Millisecond > 800)
+        {
+            Thread.Sleep(200);
+        }
+
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Started");
+
+        for (int i = 0; i < limiter.PermitLimit; i++)
+        {
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+        }
+
+        // Now we should exceed
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+
+        // Now waiting for the next second to start
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting till next second");
+
+        int ms = DateTime.UtcNow.Millisecond;
+        do
+        {
+            Thread.Sleep(10);
+        }
+        while (DateTime.UtcNow.Millisecond > ms);
+
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Reached next second");
+
+        // Now we should be good again
+        for (int i = 0; i < limiter.PermitLimit; i++)
+        {
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+        }
+
+        // Now we should exceed again
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Finished");
+    }
+
+
+    [TestMethod]
+    public async Task SlidingWindowWithTwoBucketsIsResetAfterTwoSeconds()
+    {
+        string key = Guid.NewGuid().ToString();
+
+        var store = new MemoryCacheCounterStore();
+
+        var limiter = new SlidingWindowRateLimitMethod
+        {
+            PermitLimit = 3,
+            IntervalInSeconds = 2,
+            NumOfBuckets = 2,
+        };
+
+        // If too close to the end of current second, need to wait
+        if (DateTime.UtcNow.Millisecond > 800)
+        {
+            Thread.Sleep(200);
+        }
+
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Started");
+
+        for (int i = 0; i < limiter.PermitLimit; i++)
+        {
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+        }
+
+        // Now we should exceed
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+
+        // Now waiting for two seconds
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting");
+
+        Thread.Sleep(1000);
+
+        int ms = DateTime.UtcNow.Millisecond;
+        do
+        {
+            Thread.Sleep(10);
+        }
+        while (DateTime.UtcNow.Millisecond > ms);
+
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Reached next second");
+
+        // Now we should be good again
+        for (int i = 0; i < limiter.PermitLimit; i++)
+        {
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+        }
+
+        // Now we should exceed again
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Finished");
     }
 }

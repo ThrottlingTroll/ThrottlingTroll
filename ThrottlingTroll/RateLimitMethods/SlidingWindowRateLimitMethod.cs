@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -10,6 +11,8 @@ namespace ThrottlingTroll
     /// </summary>
     public class SlidingWindowRateLimitMethod : RateLimitMethod
     {
+        private readonly MemoryCache _cache = MemoryCache.Default;
+
         /// <summary>
         /// Window size in seconds
         /// </summary>
@@ -35,16 +38,28 @@ namespace ThrottlingTroll
                 return 0;
             }
 
+            var now = DateTime.UtcNow;
+
+            int curBucketId = (now.Second / bucketSizeInSeconds) % this.NumOfBuckets;
+            string curBucketKey = $"{limitKey}-{curBucketId}";
+
             // Will load contents of all buckets in parallel
             var tasks = new List<Task<long>>();
 
-            int curBucketId = (DateTime.UtcNow.Second / bucketSizeInSeconds) % this.NumOfBuckets;
-            string curBucketKey = $"{limitKey}-{curBucketId}";
-
-            var ttl = DateTimeOffset.UtcNow - TimeSpan.FromMilliseconds(DateTimeOffset.UtcNow.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds * this.NumOfBuckets);
+            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds * this.NumOfBuckets);
 
             // Incrementing and getting the current bucket
             tasks.Add(store.IncrementAndGetAsync(curBucketKey, ttl));
+
+            // Now checking our local memory cache for the "counter exceeded" flag.
+            // Need to do that _after_ the current bucket gets incremented, since for a sliding window the correct count in each bucket matters.
+            string limitKeyExceededKey = $"{limitKey}-exceeded";
+
+            if (this._cache.Get(limitKeyExceededKey) != null)
+            {
+                // But in this case it's OK to abandon the increment task, so the optimization still takes place.
+                return bucketSizeInSeconds;
+            }
 
             // Also getting values from other buckets
             var otherBucketIds = Enumerable.Range(0, this.NumOfBuckets).Where(id => id != curBucketId);
@@ -58,6 +73,10 @@ namespace ThrottlingTroll
 
             if (count > this.PermitLimit)
             {
+                // Remember the fact that this counter exceeded in local cache
+                var limitKeyExceededTtl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds);
+                this._cache.Set(limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = limitKeyExceededTtl });
+
                 return bucketSizeInSeconds;
             }
             else

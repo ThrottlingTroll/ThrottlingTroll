@@ -24,10 +24,6 @@ namespace ThrottlingTroll
                 return 0;
             }
 
-            var now = DateTime.UtcNow;
-
-            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
-
             // First checking our local memory cache for the "counter exceeded" flag
             string limitKeyExceededKey = $"{limitKey}-exceeded";
 
@@ -36,12 +32,16 @@ namespace ThrottlingTroll
                 return this.IntervalInSeconds;
             }
 
+            var now = DateTime.UtcNow;
+
+            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
+
             // Now checking the actual count
             long count = await store.IncrementAndGetAsync(limitKey, ttl);
 
             if (count > this.PermitLimit)
             {
-                // Remember the fact that this counter exceeded
+                // Remember the fact that this counter exceeded in local cache
                 this._cache.Set( limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = ttl } );
 
                 return this.IntervalInSeconds;
