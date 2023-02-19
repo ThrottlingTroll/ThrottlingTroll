@@ -9,7 +9,8 @@ namespace ThrottlingTroll
     /// </summary>
     public class RedisCounterStore : ICounterStore
     {
-        private IConnectionMultiplexer _redis;
+        private readonly IConnectionMultiplexer _redis;
+
         public RedisCounterStore(IConnectionMultiplexer redis)
         {
             this._redis = redis;

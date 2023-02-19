@@ -27,9 +27,9 @@ namespace ThrottlingTroll
             }
         }
 
-        private MemoryCache _cache = MemoryCache.Default;
+        private readonly MemoryCache _cache = MemoryCache.Default;
 
-        private SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
 
         /// <inheritdoc />
         public async Task<long> GetAsync(string key)

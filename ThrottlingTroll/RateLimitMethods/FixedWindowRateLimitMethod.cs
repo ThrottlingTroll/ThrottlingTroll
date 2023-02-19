@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.Caching;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -10,6 +9,8 @@ namespace ThrottlingTroll
     /// </summary>
     public class FixedWindowRateLimitMethod : RateLimitMethod
     {
+        private readonly MemoryCache _cache = MemoryCache.Default;
+
         /// <summary>
         /// Window size in seconds
         /// </summary>
@@ -23,12 +24,26 @@ namespace ThrottlingTroll
                 return 0;
             }
 
-            var ttl = DateTimeOffset.UtcNow - TimeSpan.FromMilliseconds(DateTimeOffset.UtcNow.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
+            var now = DateTime.UtcNow;
 
+            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
+
+            // First checking our local memory cache for the "counter exceeded" flag
+            string limitKeyExceededKey = $"{limitKey}-exceeded";
+
+            if (this._cache.Get(limitKeyExceededKey) != null)
+            {
+                return this.IntervalInSeconds;
+            }
+
+            // Now checking the actual count
             long count = await store.IncrementAndGetAsync(limitKey, ttl);
 
             if (count > this.PermitLimit)
             {
+                // Remember the fact that this counter exceeded
+                this._cache.Set( limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = ttl } );
+
                 return this.IntervalInSeconds;
             }
             else
