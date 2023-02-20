@@ -41,8 +41,12 @@ namespace ThrottlingTroll
             // First trying ingress
             var result = await this.IsExceededAsync(requestProxy);
 
+            bool restOfPipelineCalled = false;
+
             if (result == null)
             {
+                restOfPipelineCalled = true;
+
                 // Also trying to propagate egress to ingress
                 try
                 {
@@ -81,10 +85,10 @@ namespace ThrottlingTroll
                 return;
             }
 
-            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
             if (this._responseFabric == null)
             {
+                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
                 // Formatting default Retry-After response
 
                 if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
@@ -102,7 +106,19 @@ namespace ThrottlingTroll
             {
                 // Using the provided response builder
 
-                await this._responseFabric(result, requestProxy, new HttpResponseProxy(context.Response));
+                var responseProxy = new HttpResponseProxy(context.Response);
+
+                await this._responseFabric(result, requestProxy, responseProxy);
+
+                if (responseProxy.ShouldContinueWithIngressAsNormal)
+                {
+                    // Continue with normal request processing
+
+                    if (!restOfPipelineCalled)
+                    {
+                        await this._next(context);
+                    }
+                }
             }
         }
     }

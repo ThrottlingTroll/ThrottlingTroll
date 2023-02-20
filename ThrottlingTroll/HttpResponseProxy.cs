@@ -30,6 +30,12 @@ namespace ThrottlingTroll
         public HttpResponseMessage EgressResponse { get; private set; }
 
         /// <summary>
+        /// Set this to true, if you want ThrottlingTroll to continue processing ingress request as normal 
+        /// (instead of returning 429 TooManyRequests).
+        /// </summary>
+        public bool ShouldContinueWithIngressAsNormal { get; set; }
+
+        /// <summary>
         /// Set this to true, if you want ThrottlingTroll to automatically retry the outgoing request.
         /// </summary>
         public bool ShouldRetryEgressRequest { get; set; }
