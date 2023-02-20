@@ -103,7 +103,7 @@ namespace ThrottlingTroll
                 // Our key is static, so calculating its hash only once for optimization purposes
                 if (string.IsNullOrEmpty(this._cacheKey))
                 {
-                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.IdentityId}>";
+                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>";
 
                     this._cacheKey = this.GetHash(key);
                 }
@@ -198,25 +198,27 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
-        /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
+        /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        internal async Task<int> IsExceededAsync(HttpRequestProxy request, ICounterStore store, string configName, Action<LogLevel, string> log)
+        internal async Task<LimitExceededResult> IsExceededAsync(HttpRequestProxy request, ICounterStore store, string configName, Action<LogLevel, string> log)
         {
             if (!this.IsMatch(request) || this.LimitMethod == null)
             {
-                return 0;
+                return null;
             }
 
             string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
             var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, store);
 
-            if (retryAfter > 0)
+            if (retryAfter <= 0)
             {
-                log(LogLevel.Warning, $"ThrottlingTroll: rule {uniqueCacheKey} exceeded by {request.Method} {request.UriWithoutQueryString}");
+                return null;
             }
 
-            return retryAfter;
+            log(LogLevel.Warning, $"ThrottlingTroll: rule {uniqueCacheKey} exceeded by {request.Method} {request.UriWithoutQueryString}");
+
+            return new LimitExceededResult(this, retryAfter.ToString(), uniqueCacheKey);
         }
     }
 }

@@ -94,20 +94,21 @@ namespace ThrottlingTroll
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             // Decoupling from SynchronizationContext just in case
-            var retryAfter = Task.Run(() =>
+            var isExceededResult = Task.Run(() =>
             {
                 return this._troll.IsExceededAsync(new HttpRequestProxy(request));
             })
             .Result;
 
             HttpResponseMessage response;
-            if (retryAfter > 0)
+
+            if (isExceededResult == null)
             {
-                response = this.CreateRetryAfterResponse(request, retryAfter);
+                response = base.Send(request, cancellationToken);
             }
             else
             {
-                response = base.Send(request, cancellationToken);
+                response = this.CreateRetryAfterResponse(request, isExceededResult);
             }
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests && this._propagateToIngress)
@@ -127,16 +128,17 @@ namespace ThrottlingTroll
         /// </summary>
         protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var retryAfter = await this._troll.IsExceededAsync(new HttpRequestProxy(request));
+            var isExceededResult = await this._troll.IsExceededAsync(new HttpRequestProxy(request));
 
             HttpResponseMessage response;
-            if (retryAfter > 0)
+
+            if (isExceededResult == null)
             {
-                response = this.CreateRetryAfterResponse(request, retryAfter);
+                response = await base.SendAsync(request, cancellationToken);
             }
             else
             {
-                response = await base.SendAsync(request, cancellationToken);
+                response = this.CreateRetryAfterResponse(request, isExceededResult);
             }
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests && this._propagateToIngress)
@@ -151,13 +153,20 @@ namespace ThrottlingTroll
             return response;
         }
 
-        private HttpResponseMessage CreateRetryAfterResponse(HttpRequestMessage request, int retryAfter)
+        private HttpResponseMessage CreateRetryAfterResponse(HttpRequestMessage request, LimitExceededResult limitExceededResult)
         {
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
 
-            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(retryAfter));
-
-            response.Content = new StringContent($"Retry after {retryAfter} seconds");
+            if (DateTime.TryParse(limitExceededResult.RetryAfterHeaderValue, out var retryAfterDateTime))
+            {
+                response.Headers.RetryAfter = new RetryConditionHeaderValue(retryAfterDateTime);
+                response.Content = new StringContent($"Retry after {limitExceededResult.RetryAfterHeaderValue}");
+            }
+            else if (int.TryParse(limitExceededResult.RetryAfterHeaderValue, out int retryAfterInSeconds))
+            {
+                response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(retryAfterInSeconds));
+                response.Content = new StringContent($"Retry after {retryAfterInSeconds} seconds");
+            }
 
             response.RequestMessage = request;
 

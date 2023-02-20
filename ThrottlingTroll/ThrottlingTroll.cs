@@ -37,11 +37,11 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
-        /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
+        /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        internal async Task<int> IsExceededAsync(HttpRequestProxy request)
+        internal async Task<LimitExceededResult> IsExceededAsync(HttpRequestProxy request)
         {
-            var results = new List<int>();
+            LimitExceededResult result = null;
 
             try
             {
@@ -59,9 +59,21 @@ namespace ThrottlingTroll
                         // Still need to check all limits, so that all counters get updated
                         foreach (var limit in config.Rules)
                         {
-                            int retryAfter = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+                            var isExceeded = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
 
-                            results.Add(retryAfter);
+                            if (isExceeded != null)
+                            {
+                                if (result == null)
+                                {
+                                    // Just grabbing this result
+                                    result = isExceeded;
+                                }
+                                else if (string.Compare(result.RetryAfterHeaderValue, isExceeded.RetryAfterHeaderValue) < 0)
+                                {
+                                    // Will return result with biggest RetryAfterInSeconds
+                                    result = isExceeded;
+                                }
+                            }
                         }
                     }
                 }
@@ -71,7 +83,7 @@ namespace ThrottlingTroll
                 this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
             }
 
-            return results.Count > 0 ? results.Max() : 0;
+            return result;
         }
 
         /// <summary>

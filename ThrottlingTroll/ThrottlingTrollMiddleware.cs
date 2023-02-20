@@ -36,16 +36,12 @@ namespace ThrottlingTroll
         /// </summary>
         public async Task InvokeAsync(HttpContext context)
         {
-            int retryAfter = await this.IsExceededAsync(new HttpRequestProxy(context.Request));
+            // First trying ingress
+            var result = await this.IsExceededAsync(new HttpRequestProxy(context.Request));
 
-            string retryAfterHeaderValue = null;
-
-            if (retryAfter > 0)
+            if (result == null)
             {
-                retryAfterHeaderValue = retryAfter.ToString();
-            }
-            else
-            {
+                // Also trying to propagate egress to ingress
                 try
                 {
                     await this._next(context);
@@ -53,7 +49,7 @@ namespace ThrottlingTroll
                 catch (ThrottlingTrollTooManyRequestsException throttlingEx)
                 {
                     // Catching propagated exception from egress
-                    retryAfterHeaderValue = throttlingEx.RetryAfterHeaderValue;
+                    result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
                 }
                 catch (AggregateException ex)
                 {
@@ -66,7 +62,7 @@ namespace ThrottlingTroll
                         throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
                         if (throttlingEx != null)
                         {
-                            retryAfterHeaderValue = throttlingEx.RetryAfterHeaderValue;
+                            result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
                             break;
                         }
                     }
@@ -78,18 +74,25 @@ namespace ThrottlingTroll
                 }
             }
 
-            if (!string.IsNullOrEmpty(retryAfterHeaderValue))
+            if (result == null)
             {
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-                context.Response.Headers.Add(HeaderNames.RetryAfter, retryAfterHeaderValue);
-
-                string responseString = DateTime.TryParse(retryAfterHeaderValue, out var dt) ?
-                    retryAfterHeaderValue :
-                    $"{retryAfterHeaderValue} seconds";
-
-                await context.Response.WriteAsync($"Retry after {responseString}");
+                return;
             }
+
+            // Formatting Retry-After response
+
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+            if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+            {
+                context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+            }
+
+            string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
+                result.RetryAfterHeaderValue :
+                $"{result.RetryAfterHeaderValue} seconds";
+
+            await context.Response.WriteAsync($"Retry after {responseString}");
         }
     }
 
