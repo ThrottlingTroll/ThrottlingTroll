@@ -42,7 +42,7 @@ public class FixedWindowRateLimitMethodTests
         int ms = DateTime.UtcNow.Millisecond;
         do
         {
-            Thread.Sleep(10);
+            Thread.Sleep(100);
         }
         while (DateTime.UtcNow.Millisecond > ms);
 
