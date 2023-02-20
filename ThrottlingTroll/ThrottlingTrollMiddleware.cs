@@ -18,17 +18,17 @@ namespace ThrottlingTroll
     {
         private readonly RequestDelegate _next;
 
+        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> _responseFabric;
+
         public ThrottlingTrollMiddleware
         (
             RequestDelegate next,
-            ICounterStore counterStore,
-            Action<LogLevel, string> log,
-            Func<Task<ThrottlingTrollConfig>> getConfigFunc,
-            int intervalToReloadConfigInSeconds
+            ThrottlingTrollOptions options
 
-        ) : base(log, counterStore, getConfigFunc, intervalToReloadConfigInSeconds)
+        ) : base(options.Log, options.CounterStore, options.GetConfigFunc, options.IntervalToReloadConfigInSeconds)
         {
             this._next = next;
+            this._responseFabric = options.ResponseFabric;
         }
 
         /// <summary>
@@ -36,8 +36,10 @@ namespace ThrottlingTroll
         /// </summary>
         public async Task InvokeAsync(HttpContext context)
         {
+            var requestProxy = new HttpRequestProxy(context.Request);
+
             // First trying ingress
-            var result = await this.IsExceededAsync(new HttpRequestProxy(context.Request));
+            var result = await this.IsExceededAsync(requestProxy);
 
             if (result == null)
             {
@@ -79,20 +81,29 @@ namespace ThrottlingTroll
                 return;
             }
 
-            // Formatting Retry-After response
-
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
 
-            if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+            if (this._responseFabric == null)
             {
-                context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+                // Formatting default Retry-After response
+
+                if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+                {
+                    context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+                }
+
+                string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
+                    result.RetryAfterHeaderValue :
+                    $"{result.RetryAfterHeaderValue} seconds";
+
+                await context.Response.WriteAsync($"Retry after {responseString}");
             }
+            else
+            {
+                // Using the provided response builder
 
-            string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
-                result.RetryAfterHeaderValue :
-                $"{result.RetryAfterHeaderValue} seconds";
-
-            await context.Response.WriteAsync($"Retry after {responseString}");
+                await this._responseFabric(result, requestProxy, new HttpResponseProxy(context.Response));
+            }
         }
     }
 
@@ -149,7 +160,7 @@ namespace ThrottlingTroll
                 opt.CounterStore = builder.GetOrCreateThrottlingTrollCounterStore();
             }
 
-            return builder.UseMiddleware<ThrottlingTrollMiddleware>(opt.CounterStore, opt.Log, opt.GetConfigFunc, opt.IntervalToReloadConfigInSeconds);
+            return builder.UseMiddleware<ThrottlingTrollMiddleware>(opt);
         }
 
         private static ICounterStore GetOrCreateThrottlingTrollCounterStore(this IApplicationBuilder builder)

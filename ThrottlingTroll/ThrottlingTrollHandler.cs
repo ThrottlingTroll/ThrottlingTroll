@@ -17,8 +17,12 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollHandler : DelegatingHandler
     {
+        private const int DefaultDelayInSeconds = 5;
+
         private readonly ThrottlingTroll _troll;
         private bool _propagateToIngress;
+
+        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> _responseFabric;
 
         /// <summary>
         /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
@@ -51,30 +55,41 @@ namespace ThrottlingTroll
             Action<LogLevel, string> log = null,
             HttpMessageHandler innerHttpMessageHandler = null
 
+        ) : this(null, counterStore, config, log, innerHttpMessageHandler)
+        {
+        }
+
+        /// <summary>
+        /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
+        /// </summary>
+        /// <param name="responseFabric">Routine for generating custom HTTP responses and/or controlling built-in retries</param>
+        /// <param name="counterStore">Implementation of <see cref="ICounterStore"/></param>
+        /// <param name="config">Throttling configuration</param>
+        /// <param name="log">Logging utility</param>
+        /// <param name="innerHttpMessageHandler">Instance of <see cref="HttpMessageHandler"/> to use as inner handler. When null, a default <see cref="HttpClientHandler"/> instance will be created.</param>
+        public ThrottlingTrollHandler
+        (
+            Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> responseFabric,
+            ICounterStore counterStore,
+            ThrottlingTrollEgressConfig config,
+            Action<LogLevel, string> log = null,
+            HttpMessageHandler innerHttpMessageHandler = null
+
         ) : base(innerHttpMessageHandler ?? new HttpClientHandler())
         {
             this._troll = new ThrottlingTroll(log, counterStore, async () => config);
             this._propagateToIngress = config.PropagateToIngress;
+            this._responseFabric = responseFabric;
         }
 
         /// <summary>
         /// Use this ctor in DI container initialization (with <see cref="HttpClientBuilderExtensions.AddHttpMessageHandler"/>)
         /// </summary>
-        /// <param name="counterStore">Implementation of <see cref="ICounterStore"/></param>
-        /// <param name="log">Logging utility</param>
-        /// <param name="getConfigFunc">Function that produces <see cref="ThrottlingTrollConfig"/></param>
-        /// <param name="intervalToReloadConfigInSeconds">Interval to periodically call getConfigFunc. When 0, getConfigFunc will only be called once.</param>
-        internal ThrottlingTrollHandler
-        (
-            ICounterStore counterStore,
-            Action<LogLevel, string> log,
-            Func<Task<ThrottlingTrollConfig>> getConfigFunc = null,
-            int intervalToReloadConfigInSeconds = 0
-        )
+        internal ThrottlingTrollHandler(ThrottlingTrollOptions options)
         {
-            this._troll = new ThrottlingTroll(log, counterStore, async () =>
+            this._troll = new ThrottlingTroll(options.Log, options.CounterStore, async () =>
             {
-                var config = await getConfigFunc();
+                var config = await options.GetConfigFunc();
 
                 var egressConfig = config as ThrottlingTrollEgressConfig;
                 if (egressConfig != null)
@@ -85,7 +100,7 @@ namespace ThrottlingTroll
 
                 return config;
 
-            }, intervalToReloadConfigInSeconds);
+            }, options.IntervalToReloadConfigInSeconds);
         }
 
         /// <summary>
@@ -93,32 +108,61 @@ namespace ThrottlingTroll
         /// </summary>
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            // Decoupling from SynchronizationContext just in case
-            var isExceededResult = Task.Run(() =>
-            {
-                return this._troll.IsExceededAsync(new HttpRequestProxy(request));
-            })
-            .Result;
-
+            var requestProxy = new HttpRequestProxy(request);
             HttpResponseMessage response;
+            int retryCount = 0;
 
-            if (isExceededResult == null)
+            while (true)
             {
-                response = base.Send(request, cancellationToken);
-            }
-            else
-            {
-                response = this.CreateRetryAfterResponse(request, isExceededResult);
-            }
-
-            if (response.StatusCode == HttpStatusCode.TooManyRequests && this._propagateToIngress)
-            {
-                // Propagating TooManyRequests response up to ThrottlingTrollMiddleware
-                throw new ThrottlingTrollTooManyRequestsException
+                // Decoupling from SynchronizationContext just in case
+                var isExceededResult = Task.Run(() =>
                 {
-                    RetryAfterHeaderValue = response.Headers.RetryAfter.ToString()
-                };
+                    return this._troll.IsExceededAsync(new HttpRequestProxy(request));
+                })
+                .Result;
+
+                if (isExceededResult == null)
+                {
+                    // Just making the call as normal
+                    response = base.Send(request, cancellationToken);
+                }
+                else
+                {
+                    // Creating the TooManyRequests response
+                    response = this.CreateRetryAfterResponse(request, isExceededResult);
+                }
+
+                if (this._responseFabric != null)
+                {
+                    // Using the custom response builder
+                    var responseProxy = new HttpResponseProxy(response, retryCount++);
+
+                    // Decoupling from SynchronizationContext just in case
+                    Task.Run(() =>
+                    {
+                        return this._responseFabric(isExceededResult, requestProxy, responseProxy);
+                    })
+                    .Wait();
+
+                    if (responseProxy.ShouldRetryEgressRequest)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        Thread.Sleep(this.GetRetryAfterTimeSpan(response.Headers));
+
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        // Retrying the call
+                        continue;
+                    }
+
+                    response = responseProxy.EgressResponse;
+                }
+
+                break;
             }
+
+            this.PropagateToIngressIfNeeded(response);
 
             return response;
         }
@@ -128,19 +172,53 @@ namespace ThrottlingTroll
         /// </summary>
         protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var isExceededResult = await this._troll.IsExceededAsync(new HttpRequestProxy(request));
-
+            var requestProxy = new HttpRequestProxy(request);
             HttpResponseMessage response;
+            int retryCount = 0;
 
-            if (isExceededResult == null)
+            while (true)
             {
-                response = await base.SendAsync(request, cancellationToken);
-            }
-            else
-            {
-                response = this.CreateRetryAfterResponse(request, isExceededResult);
+                var isExceededResult = await this._troll.IsExceededAsync(requestProxy);
+
+                if (isExceededResult == null)
+                {
+                    // Just making the call as normal
+                    response = await base.SendAsync(request, cancellationToken);
+                }
+                else
+                {
+                    // Creating the TooManyRequests response
+                    response = this.CreateRetryAfterResponse(request, isExceededResult);
+                }
+
+                if (this._responseFabric != null)
+                {
+                    // Using the custom response builder
+                    var responseProxy = new HttpResponseProxy(response, retryCount++);
+
+                    await this._responseFabric(isExceededResult, requestProxy, responseProxy);
+
+                    if (responseProxy.ShouldRetryEgressRequest)
+                    {
+                        await Task.Delay(this.GetRetryAfterTimeSpan(response.Headers), cancellationToken);
+
+                        // Retrying the call
+                        continue;
+                    }
+
+                    response = responseProxy.EgressResponse;
+                }
+
+                break;
             }
 
+            this.PropagateToIngressIfNeeded(response);
+
+            return response;
+        }
+
+        private void PropagateToIngressIfNeeded(HttpResponseMessage response)
+        {
             if (response.StatusCode == HttpStatusCode.TooManyRequests && this._propagateToIngress)
             {
                 // Propagating TooManyRequests response up to ThrottlingTrollMiddleware
@@ -149,8 +227,20 @@ namespace ThrottlingTroll
                     RetryAfterHeaderValue = response.Headers.RetryAfter.ToString()
                 };
             }
+        }
 
-            return response;
+        private TimeSpan GetRetryAfterTimeSpan(HttpResponseHeaders headers)
+        {
+            if (headers?.RetryAfter?.Delta != null)
+            {
+                return headers.RetryAfter.Delta.Value;
+            }
+            else if (headers?.RetryAfter?.Date != null)
+            {
+                return headers.RetryAfter.Date.Value - DateTimeOffset.UtcNow;
+            }
+
+            return TimeSpan.FromSeconds(DefaultDelayInSeconds);
         }
 
         private HttpResponseMessage CreateRetryAfterResponse(HttpRequestMessage request, LimitExceededResult limitExceededResult)
@@ -236,7 +326,7 @@ namespace ThrottlingTroll
                     opt.CounterStore = serviceProvider.GetOrCreateThrottlingTrollCounterStore();
                 }
 
-                return new ThrottlingTrollHandler(opt.CounterStore, opt.Log, opt.GetConfigFunc, opt.IntervalToReloadConfigInSeconds);
+                return new ThrottlingTrollHandler(opt);
             });
         }
 

@@ -35,5 +35,13 @@ namespace ThrottlingTroll
         /// Logging utility to use
         /// </summary>
         public Action<LogLevel, string> Log { get; set; }
+
+        /// <summary>
+        /// Custom response creation routine.
+        /// Takes <see cref="LimitExceededResult"/> (represents the Rule that was exceeded),
+        /// <see cref="HttpRequestProxy"/> (provides info about the ongoing request) and 
+        /// <see cref="HttpResponseProxy"/> (which should be customized by your code).
+        /// </summary>
+        public Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> ResponseFabric { get; set; }
     }
 }

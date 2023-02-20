@@ -16,7 +16,7 @@ namespace ThrottlingTroll
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
 
-        public ThrottlingTroll
+        internal ThrottlingTroll
         (
             Action<LogLevel, string> log,
             ICounterStore counterStore,

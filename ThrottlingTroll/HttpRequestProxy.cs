@@ -11,12 +11,12 @@ namespace ThrottlingTroll
     /// </summary>
     public class HttpRequestProxy
     {
-        public HttpRequestProxy(HttpRequest incomingRequest)
+        internal HttpRequestProxy(HttpRequest incomingRequest)
         {
             this.IncomingRequest = incomingRequest;
         }
 
-        public HttpRequestProxy(HttpRequestMessage outgoingRequest)
+        internal HttpRequestProxy(HttpRequestMessage outgoingRequest)
         {
             this.OutgoingRequest = outgoingRequest;
         }
