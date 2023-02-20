@@ -180,7 +180,6 @@ namespace ThrottlingTrollSampleWeb.Controllers
                                     }
                                 }
                             }
-
                         }
                     )
             };
@@ -206,7 +205,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         [HttpGet]
-        [Route("egress-fixed-window-2-requests-per-5-seconds-with-retries")]
+        [Route("egress-fixed-window-3-requests-per-10-seconds-with-retries")]
         public async Task<string> EgressTest4()
         {
             using var client = this._httpClientFactory.CreateClient("my-retrying-httpclient");
@@ -216,6 +215,53 @@ namespace ThrottlingTrollSampleWeb.Controllers
             var response = await client.GetAsync(url);
 
             return $"Dummy endpoint returned {response.StatusCode}";
+        }
+
+
+        /// <summary>
+        /// Calls /dummy endpoint 
+        /// using an HttpClient that is limited to 3 requests per 5 seconds and does automatic delays and retries.
+        /// HttpClient configured in-place programmatically.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("egress-fixed-window-3-requests-per-5-seconds-with-delays")]
+        public async Task<string> EgressTest5()
+        {
+            // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
+            using var client = new HttpClient
+            (
+                new ThrottlingTrollHandler
+                (
+                    async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) => 
+                    {
+                        httpResponseProxy.ShouldRetryEgressRequest = true;
+                    },
+
+                    counterStore: null,
+
+                    new ThrottlingTrollEgressConfig
+                    {
+                        Rules = new[]
+                        {
+                            new ThrottlingTrollRule
+                            {
+                                LimitMethod = new FixedWindowRateLimitMethod
+                                {
+                                    PermitLimit = 3,
+                                    IntervalInSeconds = 5
+                                }
+                            }
+                        }
+                    }
+                )
+            );
+
+            string url = $"{this.Request.Scheme}://{this.Request.Host}/dummy";
+
+            await client.GetAsync(url);
+
+            return "OK";
         }
 
         /// <summary>

@@ -37,7 +37,7 @@ namespace ThrottlingTroll
             Action<LogLevel, string> log = null,
             HttpMessageHandler innerHttpMessageHandler = null
 
-        ) : this(new MemoryCacheCounterStore(), config, log, innerHttpMessageHandler)
+        ) : this(null, config, log, innerHttpMessageHandler)
         {
         }
 
@@ -77,7 +77,7 @@ namespace ThrottlingTroll
 
         ) : base(innerHttpMessageHandler ?? new HttpClientHandler())
         {
-            this._troll = new ThrottlingTroll(log, counterStore, async () => config);
+            this._troll = new ThrottlingTroll(log, counterStore ?? new MemoryCacheCounterStore(), async () => config);
             this._propagateToIngress = config.PropagateToIngress;
             this._responseFabric = responseFabric;
         }
