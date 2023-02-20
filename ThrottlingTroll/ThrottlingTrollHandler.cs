@@ -22,7 +22,7 @@ namespace ThrottlingTroll
         private readonly ThrottlingTroll _troll;
         private bool _propagateToIngress;
 
-        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> _responseFabric;
+        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         /// <summary>
         /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
@@ -69,7 +69,7 @@ namespace ThrottlingTroll
         /// <param name="innerHttpMessageHandler">Instance of <see cref="HttpMessageHandler"/> to use as inner handler. When null, a default <see cref="HttpClientHandler"/> instance will be created.</param>
         public ThrottlingTrollHandler
         (
-            Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> responseFabric,
+            Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> responseFabric,
             ICounterStore counterStore,
             ThrottlingTrollEgressConfig config,
             Action<LogLevel, string> log = null,
@@ -87,6 +87,8 @@ namespace ThrottlingTroll
         /// </summary>
         internal ThrottlingTrollHandler(ThrottlingTrollOptions options)
         {
+            this._responseFabric = options.ResponseFabric;
+
             this._troll = new ThrottlingTroll(options.Log, options.CounterStore, async () =>
             {
                 var config = await options.GetConfigFunc();
@@ -132,15 +134,15 @@ namespace ThrottlingTroll
                     response = this.CreateRetryAfterResponse(request, isExceededResult);
                 }
 
-                if (this._responseFabric != null)
+                if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)
                 {
-                    // Using the custom response builder
+                    // Using custom response fabric
                     var responseProxy = new HttpResponseProxy(response, retryCount++);
 
                     // Decoupling from SynchronizationContext just in case
                     Task.Run(() =>
                     {
-                        return this._responseFabric(isExceededResult, requestProxy, responseProxy);
+                        return this._responseFabric(isExceededResult, requestProxy, responseProxy, cancellationToken);
                     })
                     .Wait();
 
@@ -191,12 +193,12 @@ namespace ThrottlingTroll
                     response = this.CreateRetryAfterResponse(request, isExceededResult);
                 }
 
-                if (this._responseFabric != null)
+                if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)
                 {
-                    // Using the custom response builder
+                    // Using custom response fabric
                     var responseProxy = new HttpResponseProxy(response, retryCount++);
 
-                    await this._responseFabric(isExceededResult, requestProxy, responseProxy);
+                    await this._responseFabric(isExceededResult, requestProxy, responseProxy, cancellationToken);
 
                     if (responseProxy.ShouldRetryEgressRequest)
                     {

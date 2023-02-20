@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -18,7 +19,7 @@ namespace ThrottlingTroll
     {
         private readonly RequestDelegate _next;
 
-        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, Task> _responseFabric;
+        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         public ThrottlingTrollMiddleware
         (
@@ -108,7 +109,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new HttpResponseProxy(context.Response);
 
-                await this._responseFabric(result, requestProxy, responseProxy);
+                await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
 
                 if (responseProxy.ShouldContinueWithIngressAsNormal)
                 {

@@ -77,6 +77,33 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Rate limited to 1 request per a fixed window of 2 seconds.
+        /// Custom throttled response is returned, with 400 BadRequest status code and custom body.
+        /// Demonstrates how to use custom response fabrics.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="400">BadRequest</response>
+        [HttpGet]
+        [Route("fixed-window-1-request-per-2-seconds-response-fabric")]
+        public string Test6()
+        {
+            return "OK";
+        }
+
+        /// <summary>
+        /// Rate limited to 1 request per a fixed window of 2 seconds.
+        /// Throttled response is delayed for 3 seconds (instead of returning an error).
+        /// Demonstrates how to implement a delay with a custom response fabric.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("fixed-window-1-request-per-2-seconds-delayed-response")]
+        public string Test7()
+        {
+            return "OK";
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
@@ -171,6 +198,24 @@ namespace ThrottlingTrollSampleWeb.Controllers
             }
 
             return $"Dummy endpoint returned OK";
+        }
+
+        /// <summary>
+        /// Calls /fixed-window-3-requests-per-10-seconds-configured-via-appsettings endpoint 
+        /// using an HttpClient that is configured to do retries.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("egress-fixed-window-2-requests-per-5-seconds-with-retries")]
+        public async Task<string> EgressTest4()
+        {
+            using var client = this._httpClientFactory.CreateClient("my-retrying-httpclient");
+
+            string url = $"{this.Request.Scheme}://{this.Request.Host}/fixed-window-3-requests-per-10-seconds-configured-via-appsettings";
+
+            var response = await client.GetAsync(url);
+
+            return $"Dummy endpoint returned {response.StatusCode}";
         }
 
         /// <summary>

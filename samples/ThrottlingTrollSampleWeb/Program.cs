@@ -1,3 +1,4 @@
+using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
@@ -25,6 +26,15 @@ namespace ThrottlingTrollSampleWeb
 
             // Configuring a named HttpClient for egress throttling. Rules and limits taken from appsettings.json
             builder.Services.AddHttpClient("my-throttled-httpclient").AddThrottlingTrollMessageHandler();
+
+            // Configuring a named HttpClient that does automatic retries with respect to Retry-After response header
+            builder.Services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
+            {
+                options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
+                {
+                    responseProxy.ShouldRetryEgressRequest = true;
+                };
+            });
 
             // </ThrottlingTroll Egress Configuration>
 
@@ -128,6 +138,64 @@ namespace ThrottlingTrollSampleWeb
                             }
                         }
                     }                    
+                };
+            });
+
+            // Demonstrates how to use custom response fabrics
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/fixed-window-1-request-per-2-seconds-response-fabric",
+                            LimitMethod = new FixedWindowRateLimitMethod
+                            {
+                                PermitLimit = 1,
+                                IntervalInSeconds = 2
+                            }
+                        }
+                    }
+                };
+
+                // Custom response fabric, returns 400 BadRequest + some custom content
+                options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
+                {
+                    responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
+
+                    responseProxy.IngressResponse.Headers.Add(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+
+                    await responseProxy.IngressResponse.WriteAsync("Too many requests. Try again later.");
+                };
+            });
+
+            // Demonstrates how to delay the response instead of returning 429
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/fixed-window-1-request-per-2-seconds-delayed-response",
+                            LimitMethod = new FixedWindowRateLimitMethod
+                            {
+                                PermitLimit = 1,
+                                IntervalInSeconds = 2
+                            }
+                        }
+                    }
+                };
+
+                // Custom response fabric, impedes the normal response for 3 seconds
+                options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(3));
+
+                    responseProxy.ShouldContinueWithIngressAsNormal = true;
                 };
             });
 
