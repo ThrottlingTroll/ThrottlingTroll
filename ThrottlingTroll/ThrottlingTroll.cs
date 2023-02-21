@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -61,18 +60,22 @@ namespace ThrottlingTroll
                         {
                             var isExceeded = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
 
-                            if (isExceeded != null)
+                            if (
+                                (isExceeded != null)
+                                &&
+                                (
+                                    (result == null) 
+                                    ||
+                                    (
+                                        int.TryParse(result.RetryAfterHeaderValue, out int first) &&
+                                        int.TryParse(isExceeded.RetryAfterHeaderValue, out int second) &&
+                                        first < second
+                                    )
+                                )
+                            )
                             {
-                                if (result == null)
-                                {
-                                    // Just grabbing this result
-                                    result = isExceeded;
-                                }
-                                else if (string.Compare(result.RetryAfterHeaderValue, isExceeded.RetryAfterHeaderValue) < 0)
-                                {
-                                    // Will return result with biggest RetryAfterInSeconds
-                                    result = isExceeded;
-                                }
+                                // Will return result with biggest RetryAfterInSeconds
+                                result = isExceeded;
                             }
                         }
                     }
