@@ -221,6 +221,41 @@ app.UseThrottlingTroll(options =>
 ```
 Then ThrottlingTroll will count their requests on a per-identity basis.
 
+### To customize responses with a custom response fabric
+
+Provide a response fabric implementation via **ResponseFabric** option:
+```
+app.UseThrottlingTroll(options =>
+{
+    // Custom response fabric, returns 400 BadRequest + some custom content
+    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
+    {
+        responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
+
+        responseProxy.IngressResponse.Headers.Add(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+
+        await responseProxy.IngressResponse.WriteAsync("Too many requests. Try again later.");
+    };
+});
+```
+
+### To delay responses instead of returning errors
+
+Provide a response fabric implementation with a delay in it. Also set **ShouldContinueWithIngressAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
+```
+app.UseThrottlingTroll(options =>
+{
+    // Custom response fabric, impedes the normal response for 3 seconds
+    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(3));
+
+        responseProxy.ShouldContinueWithIngressAsNormal = true;
+    };
+});
+```
+
+
 ## How to use for Egress Throttling
 
 ### To configure via appsettings.json
