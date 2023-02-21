@@ -214,7 +214,7 @@ public class ThrottlingTrollHandlerTests
 
         // Assert
 
-        Assert.IsTrue(sw.Elapsed >= TimeSpan.FromSeconds(2));
+        Assert.IsTrue(sw.Elapsed >= TimeSpan.FromSeconds(2), $"Should take 2 seconds, but took ${sw.Elapsed}");
 
         Assert.AreEqual(HttpStatusCode.TooManyRequests, result.StatusCode);
         Assert.AreEqual(TimeSpan.FromSeconds(1), result.Headers.RetryAfter.Delta);
