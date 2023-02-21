@@ -388,6 +388,23 @@ var restClient = new RestClient(restClientOptions);
 
 and then use it as normal.
 
+
+### To make HttpClient do automatic retries when getting 429 TooManyRequests
+
+Provide a response fabric implementation via **ResponseFabric** option and set **ShouldRetryEgressRequest** to **true** in it:
+```
+builder.Services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
+{
+    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
+    {
+        // Doing no more than 10 automatic retries
+        responseProxy.ShouldRetryEgressRequest = responseProxy.EgressResponseRetryCount < 10;
+    };
+});
+```
+
+HttpClient will then first wait for the amount of time suggested by **Retry-After** response header and then re-send the request. This will happen no matter whether `429 TooManyRequests` status was returned by the external resource or it was the egress rate limit that got exceeded.
+
 ## Supported Rate Counter Stores
 
 By default ThrottlingTroll will store rate counters in memory, using [MemoryCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/MemoryCacheCounterStore.cs) (which internally uses [System.Runtime.Caching.MemoryCache](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache)).
