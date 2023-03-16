@@ -28,3 +28,5 @@ jobs:
       run: dotnet build --no-restore ThrottlingTroll
     - name: Test
       run: dotnet test --verbosity normal tests/ThrottlingTroll.Tests
+    - name: Build Sample Project
+      run: dotnet build samples/ThrottlingTrollSampleWeb/ThrottlingTrollSampleWeb.csproj
