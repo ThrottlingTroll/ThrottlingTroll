@@ -10,10 +10,7 @@
   <ItemGroup>
     <PackageReference Include="restsharp" Version="108.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\ThrottlingTroll\ThrottlingTroll.csproj" />
+    <PackageReference Include="ThrottlingTroll" Version="1.2.0" />
   </ItemGroup>
 
 </Project>
