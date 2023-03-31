@@ -15,7 +15,7 @@ namespace ThrottlingTroll
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
 
-        internal ThrottlingTroll
+        protected internal ThrottlingTroll
         (
             Action<LogLevel, string> log,
             ICounterStore counterStore,
@@ -38,7 +38,7 @@ namespace ThrottlingTroll
         /// Checks if limit of calls is exceeded for a given request.
         /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request)
+        protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request)
         {
             LimitExceededResult result = null;
 

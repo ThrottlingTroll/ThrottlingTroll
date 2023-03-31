@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleWeb", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.Tests", "tests\ThrottlingTroll.Tests\ThrottlingTroll.Tests.csproj", "{75EC843E-720C-46CE-B4FF-420236A26108}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.Core", "ThrottlingTroll.Core\ThrottlingTroll.Core.csproj", "{6402D884-031B-4636-A25F-F240BE91B02F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{75EC843E-720C-46CE-B4FF-420236A26108}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75EC843E-720C-46CE-B4FF-420236A26108}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75EC843E-720C-46CE-B4FF-420236A26108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6402D884-031B-4636-A25F-F240BE91B02F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6402D884-031B-4636-A25F-F240BE91B02F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6402D884-031B-4636-A25F-F240BE91B02F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6402D884-031B-4636-A25F-F240BE91B02F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

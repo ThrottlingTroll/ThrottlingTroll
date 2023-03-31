@@ -1,6 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 
 namespace ThrottlingTroll
@@ -56,13 +56,13 @@ namespace ThrottlingTroll
         /// <summary>
         /// Request HTTP Headers
         /// </summary>
-        public IHeaderDictionary Headers
+        public IDictionary<string, StringValues> Headers
         {
             get
             {
                 if (this._headers == null)
                 {
-                    var headers = new HeaderDictionary();
+                    var headers = new Dictionary<string, StringValues>();
 
                     foreach (var header in this.Request.Headers)
                     {
@@ -76,6 +76,6 @@ namespace ThrottlingTroll
             }
         }
 
-        private IHeaderDictionary _headers;
+        private IDictionary<string, StringValues> _headers;
     }
 }

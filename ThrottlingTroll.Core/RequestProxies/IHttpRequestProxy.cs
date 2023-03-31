@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.Extensions.Primitives;
+using System.Collections.Generic;
 
 namespace ThrottlingTroll
 {
@@ -25,6 +26,6 @@ namespace ThrottlingTroll
         /// <summary>
         /// Request HTTP Headers
         /// </summary>
-        public IHeaderDictionary Headers { get; }
+        public IDictionary<string, StringValues> Headers { get; }
     }
 }

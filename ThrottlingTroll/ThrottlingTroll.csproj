@@ -31,6 +31,10 @@
 			<Pack>true</Pack>
 		</Content>
 
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
 	</ItemGroup>	
 	
 </Project>
