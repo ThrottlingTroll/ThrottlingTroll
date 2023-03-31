@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ThrottlingTrollSampleFunction": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7060",
+      "launchBrowser": false
+    }
+  }
+}

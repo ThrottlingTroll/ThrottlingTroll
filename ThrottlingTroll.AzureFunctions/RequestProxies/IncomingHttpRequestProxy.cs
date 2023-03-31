@@ -1,29 +1,30 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Primitives;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Abstraction layer on top of <see cref="HttpRequestMessage"/>
+    /// Abstraction layer on top of <see cref="HttpRequest"/>
     /// </summary>
-    public class OutgoingHttpRequestProxy : IOutgoingHttpRequestProxy
+    public class IncomingHttpRequestProxy : IIncomingHttpRequestProxy
     {
-        internal OutgoingHttpRequestProxy(HttpRequestMessage request)
+        internal IncomingHttpRequestProxy(HttpRequestData request)
         {
             this.Request = request;
         }
 
         /// <inheritdoc />
-        public HttpRequestMessage Request { get; private set; }
+        public HttpRequestData Request { get; private set; }
 
         /// <inheritdoc />
         public string Uri
         {
             get
             {
-                return this.Request.RequestUri?.ToString();
+                return this.Request.Url?.ToString();
             }
         }
 
@@ -32,7 +33,7 @@ namespace ThrottlingTroll
         {
             get
             {
-                return $"{this.Request.RequestUri?.Scheme}://{this.Request.RequestUri?.Authority}{this.Request.RequestUri?.AbsolutePath}";
+                return $"{this.Request.Url?.Scheme}://{this.Request.Url?.Authority}{this.Request.Url?.AbsolutePath}";
             }
         }
 
@@ -41,7 +42,7 @@ namespace ThrottlingTroll
         {
             get
             {
-                return this.Request.Method.Method;
+                return this.Request.Method;
             }
         }
 
