@@ -115,32 +115,6 @@ namespace ThrottlingTrollSampleWeb
                 options.IntervalToReloadConfigInSeconds = 5;
             });
 
-            // Demonstrates how to use identity extractors
-            app.UseThrottlingTroll(options =>
-            {
-                options.Config = new ThrottlingTrollConfig
-                {
-                    Rules = new[]
-                    {
-                        new ThrottlingTrollRule
-                        {
-                            UriPattern = "/fixed-window-3-requests-per-15-seconds-per-each-api-key",
-                            LimitMethod = new FixedWindowRateLimitMethod
-                            {
-                                PermitLimit = 3,
-                                IntervalInSeconds = 15
-                            },
-
-                            IdentityIdExtractor = (request) =>
-                            {
-                                // Identifying clients by their api-key
-                                return request.IncomingRequest.Query["api-key"];
-                            }
-                        }
-                    }                    
-                };
-            });
-
             // Demonstrates how to use custom response fabrics
             app.UseThrottlingTroll(options =>
             {
@@ -161,7 +135,7 @@ namespace ThrottlingTrollSampleWeb
                 };
 
                 // Custom response fabric, returns 400 BadRequest + some custom content
-                options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
+                options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
                 {
                     responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
 
@@ -196,6 +170,32 @@ namespace ThrottlingTrollSampleWeb
                     await Task.Delay(TimeSpan.FromSeconds(3));
 
                     responseProxy.ShouldContinueWithIngressAsNormal = true;
+                };
+            });
+
+            // Demonstrates how to use identity extractors
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/fixed-window-3-requests-per-15-seconds-per-each-api-key",
+                            LimitMethod = new FixedWindowRateLimitMethod
+                            {
+                                PermitLimit = 3,
+                                IntervalInSeconds = 15
+                            },
+
+                            IdentityIdExtractor = (request) =>
+                            {
+                                // Identifying clients by their api-key
+                                return request.IncomingRequest.Query["api-key"];
+                            }
+                        }
+                    }                    
                 };
             });
 
