@@ -38,7 +38,7 @@ namespace ThrottlingTroll
         /// Checks if limit of calls is exceeded for a given request.
         /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        internal async Task<LimitExceededResult> IsExceededAsync(HttpRequestProxy request)
+        internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request)
         {
             LimitExceededResult result = null;
 

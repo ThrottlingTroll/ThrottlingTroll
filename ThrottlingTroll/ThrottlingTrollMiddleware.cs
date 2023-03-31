@@ -19,7 +19,7 @@ namespace ThrottlingTroll
     {
         private readonly RequestDelegate _next;
 
-        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         public ThrottlingTrollMiddleware
         (
@@ -37,7 +37,7 @@ namespace ThrottlingTroll
         /// </summary>
         public async Task InvokeAsync(HttpContext context)
         {
-            var requestProxy = new HttpRequestProxy(context.Request);
+            var requestProxy = new IncomingHttpRequestProxy(context.Request);
 
             // First trying ingress
             var result = await this.IsExceededAsync(requestProxy);
@@ -107,11 +107,11 @@ namespace ThrottlingTroll
             {
                 // Using the provided response builder
 
-                var responseProxy = new HttpResponseProxy(context.Response);
+                var responseProxy = new IngressHttpResponseProxy(context.Response);
 
                 await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
 
-                if (responseProxy.ShouldContinueWithIngressAsNormal)
+                if (responseProxy.ShouldContinueAsNormal)
                 {
                     // Continue with normal request processing
 

@@ -1,5 +1,4 @@
 using Microsoft.Net.Http.Headers;
-using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
 
@@ -32,7 +31,9 @@ namespace ThrottlingTrollSampleWeb
             {
                 options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
                 {
-                    responseProxy.ShouldRetryEgressRequest = true;
+                    var egressResponse = (EgressHttpResponseProxy)responseProxy;
+
+                    egressResponse.ShouldRetry = true;
                 };
             });
 
@@ -131,10 +132,10 @@ namespace ThrottlingTrollSampleWeb
                                 IntervalInSeconds = 15
                             },
 
-                            IdentityIdExtractor = (request) =>
+                            IdentityIdExtractor = request =>
                             {
                                 // Identifying clients by their api-key
-                                return request.IncomingRequest.Query["api-key"];
+                                return ((IncomingHttpRequestProxy)request).Request.Query["api-key"];
                             }
                         }
                     }                    
@@ -163,11 +164,11 @@ namespace ThrottlingTrollSampleWeb
                 // Custom response fabric, returns 400 BadRequest + some custom content
                 options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
                 {
-                    responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
+                    responseProxy.StatusCode = StatusCodes.Status400BadRequest;
 
-                    responseProxy.IngressResponse.Headers.Add(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+                    responseProxy.SetHttpHeader(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
 
-                    await responseProxy.IngressResponse.WriteAsync("Too many requests. Try again later.");
+                    await responseProxy.WriteAsync("Too many requests. Try again later.");
                 };
             });
 
@@ -195,7 +196,8 @@ namespace ThrottlingTrollSampleWeb
                 {
                     await Task.Delay(TimeSpan.FromSeconds(3));
 
-                    responseProxy.ShouldContinueWithIngressAsNormal = true;
+                    var ingressResponse = (IngressHttpResponseProxy)responseProxy;
+                    ingressResponse.ShouldContinueAsNormal = true;
                 };
             });
 
