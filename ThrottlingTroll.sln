@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll", "ThrottlingTroll\ThrottlingTroll.csproj", "{A8A6E78C-C70E-44A1-A62E-B8E3964AF4ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AspNet", "ThrottlingTroll.AspNet\ThrottlingTroll.AspNet.csproj", "{A8A6E78C-C70E-44A1-A62E-B8E3964AF4ED}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleWeb", "samples\ThrottlingTrollSampleWeb\ThrottlingTrollSampleWeb.csproj", "{C2EC72A2-4A6B-4126-9195-390032717F9A}"
 EndProject

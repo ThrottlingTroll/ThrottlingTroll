@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ThrottlingTroll\ThrottlingTroll.csproj" />
+    <ProjectReference Include="..\..\ThrottlingTroll\ThrottlingTroll.AspNet.csproj" />
   </ItemGroup>
 
 </Project>
