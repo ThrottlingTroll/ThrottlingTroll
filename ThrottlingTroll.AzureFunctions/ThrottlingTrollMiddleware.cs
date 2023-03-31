@@ -140,7 +140,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Configures ThrottlingTroll ingress throttling
         /// </summary>
-        public static IHostBuilder UseThrottlingTroll(this IHostBuilder hostBuilder, Action<ThrottlingTrollOptions> options = null)
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, HostBuilderContext builderContext, Action<ThrottlingTrollOptions> options = null)
         {
             var opt = new ThrottlingTrollOptions();
 
@@ -152,77 +152,87 @@ namespace ThrottlingTroll
             // Need to create a single instance, yet still allow for multiple copies of ThrottlingTrollMiddleware with different settings
             ThrottlingTrollMiddleware throttlingTrollMiddleware = null;
 
-            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
+            if (opt.GetConfigFunc == null)
             {
-                if (opt.GetConfigFunc == null)
+                if (opt.Config == null)
                 {
-                    if (opt.Config == null)
+                    // Trying to read config from settings
+
+                    var section = builderContext.Configuration?.GetSection(ConfigSectionName);
+
+                    var throttlingTrollConfig = section?.Get<ThrottlingTrollConfig>();
+
+                    if (throttlingTrollConfig == null)
                     {
-                        // Trying to read config from settings
-
-                        var section = builderContext.Configuration?.GetSection(ConfigSectionName);
-
-                        var throttlingTrollConfig = section?.Get<ThrottlingTrollConfig>();
-
-                        if (throttlingTrollConfig == null)
-                        {
-                            throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{ConfigSectionName}' not found or cannot be deserialized.");
-                        }
-
-                        opt.GetConfigFunc = async () => throttlingTrollConfig;
+                        throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{ConfigSectionName}' not found or cannot be deserialized.");
                     }
-                    else
-                    {
-                        opt.GetConfigFunc = async () => opt.Config;
-                    }
+
+                    opt.GetConfigFunc = async () => throttlingTrollConfig;
                 }
+                else
+                {
+                    opt.GetConfigFunc = async () => opt.Config;
+                }
+            }
 
-                builder.UseWhen
-                (
-                    (FunctionContext context) =>
+            builder.UseWhen
+            (
+                (FunctionContext context) =>
+                {
+                    // This middleware is only for http trigger invocations.
+                    return context
+                        .FunctionDefinition
+                        .InputBindings
+                        .Values
+                        .First(a => a.Type.EndsWith("Trigger"))
+                        .Type == "httpTrigger";
+                },
+
+                async (FunctionContext context, Func<Task> next) =>
+                {
+                    // To initialize ThrottlingTrollMiddleware we need access to context.InstanceServices (the DI container),
+                    // and it is only here when we get one.
+                    // So that's why all the complexity with double-checked locking etc.
+
+                    if (throttlingTrollMiddleware == null)
                     {
-                        // This middleware is only for http trigger invocations.
-                        return context
-                            .FunctionDefinition
-                            .InputBindings
-                            .Values
-                            .First(a => a.Type.EndsWith("Trigger"))
-                            .Type == "httpTrigger";
-                    },
-
-                    async (FunctionContext context, Func<Task> next) =>
-                    {
-                        // To initialize ThrottlingTrollMiddleware we need access to context.InstanceServices (the DI container),
-                        // and it is only here when we get one.
-                        // So that's why all the complexity with double-checked locking etc.
-
-                        if (throttlingTrollMiddleware == null)
+                        // Using opt as lock object
+                        lock (opt)
                         {
-                            // Using opt as lock object
-                            lock (opt)
+                            if (throttlingTrollMiddleware == null)
                             {
-                                if (throttlingTrollMiddleware == null)
+
+                                if (opt.Log == null)
                                 {
-
-                                    if (opt.Log == null)
-                                    {
-                                        var logger = context.InstanceServices.GetService<ILogger<ThrottlingTroll>>();
-                                        opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
-                                    }
-
-                                    if (opt.CounterStore == null)
-                                    {
-                                        opt.CounterStore = context.GetOrCreateThrottlingTrollCounterStore();
-                                    }
-
-                                    throttlingTrollMiddleware = new ThrottlingTrollMiddleware(opt);
+                                    var logger = context.InstanceServices.GetService<ILogger<ThrottlingTroll>>();
+                                    opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
                                 }
+
+                                if (opt.CounterStore == null)
+                                {
+                                    opt.CounterStore = context.GetOrCreateThrottlingTrollCounterStore();
+                                }
+
+                                throttlingTrollMiddleware = new ThrottlingTrollMiddleware(opt);
                             }
                         }
-
-                        await throttlingTrollMiddleware.Invoke(context, next);
                     }
-                 );
+
+                    await throttlingTrollMiddleware.Invoke(context, next);
+                }
+             );
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IHostBuilder UseThrottlingTroll(this IHostBuilder hostBuilder, Action<ThrottlingTrollOptions> options = null)
+        {
+            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
+            {
+                builder.UseThrottlingTroll(builderContext, options);
             });
         }
 
