@@ -1,5 +1,4 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace ThrottlingTroll
@@ -7,16 +6,14 @@ namespace ThrottlingTroll
     /// <summary>
     /// Abstraction layer on top of <see cref="HttpResponse"/>
     /// </summary>
-    public class IngressHttpResponseProxy : IHttpResponseProxy
+    public class IngressHttpResponseProxy : IIngressHttpResponseProxy
     {
         internal IngressHttpResponseProxy(HttpResponse response)
         {
             this.Response = response;
         }
 
-        /// <summary>
-        /// Ingress <see cref="HttpResponse"/>
-        /// </summary>
+        /// <inheritdoc />
         public HttpResponse Response { get; private set; }
 
         /// <inheritdoc />
@@ -45,10 +42,7 @@ namespace ThrottlingTroll
             return this.Response.WriteAsync(text);
         }
 
-        /// <summary>
-        /// Set this to true, if you want ThrottlingTroll to continue processing ingress request as normal 
-        /// (instead of returning 429 TooManyRequests).
-        /// </summary>
+        /// <inheritdoc />
         public bool ShouldContinueAsNormal { get; set; }
     }
 }

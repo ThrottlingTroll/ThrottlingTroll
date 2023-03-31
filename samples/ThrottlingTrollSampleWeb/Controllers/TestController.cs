@@ -235,7 +235,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
                 (
                     async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) => 
                     {
-                        var egressResponse = (EgressHttpResponseProxy)httpResponseProxy;
+                        var egressResponse = (IEgressHttpResponseProxy)httpResponseProxy;
 
                         egressResponse.ShouldRetry = true;
                     },

@@ -31,7 +31,7 @@ namespace ThrottlingTrollSampleWeb
             {
                 options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
                 {
-                    var egressResponse = (EgressHttpResponseProxy)responseProxy;
+                    var egressResponse = (IEgressHttpResponseProxy)responseProxy;
 
                     egressResponse.ShouldRetry = true;
                 };
@@ -170,7 +170,7 @@ namespace ThrottlingTrollSampleWeb
                 {
                     await Task.Delay(TimeSpan.FromSeconds(3));
 
-                    var ingressResponse = (IngressHttpResponseProxy)responseProxy;
+                    var ingressResponse = (IIngressHttpResponseProxy)responseProxy;
                     ingressResponse.ShouldContinueAsNormal = true;
                 };
             });
@@ -194,7 +194,7 @@ namespace ThrottlingTrollSampleWeb
                             IdentityIdExtractor = request =>
                             {
                                 // Identifying clients by their api-key
-                                return ((IncomingHttpRequestProxy)request).Request.Query["api-key"];
+                                return ((IIncomingHttpRequestProxy)request).Request.Query["api-key"];
                             }
                         }
                     }                    

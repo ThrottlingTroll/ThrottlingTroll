@@ -7,7 +7,7 @@ namespace ThrottlingTroll
     /// <summary>
     /// Abstraction layer on top of <see cref="HttpResponseMessage"/>
     /// </summary>
-    public class EgressHttpResponseProxy : IHttpResponseProxy
+    public class EgressHttpResponseProxy : IEgressHttpResponseProxy
     {
         internal EgressHttpResponseProxy(HttpResponseMessage responseMessage, int retryCount)
         {
@@ -15,9 +15,7 @@ namespace ThrottlingTroll
             this.RetryCount = retryCount;
         }
 
-        /// <summary>
-        /// Egress <see cref="HttpResponseMessage"/>
-        /// </summary>
+        /// <inheritdoc />
         public HttpResponseMessage Response { get; private set; }
 
         /// <inheritdoc />
@@ -53,14 +51,10 @@ namespace ThrottlingTroll
             return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Set this to true, if you want ThrottlingTroll to automatically retry the outgoing request.
-        /// </summary>
+        /// <inheritdoc />
         public bool ShouldRetry { get; set; }
 
-        /// <summary>
-        /// How many times the current outgoing request was retried so far. Use this counter to control <see cref="ShouldRetry"/> flag.
-        /// </summary>
+        /// <inheritdoc />
         public int RetryCount { get; private set; }
     }
 }

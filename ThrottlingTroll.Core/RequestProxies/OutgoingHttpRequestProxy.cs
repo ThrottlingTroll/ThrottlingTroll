@@ -8,21 +8,17 @@ namespace ThrottlingTroll
     /// <summary>
     /// Abstraction layer on top of <see cref="HttpRequestMessage"/>
     /// </summary>
-    public class OutgoingHttpRequestProxy : IHttpRequestProxy
+    public class OutgoingHttpRequestProxy : IOutgoingHttpRequestProxy
     {
         internal OutgoingHttpRequestProxy(HttpRequestMessage request)
         {
             this.Request = request;
         }
 
-        /// <summary>
-        /// Outgoing <see cref="HttpRequestMessage"/>
-        /// </summary>
+        /// <inheritdoc />
         public HttpRequestMessage Request { get; private set; }
 
-        /// <summary>
-        /// Request URI
-        /// </summary>
+        /// <inheritdoc />
         public string Uri
         {
             get
@@ -31,9 +27,7 @@ namespace ThrottlingTroll
             }
         }
 
-        /// <summary>
-        /// Request URI without query string
-        /// </summary>
+        /// <inheritdoc />
         public string UriWithoutQueryString
         {
             get
@@ -42,9 +36,7 @@ namespace ThrottlingTroll
             }
         }
 
-        /// <summary>
-        /// Request HTTP method
-        /// </summary>
+        /// <inheritdoc />
         public string Method
         {
             get
@@ -53,9 +45,7 @@ namespace ThrottlingTroll
             }
         }
 
-        /// <summary>
-        /// Request HTTP Headers
-        /// </summary>
+        /// <inheritdoc />
         public IDictionary<string, StringValues> Headers
         {
             get
