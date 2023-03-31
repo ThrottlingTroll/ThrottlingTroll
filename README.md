@@ -16,6 +16,7 @@ dotnet add package ThrottlingTroll
 * **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Both [Microsoft.Extensions.Caching.Distributed.IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) and [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/Basics.html) are supported. 
 * **Propagating `429 TooManyRequests` from egress to ingress**, aka when your service internally makes an HTTP request which results in `429 TooManyRequests`, your service can automatically respond with same `429 TooManyRequests` to its calling client.
 * **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
+* **Custom response fabrics**. For ingress it gives full control on what to return when a request is being throttled, and also allows to implement delayed responses (instead of just returning `429 TooManyRequests`). For egress it also allows ThrottlingTroll to do automatic retries for you.
 
 ## How to configure
 
@@ -220,6 +221,41 @@ app.UseThrottlingTroll(options =>
 ```
 Then ThrottlingTroll will count their requests on a per-identity basis.
 
+### To customize responses with a custom response fabric
+
+Provide a response fabric implementation via **ResponseFabric** option:
+```
+app.UseThrottlingTroll(options =>
+{
+    // Custom response fabric, returns 400 BadRequest + some custom content
+    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
+    {
+        responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
+
+        responseProxy.IngressResponse.Headers.Add(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+
+        await responseProxy.IngressResponse.WriteAsync("Too many requests. Try again later.");
+    };
+});
+```
+
+### To delay responses instead of returning errors
+
+Provide a response fabric implementation with a delay in it. Also set **ShouldContinueWithIngressAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
+```
+app.UseThrottlingTroll(options =>
+{
+    // Custom response fabric, impedes the normal response for 3 seconds
+    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+    {
+        await Task.Delay(TimeSpan.FromSeconds(3));
+
+        responseProxy.ShouldContinueWithIngressAsNormal = true;
+    };
+});
+```
+
+
 ## How to use for Egress Throttling
 
 ### To configure via appsettings.json
@@ -351,6 +387,23 @@ var restClient = new RestClient(restClientOptions);
 ```
 
 and then use it as normal.
+
+
+### To make HttpClient do automatic retries when getting 429 TooManyRequests
+
+Provide a response fabric implementation via **ResponseFabric** option and set **ShouldRetryEgressRequest** to **true** in it:
+```
+builder.Services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
+{
+    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
+    {
+        // Doing no more than 10 automatic retries
+        responseProxy.ShouldRetryEgressRequest = responseProxy.EgressResponseRetryCount < 10;
+    };
+});
+```
+
+HttpClient will then first wait for the amount of time suggested by **Retry-After** response header and then re-send the request. This will happen no matter whether `429 TooManyRequests` status was returned by the external resource or it was the egress rate limit that got exceeded.
 
 ## Supported Rate Counter Stores
 
