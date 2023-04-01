@@ -4,7 +4,7 @@ Rate limiting/throttling middleware for Azure Functions (.NET Isolated).
 
 Install from NuGet:
 ```
-dotnet add package ThrottlingTroll
+dotnet add package ThrottlingTroll.AzureFunctions
 ```
 
 ## How to configure
