@@ -2,7 +2,7 @@
 
 Yet another take on rate limiting/throttling in ASP.NET.
 
-Install it from NuGet:
+Install from NuGet:
 ```
 dotnet add package ThrottlingTroll
 ```
@@ -25,7 +25,7 @@ Quick example of an ingress config setting:
   }
 ```
 
-ThrottlingTroll's configuration (both for ingress and egress) is represented by [ThrottlingTrollConfig](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollConfig.cs) class.
+ThrottlingTroll's configuration (both for ingress and egress) is represented by [ThrottlingTrollConfig](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollConfig.cs) class.
 It contains a list of rate limiting Rules and some other settings and it can be configured:
 
 * Statically, via appsettings.json.
