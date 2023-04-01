@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>ThrottlingTroll.AzureFunctions</id>
+    <version>2.0.0</version>
+    <authors>ThrottlingTroll</authors>
+    <license type="file">LICENSE</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <description>Rate limiting library for Azure Functions</description>
+    <tags>Rate Limiting;Throttling;Azure Functions;Redis</tags>
+    <repository url="https://github.com/scale-tone/ThrottlingTroll" />
+    <dependencies>
+      <group targetFramework="net7.0">
+        <dependency id="Microsoft.Azure.Functions.Worker" version="1.13.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="7.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+
+    <files>
+        <file src="..\LICENSE" target="LICENSE" />
+        <file src="bin\Release\net7.0\ThrottlingTroll.*" target="lib/net7.0" />
+    </files>
+
+</package>
