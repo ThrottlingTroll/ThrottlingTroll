@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>ThrottlingTroll.AzureFunctions</id>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <authors>ThrottlingTroll</authors>
     <license type="file">LICENSE</license>
     <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
@@ -12,7 +12,10 @@
     <dependencies>
       <group targetFramework="net7.0">
         <dependency id="Microsoft.Azure.Functions.Worker" version="1.13.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Caching.StackExchangeRedis" version="6.0.9" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Configuration.Binder" version="7.0.2" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.Caching" version="7.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>
