@@ -20,7 +20,6 @@
 		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-		<PackageReference Include="StackExchange.Redis" Version="2.6.90" />
 		<PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
 	</ItemGroup>
 
