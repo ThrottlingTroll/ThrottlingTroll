@@ -30,7 +30,11 @@ namespace ThrottlingTroll
             this.RetryAfterHeaderValue = retryAfter;
             this.CounterId = counterId;
         }
-        internal LimitExceededResult(string retryAfter)
+
+        /// <summary>
+        /// Ctor to be used when propagating from egress to ingress
+        /// </summary>
+        public LimitExceededResult(string retryAfter)
         {
             this.RetryAfterHeaderValue = retryAfter;
         }

@@ -42,7 +42,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Identity ID extraction routine to be used for extracting Identity IDs from requests.
         /// </summary>
-        public Func<HttpRequestProxy, string> IdentityIdExtractor { get; set; }
+        public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
 
         /// <summary>
         /// Rate Limiting algorithm to use. Should be set to one of <see cref="RateLimitMethod"/>'s inheritors.
@@ -96,7 +96,7 @@ namespace ThrottlingTroll
 
         private string _cacheKey;
 
-        private string GetUniqueCacheKey(HttpRequestProxy request, string configName)
+        private string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
         {
             if (this.IdentityIdExtractor == null)
             {
@@ -134,7 +134,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private bool IsMatch(HttpRequestProxy request)
+        private bool IsMatch(IHttpRequestProxy request)
         {
             return this.IsUrlMatch(request) &&
                 this.IsMethodMatch(request) &&
@@ -142,7 +142,7 @@ namespace ThrottlingTroll
                 this.IsIdentityMatch(request);
         }
 
-        private bool IsUrlMatch(HttpRequestProxy request)
+        private bool IsUrlMatch(IHttpRequestProxy request)
         {
             if (this.UrlRegex == null)
             {
@@ -152,7 +152,7 @@ namespace ThrottlingTroll
             return this.UrlRegex.IsMatch(request.Uri);
         }
 
-        private bool IsMethodMatch(HttpRequestProxy request)
+        private bool IsMethodMatch(IHttpRequestProxy request)
         {
             if (string.IsNullOrEmpty(this.Method))
             {
@@ -162,7 +162,7 @@ namespace ThrottlingTroll
             return request.Method.ToLower() == this.Method.ToLower();
         }
 
-        private bool IsHeaderMatch(HttpRequestProxy request)
+        private bool IsHeaderMatch(IHttpRequestProxy request)
         {
             if (string.IsNullOrEmpty(this.HeaderName))
             {
@@ -184,7 +184,7 @@ namespace ThrottlingTroll
             return headerValue == this.HeaderValue;
         }
 
-        private bool IsIdentityMatch(HttpRequestProxy request)
+        private bool IsIdentityMatch(IHttpRequestProxy request)
         {
             if (this.IdentityIdExtractor == null || string.IsNullOrEmpty(this.IdentityId))
             {
@@ -200,7 +200,7 @@ namespace ThrottlingTroll
         /// Checks if limit of calls is exceeded for a given request.
         /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        internal async Task<LimitExceededResult> IsExceededAsync(HttpRequestProxy request, ICounterStore store, string configName, Action<LogLevel, string> log)
+        internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, ICounterStore store, string configName, Action<LogLevel, string> log)
         {
             if (!this.IsMatch(request) || this.LimitMethod == null)
             {

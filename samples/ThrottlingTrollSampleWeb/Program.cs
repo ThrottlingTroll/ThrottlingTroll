@@ -1,5 +1,4 @@
 using Microsoft.Net.Http.Headers;
-using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
 
@@ -32,7 +31,9 @@ namespace ThrottlingTrollSampleWeb
             {
                 options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
                 {
-                    responseProxy.ShouldRetryEgressRequest = true;
+                    var egressResponse = (IEgressHttpResponseProxy)responseProxy;
+
+                    egressResponse.ShouldRetry = true;
                 };
             });
 
@@ -137,11 +138,11 @@ namespace ThrottlingTrollSampleWeb
                 // Custom response fabric, returns 400 BadRequest + some custom content
                 options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
                 {
-                    responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
+                    responseProxy.StatusCode = StatusCodes.Status400BadRequest;
 
-                    responseProxy.IngressResponse.Headers.Add(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+                    responseProxy.SetHttpHeader(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
 
-                    await responseProxy.IngressResponse.WriteAsync("Too many requests. Try again later.");
+                    await responseProxy.WriteAsync("Too many requests. Try again later.");
                 };
             });
 
@@ -169,7 +170,34 @@ namespace ThrottlingTrollSampleWeb
                 {
                     await Task.Delay(TimeSpan.FromSeconds(3));
 
-                    responseProxy.ShouldContinueWithIngressAsNormal = true;
+                    var ingressResponse = (IIngressHttpResponseProxy)responseProxy;
+                    ingressResponse.ShouldContinueAsNormal = true;
+                };
+            });
+
+            // Demonstrates how to use identity extractors
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/fixed-window-3-requests-per-15-seconds-per-each-api-key",
+                            LimitMethod = new FixedWindowRateLimitMethod
+                            {
+                                PermitLimit = 3,
+                                IntervalInSeconds = 15
+                            },
+
+                            IdentityIdExtractor = request =>
+                            {
+                                // Identifying clients by their api-key
+                                return ((IIncomingHttpRequestProxy)request).Request.Query["api-key"];
+                            }
+                        }
+                    }                    
                 };
             });
 

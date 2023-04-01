@@ -22,10 +22,12 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
-    - name: Restore dependencies
-      run: dotnet restore ThrottlingTroll
-    - name: Build
-      run: dotnet build --no-restore ThrottlingTroll
+    - name: Restore ThrottlingTroll.AspNet
+      run: dotnet restore ThrottlingTroll.AspNet
+    - name: Restore ThrottlingTroll.AzureFunctions
+      run: dotnet restore ThrottlingTroll.AzureFunctions
+    - name: Build ThrottlingTroll.AzureFunctions
+      run: dotnet build --no-restore ThrottlingTroll.AzureFunctions
     - name: Test
       run: dotnet test --verbosity normal tests/ThrottlingTroll.Tests
     - name: Build Sample Project

@@ -1,15 +1,15 @@
-using Microsoft.AspNetCore.Mvc;
-using RestSharp;
+using System.Net;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using ThrottlingTroll;
 
-namespace ThrottlingTrollSampleWeb.Controllers
+namespace ThrottlingTrollSampleFunction
 {
-    [ApiController]
-    public class TestController : ControllerBase
+    public class Functions
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public TestController(IHttpClientFactory httpClientFactory)
+        public Functions(IHttpClientFactory httpClientFactory)
         {
             this._httpClientFactory = httpClientFactory;
         }
@@ -19,11 +19,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
-        [HttpGet]
-        [Route("fixed-window-3-requests-per-10-seconds-configured-via-appsettings")]
-        public string Test1()
+        [Function("fixed-window-3-requests-per-10-seconds-configured-via-appsettings")]
+        public HttpResponseData Test1([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
@@ -31,11 +32,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
-        [HttpGet]
-        [Route("sliding-window-5-requests-per-15-seconds-with-5-buckets-configured-via-appsettings")]
-        public string Test2()
+        [Function("sliding-window-5-requests-per-15-seconds-with-5-buckets-configured-via-appsettings")]
+        public HttpResponseData Test2([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
@@ -43,11 +45,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
-        [HttpGet]
-        [Route("fixed-window-1-request-per-2-seconds-configured-programmatically")]
-        public string Test3()
+        [Function("fixed-window-1-request-per-2-seconds-configured-programmatically")]
+        public HttpResponseData Test3([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
@@ -55,11 +58,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
-        [HttpGet]
-        [Route("sliding-window-7-requests-per-20-seconds-with-4-buckets-configured-dynamically")]
-        public string Test4()
+        [Function("sliding-window-7-requests-per-20-seconds-with-4-buckets-configured-dynamically")]
+        public HttpResponseData Test4([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
@@ -69,11 +73,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
-        [HttpGet]
-        [Route("fixed-window-3-requests-per-15-seconds-per-each-api-key")]
-        public string Test5([FromQuery(Name = "api-key")] string apiKey)
+        [Function("fixed-window-3-requests-per-15-seconds-per-each-api-key")]
+        public HttpResponseData Test5([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
@@ -83,11 +88,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="400">BadRequest</response>
-        [HttpGet]
-        [Route("fixed-window-1-request-per-2-seconds-response-fabric")]
-        public string Test6()
+        [Function("fixed-window-1-request-per-2-seconds-response-fabric")]
+        public HttpResponseData Test6([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
@@ -96,28 +102,30 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// Demonstrates how to implement a delay with a custom response fabric.
         /// </summary>
         /// <response code="200">OK</response>
-        [HttpGet]
-        [Route("fixed-window-1-request-per-2-seconds-delayed-response")]
-        public string Test7()
+        [Function("fixed-window-1-request-per-2-seconds-delayed-response")]
+        public HttpResponseData Test7([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
 
         /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
-        [HttpGet]
-        [Route("egress-fixed-window-2-requests-per-5-seconds-configured-via-appsettings")]
-        public async Task<string> EgressTest1()
+        [Function("egress-fixed-window-2-requests-per-5-seconds-configured-via-appsettings")]
+        public async Task<HttpResponseData> EgressTest1([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             using var client = this._httpClientFactory.CreateClient("my-throttled-httpclient");
 
-            string url = $"{this.Request.Scheme}://{this.Request.Host}/dummy";
+            string url = $"{req.Url.Scheme}://{req.Url.Authority}/api/dummy";
 
-            var response = await client.GetAsync(url);
+            var clientResponse = await client.GetAsync(url);
 
-            return $"Dummy endpoint returned {response.StatusCode}";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString($"Dummy endpoint returned {clientResponse.StatusCode}");
+            return response;
         }
 
         /// <summary>
@@ -127,9 +135,8 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
-        [HttpGet]
-        [Route("egress-fixed-window-3-requests-per-10-seconds-configured-programmatically")]
-        public async Task<string> EgressTest2()
+        [Function("egress-fixed-window-3-requests-per-10-seconds-configured-programmatically")]
+        public async Task<HttpResponseData> EgressTest2([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
             using var client = new HttpClient
@@ -143,60 +150,13 @@ namespace ThrottlingTrollSampleWeb.Controllers
                 )
             );
 
-            string url = $"{this.Request.Scheme}://{this.Request.Host}/fixed-window-3-requests-per-10-seconds-configured-via-appsettings";
+            string url = $"{req.Url.Scheme}://{req.Url.Authority}/api/fixed-window-3-requests-per-10-seconds-configured-via-appsettings";
 
             await client.GetAsync(url);
 
-            return "OK";
-        }
-
-        /// <summary>
-        /// Uses a rate-limited <see href="https://restsharp.dev">RestSharp</see>'s RestClient to make calls to a dummy endpoint. 
-        /// Rate limited to 3 requests per a fixed window of 10 seconds.
-        /// </summary>
-        /// <response code="200">OK</response>
-        [HttpGet]
-        [Route("egress-fixed-window-3-requests-per-10-seconds-via-restsharp")]
-        public async Task<string> EgressTest3()
-        {
-            string url = $"{this.Request.Scheme}://{this.Request.Host}/dummy";
-
-            var restClientOptions = new RestClientOptions(url)
-            {
-                ConfigureMessageHandler = unused =>
-
-                    new ThrottlingTrollHandler
-                    (
-                        new ThrottlingTrollEgressConfig
-                        {
-                            Rules = new[]
-                            {
-                                new ThrottlingTrollRule
-                                {
-                                    LimitMethod = new FixedWindowRateLimitMethod
-                                    {
-                                        PermitLimit = 3,
-                                        IntervalInSeconds = 10,
-                                    }
-                                }
-                            }
-                        }
-                    )
-            };
-
-            // NOTE: RestClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
-            using var restClient = new RestClient(restClientOptions);
-
-            try
-            {
-                var res = await restClient.GetAsync(new RestRequest());
-            }
-            catch (HttpRequestException ex)
-            {
-                return $"Dummy endpoint returned {ex.StatusCode}";
-            }
-
-            return $"Dummy endpoint returned OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString($"OK");
+            return response;
         }
 
         /// <summary>
@@ -204,19 +164,19 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// using an HttpClient that is configured to do retries.
         /// </summary>
         /// <response code="200">OK</response>
-        [HttpGet]
-        [Route("egress-fixed-window-3-requests-per-10-seconds-with-retries")]
-        public async Task<string> EgressTest4()
+        [Function("egress-fixed-window-3-requests-per-10-seconds-with-retries")]
+        public async Task<HttpResponseData> EgressTest4([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             using var client = this._httpClientFactory.CreateClient("my-retrying-httpclient");
 
-            string url = $"{this.Request.Scheme}://{this.Request.Host}/fixed-window-3-requests-per-10-seconds-configured-via-appsettings";
+            string url = $"{req.Url.Scheme}://{req.Url.Authority}/api/fixed-window-3-requests-per-10-seconds-configured-via-appsettings";
 
-            var response = await client.GetAsync(url);
+            var clientResponse = await client.GetAsync(url);
 
-            return $"Dummy endpoint returned {response.StatusCode}";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString($"Dummy endpoint returned {clientResponse.StatusCode}");
+            return response;
         }
-
 
         /// <summary>
         /// Calls /dummy endpoint 
@@ -224,16 +184,15 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// HttpClient configured in-place programmatically.
         /// </summary>
         /// <response code="200">OK</response>
-        [HttpGet]
-        [Route("egress-fixed-window-3-requests-per-5-seconds-with-delays")]
-        public async Task<string> EgressTest5()
+        [Function("egress-fixed-window-3-requests-per-5-seconds-with-delays")]
+        public async Task<HttpResponseData> EgressTest5([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
             using var client = new HttpClient
             (
                 new ThrottlingTrollHandler
                 (
-                    async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) => 
+                    async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) =>
                     {
                         var egressResponse = (IEgressHttpResponseProxy)httpResponseProxy;
 
@@ -259,22 +218,25 @@ namespace ThrottlingTrollSampleWeb.Controllers
                 )
             );
 
-            string url = $"{this.Request.Scheme}://{this.Request.Host}/dummy";
+            string url = $"{req.Url.Scheme}://{req.Url.Authority}/api/dummy";
 
             await client.GetAsync(url);
 
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString($"OK");
+            return response;
         }
 
         /// <summary>
         /// Dummy endpoint for testing HttpClient. Isn't throttled.
         /// </summary>
         /// <response code="200">OK</response>
-        [HttpGet]
-        [Route("dummy")]
-        public string Dummy()
+        [Function("dummy")]
+        public HttpResponseData Dummy([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
-            return "OK";
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
         }
     }
 }

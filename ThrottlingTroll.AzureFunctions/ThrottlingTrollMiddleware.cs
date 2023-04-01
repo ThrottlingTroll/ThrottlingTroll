@@ -1,43 +1,43 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System;
+using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Implements ingress throttling
+    /// Implements ingress throttling for Azure Functions
     /// </summary>
     public class ThrottlingTrollMiddleware : ThrottlingTroll
     {
-        private readonly RequestDelegate _next;
+        private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
-        private readonly Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> _responseFabric;
-
-        public ThrottlingTrollMiddleware
+        internal ThrottlingTrollMiddleware
         (
-            RequestDelegate next,
             ThrottlingTrollOptions options
 
         ) : base(options.Log, options.CounterStore, options.GetConfigFunc, options.IntervalToReloadConfigInSeconds)
         {
-            this._next = next;
             this._responseFabric = options.ResponseFabric;
         }
 
         /// <summary>
-        /// Is invoked by ASP.NET middleware pipeline. Handles ingress throttling.
+        /// Is invoked by Azure Functions middleware pipeline. Handles ingress throttling.
         /// </summary>
-        public async Task InvokeAsync(HttpContext context)
+        public async Task Invoke(FunctionContext context, Func<Task> next)
         {
-            var requestProxy = new HttpRequestProxy(context.Request);
+            var request = await context.GetHttpRequestDataAsync() ?? throw new ArgumentNullException("HTTP Request is null");
+
+            var requestProxy = new IncomingHttpRequestProxy(request);
 
             // First trying ingress
             var result = await this.IsExceededAsync(requestProxy);
@@ -51,7 +51,7 @@ namespace ThrottlingTroll
                 // Also trying to propagate egress to ingress
                 try
                 {
-                    await this._next(context);
+                    await next();
                 }
                 catch (ThrottlingTrollTooManyRequestsException throttlingEx)
                 {
@@ -86,39 +86,47 @@ namespace ThrottlingTroll
                 return;
             }
 
+            var response = request.CreateResponse(HttpStatusCode.OK);
+
             if (this._responseFabric == null)
             {
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                response.StatusCode = HttpStatusCode.TooManyRequests;
 
                 // Formatting default Retry-After response
 
                 if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
                 {
-                    context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+                    response.Headers.Add("Retry-After", result.RetryAfterHeaderValue);
                 }
 
                 string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
                     result.RetryAfterHeaderValue :
                     $"{result.RetryAfterHeaderValue} seconds";
 
-                await context.Response.WriteAsync($"Retry after {responseString}");
+                await response.WriteStringAsync($"Retry after {responseString}");
+
+                context.GetInvocationResult().Value = response;
             }
             else
             {
                 // Using the provided response builder
 
-                var responseProxy = new HttpResponseProxy(context.Response);
+                var responseProxy = new IngressHttpResponseProxy(response);
 
-                await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
+                await this._responseFabric(result, requestProxy, responseProxy, context.CancellationToken);
 
-                if (responseProxy.ShouldContinueWithIngressAsNormal)
+                if (responseProxy.ShouldContinueAsNormal)
                 {
                     // Continue with normal request processing
 
                     if (!restOfPipelineCalled)
                     {
-                        await this._next(context);
+                        await next();
                     }
+                }
+                else
+                {
+                    context.GetInvocationResult().Value = response;
                 }
             }
         }
@@ -132,7 +140,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Configures ThrottlingTroll ingress throttling
         /// </summary>
-        public static IApplicationBuilder UseThrottlingTroll(this IApplicationBuilder builder, Action<ThrottlingTrollOptions> options = null)
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, HostBuilderContext builderContext, Action<ThrottlingTrollOptions> options = null)
         {
             var opt = new ThrottlingTrollOptions();
 
@@ -141,14 +149,16 @@ namespace ThrottlingTroll
                 options(opt);
             }
 
+            // Need to create a single instance, yet still allow for multiple copies of ThrottlingTrollMiddleware with different settings
+            ThrottlingTrollMiddleware throttlingTrollMiddleware = null;
+
             if (opt.GetConfigFunc == null)
             {
                 if (opt.Config == null)
                 {
                     // Trying to read config from settings
-                    var config = builder.ApplicationServices.GetService<IConfiguration>();
 
-                    var section = config?.GetSection(ConfigSectionName);
+                    var section = builderContext.Configuration?.GetSection(ConfigSectionName);
 
                     var throttlingTrollConfig = section?.Get<ThrottlingTrollConfig>();
 
@@ -165,28 +175,74 @@ namespace ThrottlingTroll
                 }
             }
 
-            if (opt.Log == null)
-            {
-                var logger = builder.ApplicationServices.GetService<ILogger<ThrottlingTroll>>();
-                opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
-            }
+            builder.UseWhen
+            (
+                (FunctionContext context) =>
+                {
+                    // This middleware is only for http trigger invocations.
+                    return context
+                        .FunctionDefinition
+                        .InputBindings
+                        .Values
+                        .First(a => a.Type.EndsWith("Trigger"))
+                        .Type == "httpTrigger";
+                },
 
+                async (FunctionContext context, Func<Task> next) =>
+                {
+                    // To initialize ThrottlingTrollMiddleware we need access to context.InstanceServices (the DI container),
+                    // and it is only here when we get one.
+                    // So that's why all the complexity with double-checked locking etc.
 
-            if (opt.CounterStore == null)
-            {
-                opt.CounterStore = builder.GetOrCreateThrottlingTrollCounterStore();
-            }
+                    if (throttlingTrollMiddleware == null)
+                    {
+                        // Using opt as lock object
+                        lock (opt)
+                        {
+                            if (throttlingTrollMiddleware == null)
+                            {
 
-            return builder.UseMiddleware<ThrottlingTrollMiddleware>(opt);
+                                if (opt.Log == null)
+                                {
+                                    var logger = context.InstanceServices.GetService<ILogger<ThrottlingTroll>>();
+                                    opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
+                                }
+
+                                if (opt.CounterStore == null)
+                                {
+                                    opt.CounterStore = context.GetOrCreateThrottlingTrollCounterStore();
+                                }
+
+                                throttlingTrollMiddleware = new ThrottlingTrollMiddleware(opt);
+                            }
+                        }
+                    }
+
+                    await throttlingTrollMiddleware.Invoke(context, next);
+                }
+             );
+
+            return builder;
         }
 
-        private static ICounterStore GetOrCreateThrottlingTrollCounterStore(this IApplicationBuilder builder)
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IHostBuilder UseThrottlingTroll(this IHostBuilder hostBuilder, Action<ThrottlingTrollOptions> options = null)
         {
-            var counterStore = builder.ApplicationServices.GetService<ICounterStore>();
+            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
+            {
+                builder.UseThrottlingTroll(builderContext, options);
+            });
+        }
+
+        private static ICounterStore GetOrCreateThrottlingTrollCounterStore(this FunctionContext context)
+        {
+            var counterStore = context.InstanceServices.GetService<ICounterStore>();
 
             if (counterStore == null)
             {
-                var redis = builder.ApplicationServices.GetService<IConnectionMultiplexer>();
+                var redis = context.InstanceServices.GetService<IConnectionMultiplexer>();
 
                 if (redis != null)
                 {
@@ -194,7 +250,7 @@ namespace ThrottlingTroll
                 }
                 else
                 {
-                    var distributedCache = builder.ApplicationServices.GetService<IDistributedCache>();
+                    var distributedCache = context.InstanceServices.GetService<IDistributedCache>();
 
                     if (distributedCache != null)
                     {

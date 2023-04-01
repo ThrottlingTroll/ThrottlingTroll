@@ -38,12 +38,12 @@ namespace ThrottlingTroll
         public Action<LogLevel, string> Log { get; set; }
 
         /// <summary>
-        /// Custom response creation routine.
-        /// Takes <see cref="LimitExceededResult"/> (represents the Rule that was exceeded),
-        /// <see cref="HttpRequestProxy"/> (provides info about the ongoing request), 
-        /// <see cref="HttpResponseProxy"/> (which should be customized by your code) and
+        /// Custom response creation routine.<br/>
+        /// Takes <see cref="LimitExceededResult"/> (represents the Rule that was exceeded),<br/>
+        /// <see cref="IHttpRequestProxy"/> (provides info about the ongoing request), <br/> 
+        /// <see cref="IHttpResponseProxy"/> (which should be customized by your code) and <br/>
         /// <see cref="CancellationToken"/> (which indicates that the request was aborted from outside)
         /// </summary>
-        public Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
+        public Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
     }
 }

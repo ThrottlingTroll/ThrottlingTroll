@@ -1,4 +1,6 @@
 
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 using Moq;
 using System.Diagnostics;
 using System.Net;
@@ -12,7 +14,7 @@ public class ThrottlingTrollHandlerTests
     class ThrottlingTrollHandler_Accessor : ThrottlingTrollHandler
     {
         public ThrottlingTrollHandler_Accessor(
-            Func<LimitExceededResult, HttpRequestProxy, HttpResponseProxy, CancellationToken, Task> responseFabric,
+            Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             ICounterStore counterStore, 
             ThrottlingTrollEgressConfig options
 
@@ -135,16 +137,15 @@ public class ThrottlingTrollHandlerTests
             }
         };
 
-        var retryAfterDateTime = DateTime.UtcNow + TimeSpan.FromDays(123);
+        var retryAfterDateTime = DateTimeOffset.UtcNow + TimeSpan.FromDays(123);
 
         var handler = new ThrottlingTrollHandler_Accessor(
 
             async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) =>
             {
-                httpResponseProxy.EgressResponse.StatusCode = HttpStatusCode.InternalServerError;
-                httpResponseProxy.EgressResponse.Headers.RetryAfter = new RetryConditionHeaderValue(retryAfterDateTime);
-
-                httpResponseProxy.EgressResponse.Content = new StringContent($"Come back at {retryAfterDateTime}");
+                httpResponseProxy.StatusCode = StatusCodes.Status500InternalServerError;
+                httpResponseProxy.SetHttpHeader(HeaderNames.RetryAfter, new RetryConditionHeaderValue(retryAfterDateTime).ToString());
+                await httpResponseProxy.WriteAsync($"Come back at {retryAfterDateTime}");
             },
             
             counterStoreMock.Object, options
@@ -159,7 +160,7 @@ public class ThrottlingTrollHandlerTests
         // Assert
 
         Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
-        Assert.AreEqual(retryAfterDateTime, result.Headers.RetryAfter.Date);
+        Assert.AreEqual(retryAfterDateTime.ToString(), result.Headers.RetryAfter.Date.ToString());
         Assert.AreEqual($"Come back at {retryAfterDateTime}", await result.Content.ReadAsStringAsync());
     }
 
@@ -193,9 +194,10 @@ public class ThrottlingTrollHandlerTests
 
             async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) =>
             {
-                httpResponseProxy.ShouldRetryEgressRequest = httpResponseProxy.EgressResponseRetryCount < 2;
+                var egressResponse = (IEgressHttpResponseProxy)httpResponseProxy;
+                egressResponse.ShouldRetry = egressResponse.RetryCount < 2;
 
-                httpResponseProxy.EgressResponse.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(1));
+                egressResponse.SetHttpHeader(HeaderNames.RetryAfter, new RetryConditionHeaderValue(TimeSpan.FromSeconds(1)).ToString());
             },
 
             counterStoreMock.Object, options
@@ -325,16 +327,15 @@ public class ThrottlingTrollHandlerTests
             }
         };
 
-        var retryAfterDateTime = DateTime.UtcNow + TimeSpan.FromDays(123);
+        var retryAfterDateTime = DateTimeOffset.UtcNow + TimeSpan.FromDays(123);
 
         var handler = new ThrottlingTrollHandler_Accessor(
 
             async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) =>
             {
-                httpResponseProxy.EgressResponse.StatusCode = HttpStatusCode.InternalServerError;
-                httpResponseProxy.EgressResponse.Headers.RetryAfter = new RetryConditionHeaderValue(retryAfterDateTime);
-
-                httpResponseProxy.EgressResponse.Content = new StringContent($"Come back at {retryAfterDateTime}");
+                httpResponseProxy.StatusCode = (int)HttpStatusCode.InternalServerError;
+                httpResponseProxy.SetHttpHeader(HeaderNames.RetryAfter, new RetryConditionHeaderValue(retryAfterDateTime).ToString());
+                await httpResponseProxy.WriteAsync($"Come back at {retryAfterDateTime}");
             },
 
             counterStoreMock.Object, options
@@ -349,7 +350,7 @@ public class ThrottlingTrollHandlerTests
         // Assert
 
         Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
-        Assert.AreEqual(retryAfterDateTime, result.Headers.RetryAfter.Date);
+        Assert.AreEqual(retryAfterDateTime.ToString(), result.Headers.RetryAfter.Date.ToString());
         Assert.AreEqual($"Come back at {retryAfterDateTime}", await result.Content.ReadAsStringAsync());
     }
 
@@ -383,9 +384,10 @@ public class ThrottlingTrollHandlerTests
 
             async (limitExceededResult, httpRequestProxy, httpResponseProxy, cancellationToken) =>
             {
-                httpResponseProxy.ShouldRetryEgressRequest = httpResponseProxy.EgressResponseRetryCount < 2;
+                var egressResponse = (IEgressHttpResponseProxy)httpResponseProxy;
+                egressResponse.ShouldRetry = egressResponse.RetryCount < 2;
 
-                httpResponseProxy.EgressResponse.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(1));
+                egressResponse.SetHttpHeader(HeaderNames.RetryAfter, new RetryConditionHeaderValue(TimeSpan.FromSeconds(1)).ToString());
             },
 
             counterStoreMock.Object, options

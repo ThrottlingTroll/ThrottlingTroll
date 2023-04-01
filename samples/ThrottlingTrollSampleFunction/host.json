@@ -1,0 +1,48 @@
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    }
+  },
+
+  "ThrottlingTrollIngress": {
+
+    "Rules": [
+      {
+        "UriPattern": "/fixed-window-3-requests-per-10-seconds-configured-via-appsettings",
+        "RateLimit": {
+          "Algorithm": "FixedWindow",
+          "PermitLimit": 3,
+          "IntervalInSeconds": 10
+        }
+      },
+      {
+        "UriPattern": "/sliding-window-5-requests-per-15-seconds-with-5-buckets-configured-via-appsettings",
+        "RateLimit": {
+          "Algorithm": "SlidingWindow",
+          "PermitLimit": 5,
+          "IntervalInSeconds": 15,
+          "NumOfBuckets": 5
+        }
+      }
+    ]
+  },
+
+  "ThrottlingTrollEgress": {
+
+    "Rules": [
+      {
+        "RateLimit": {
+          "Algorithm": "FixedWindow",
+          "PermitLimit": 2,
+          "IntervalInSeconds": 5
+        }
+      }
+    ]
+  }
+
+}
