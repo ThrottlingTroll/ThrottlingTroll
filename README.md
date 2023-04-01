@@ -212,7 +212,7 @@ app.UseThrottlingTroll(options =>
                 IdentityIdExtractor = (request) =>
                 {
                     // Identifying clients e.g. by their api-key
-                    return request.IncomingRequest.Query["api-key"];
+                    return ((IIncomingHttpRequestProxy)request).Request.Query["api-key"]
                 }
             }
         }                    
@@ -230,11 +230,11 @@ app.UseThrottlingTroll(options =>
     // Custom response fabric, returns 400 BadRequest + some custom content
     options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
     {
-        responseProxy.IngressResponse.StatusCode = StatusCodes.Status400BadRequest;
+        responseProxy.StatusCode = StatusCodes.Status400BadRequest;
 
-        responseProxy.IngressResponse.Headers.Add(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+        responseProxy.SetHttpHeader(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
 
-        await responseProxy.IngressResponse.WriteAsync("Too many requests. Try again later.");
+        await responseProxy.WriteAsync("Too many requests. Try again later.");
     };
 });
 ```
@@ -250,7 +250,8 @@ app.UseThrottlingTroll(options =>
     {
         await Task.Delay(TimeSpan.FromSeconds(3));
 
-        responseProxy.ShouldContinueWithIngressAsNormal = true;
+        var ingressResponse = (IIngressHttpResponseProxy)responseProxy;
+        ingressResponse.ShouldContinueAsNormal = true;
     };
 });
 ```
@@ -398,7 +399,8 @@ builder.Services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessa
     options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
     {
         // Doing no more than 10 automatic retries
-        responseProxy.ShouldRetryEgressRequest = responseProxy.EgressResponseRetryCount < 10;
+        var egressResponse = (IEgressHttpResponseProxy)httpResponseProxy;
+        egressResponse.ShouldRetry = egressResponse.RetryCount < 10;
     };
 });
 ```
