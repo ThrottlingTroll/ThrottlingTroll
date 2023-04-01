@@ -111,7 +111,7 @@ That value will be used as a prefix for cache keys, so that those multiple servi
 
 ### To configure via host.json
 
-1. Enable loading custom configuration sections from 'host.json':
+1. Enable loading custom configuration sections from `host.json`:
 ```
 builder.ConfigureAppConfiguration(configBuilder => {
 
@@ -286,7 +286,7 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
 
 ### To configure via host.json
 
-1. Enable loading custom configuration sections from 'host.json':
+1. Enable loading custom configuration sections from `host.json`:
 ```
 builder.ConfigureAppConfiguration(configBuilder => {
 
