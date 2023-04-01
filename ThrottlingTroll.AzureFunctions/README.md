@@ -248,9 +248,9 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         // Custom response fabric, returns 400 BadRequest + some custom content
         options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
         {
-            responseProxy.StatusCode = StatusCodes.Status400BadRequest;
+            responseProxy.StatusCode = (int)HttpStatusCode.BadRequest;
 
-            responseProxy.SetHttpHeader(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+            responseProxy.SetHttpHeader("Retry-After", limitExceededResult.RetryAfterHeaderValue);
 
             await responseProxy.WriteAsync("Too many requests. Try again later.");
         };
