@@ -90,7 +90,7 @@ Requests that should be whitelisted (exempt from the above Rules) can be specifi
       "/api/healthcheck",
       "api-key=my-unlimited-api-key"
     ]
-  },
+  }
 ```
 
 ### Specifying UniqueName property when sharing a distributed cache instance
@@ -122,7 +122,6 @@ That value will be used as a prefix for cache keys, so that those multiple servi
         ... here go whitelisted URIs...
     ]
   }
-
 ```
 
 2. Add the following call to your startup code:
@@ -155,7 +154,6 @@ app.UseThrottlingTroll(options =>
         }
     };
 });
-
 ```
 
 ### To configure dynamically
@@ -342,7 +340,7 @@ If your service internally makes HTTP requests and you want to automatically pro
   }
 ```
 
-This will make [ThrottlingTrollHandler](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollHandler.cs) throw a dedicated [ThrottlingTrollTooManyRequestsException](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollTooManyRequestsException.cs), which then will be handled by [ThrottlingTrollMiddleware](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/ThrottlingTrollMiddleware.cs). The `Retry-After` header value (if present) will also be propagated.
+This will make [ThrottlingTrollHandler](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollHandler.cs) throw a dedicated [ThrottlingTrollTooManyRequestsException](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollTooManyRequestsException.cs), which then will be handled by [ThrottlingTrollMiddleware](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.AspNet/ThrottlingTrollMiddleware.cs). The `Retry-After` header value (if present) will also be propagated.
 
 
 ### To use with [RestSharp](https://restsharp.dev/)
@@ -381,7 +379,7 @@ and then use it as normal.
 
 ### To make HttpClient do automatic retries when getting 429 TooManyRequests
 
-Provide a response fabric implementation via **ResponseFabric** option and set **ShouldRetryEgressRequest** to **true** in it:
+Provide a response fabric implementation via **ResponseFabric** option and set **ShouldRetry** to **true** in it:
 ```
 builder.Services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
 {
@@ -398,18 +396,18 @@ HttpClient will then first wait for the amount of time suggested by **Retry-Afte
 
 ## Supported Rate Counter Stores
 
-By default ThrottlingTroll will store rate counters in memory, using [MemoryCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/MemoryCacheCounterStore.cs) (which internally uses [System.Runtime.Caching.MemoryCache](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache)).
+By default ThrottlingTroll will store rate counters in memory, using [MemoryCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/MemoryCacheCounterStore.cs) (which internally uses [System.Runtime.Caching.MemoryCache](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache)).
 
 Other supported options are:
 
-* [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/DistributedCacheCounterStore.cs). Uses [IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) instance taken from DI container. 
-* [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/RedisCounterStore.cs). Specifically designed to work with Redis. Prefer this one over [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/DistributedCacheCounterStore.cs) + [Distributed Redis Cache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#distributed-redis-cache).
+* [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/DistributedCacheCounterStore.cs). Uses [IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) instance taken from DI container. 
+* [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs). Specifically designed to work with Redis. Prefer this one over [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/DistributedCacheCounterStore.cs) + [Distributed Redis Cache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#distributed-redis-cache).
 
 You can also create your custom Counter Store by implementing the [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) interface.
 
 ### How to specify a Rate Counter Store to be used
 
-Either put a desired [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) implementation into DI container:
+Either put a desired [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs) implementation into DI container:
 ```
 builder.Services.AddSingleton<ICounterStore>(
     provider => new DistributedCacheCounterStore(provider.GetRequiredService<IDistributedCache>())
@@ -428,6 +426,3 @@ app.UseThrottlingTroll(options =>
 
 [Here is a sample project, that demonstrates all the above concepts](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb).
 
-## Contributing
-
-Is very much welcomed.
