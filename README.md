@@ -2,7 +2,11 @@
 
 Rate limiting/throttling middleware for ASP.NET and Azure Functions.
 
-[<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll?label=current%20version">](https://www.nuget.org/packages/ThrottlingTroll) [![.NET](https://github.com/scale-tone/ThrottlingTroll/actions/workflows/dotnet.yml/badge.svg)](https://github.com/scale-tone/ThrottlingTroll/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/scale-tone/ThrottlingTroll/actions/workflows/dotnet.yml/badge.svg)](https://github.com/scale-tone/ThrottlingTroll/actions/workflows/dotnet.yml)
+[<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll?label=current%20version">](https://www.nuget.org/packages/ThrottlingTroll)
+[<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll?label=ThrottlingTroll%20downloads">](https://www.nuget.org/packages/ThrottlingTroll)
+[<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.AzureFunctions?label=ThrottlingTroll.AzureFunctions%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.AzureFunctions)
+ 
 
 Install from Nuget:
 
