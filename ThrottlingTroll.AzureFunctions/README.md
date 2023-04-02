@@ -262,7 +262,7 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
 
 ### To delay responses instead of returning errors
 
-Provide a response fabric implementation with a delay in it. Also set **ShouldContinueWithIngressAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
+Provide a response fabric implementation with a delay in it. Also set **ShouldContinueAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
 ```
 builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) => {
 
