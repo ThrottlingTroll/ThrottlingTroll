@@ -320,7 +320,7 @@ builder.ConfigureServices(services => {
 
 ```
 
-4. Get an instance of that HttpClient via IHttpClientFactory:
+4. Get an instance of that HttpClient via [IHttpClientFactory](https://learn.microsoft.com/en-us/azure/azure-functions/functions-dotnet-dependency-injection#use-injected-dependencies):
 ```
 var throttledHttpClient = this._httpClientFactory.CreateClient("my-throttled-httpclient");
 ```
@@ -379,7 +379,7 @@ builder.ConfigureServices(services => {
 
 ```
 
-2. Get an instance of that HttpClient via [IHttpClientFactory](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-7.0#named-clients):
+2. Get an instance of that HttpClient via [IHttpClientFactory](https://learn.microsoft.com/en-us/azure/azure-functions/functions-dotnet-dependency-injection#use-injected-dependencies):
 ```
 var throttledHttpClient = this._httpClientFactory.CreateClient("my-throttled-httpclient");
 ```
