@@ -16,7 +16,7 @@ Install from Nuget:
 
 ## Features
 
-* **Both ASP.NET and Azure Functions (.NET Isolated) are supported**. 
+* **Both [ASP.NET](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll) and [Azure Functions (.NET Isolated)](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) are supported**. 
 * **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
