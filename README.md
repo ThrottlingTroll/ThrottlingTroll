@@ -17,12 +17,49 @@ Install from Nuget:
 ## Features
 
 * **Both ASP.NET and Azure Functions (.NET Isolated) are supported**. 
-* **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
-* **Egress throttling**, aka limit the number of calls your code is making against some external endpoint. Implemented as an [HttpClient DelegatingHandler](https://learn.microsoft.com/en-us/aspnet/web-api/overview/advanced/httpclient-message-handlers#custom-message-handlers), which produces `429 TooManyRequests` response (without making the actual call) when a limit is exceeded.
-* **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Both [Microsoft.Extensions.Caching.Distributed.IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) and [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/Basics.html) are supported. 
+* **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
+
+   ```mermaid
+      sequenceDiagram
+          Client->>+YourService: #127760;HTTP
+          alt limit exceeded?
+              YourService-->>Client: 429 TooManyRequests
+          else
+              YourService-->>-Client: 200 OK
+          end
+   ```
+   Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
+     
+* **Egress throttling**, aka limit the number of calls your code is making against some external endpoint. 
+
+   ```mermaid
+      sequenceDiagram
+          YourService->>+HttpClient: SendAsync()
+          alt limit exceeded?
+              HttpClient-->>YourService: 429 TooManyRequests
+          else
+              HttpClient->>+TheirService: #127760;HTTP
+              TheirService-->>-HttpClient: 200 OK
+              HttpClient-->>-YourService: 200 OK
+          end
+   ```
+   Implemented as an [HttpClient DelegatingHandler](https://learn.microsoft.com/en-us/aspnet/web-api/overview/advanced/httpclient-message-handlers#custom-message-handlers), which produces `429 TooManyRequests` response (without making the actual call) when a limit is exceeded.
+   
 * **Propagating `429 TooManyRequests` from egress to ingress**, aka when your service internally makes an HTTP request which results in `429 TooManyRequests`, your service can automatically respond with same `429 TooManyRequests` to its calling client.
-* **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
+
+   ```mermaid
+      sequenceDiagram
+          Client->>+YourService: #127760;HTTP
+          YourService->>+TheirService: #127760;HTTP
+          TheirService-->>-YourService: 429 TooManyRequests
+          YourService-->>-Client: 429 TooManyRequests
+   ```
+
 * **Custom response fabrics**. For ingress it gives full control on what to return when a request is being throttled, and also allows to implement delayed responses (instead of just returning `429 TooManyRequests`). For egress it also allows ThrottlingTroll to do automatic retries for you.
+
+* **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Both [Microsoft.Extensions.Caching.Distributed.IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) and [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/Basics.html) are supported. 
+
+* **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
 
 ## How to configure and use
 
