@@ -55,7 +55,35 @@ Install from Nuget:
           YourService-->>-Client: 429 TooManyRequests
    ```
 
-* **Custom response fabrics**. For ingress it gives full control on what to return when a request is being throttled, and also allows to implement delayed responses (instead of just returning `429 TooManyRequests`). For egress it also allows ThrottlingTroll to do automatic retries for you.
+* **Custom response fabrics**. For ingress it gives full control on what to return when a request is being throttled, and also allows to implement delayed responses (instead of just returning `429 TooManyRequests`): 
+
+   ```mermaid
+      sequenceDiagram
+          Client->>+YourService: #127760;HTTP
+          alt limit exceeded?
+              YourService-->>YourService: await Task.Delay(RetryAfter)
+              YourService-->>Client: 200 OK
+          else
+              YourService-->>-Client: 200 OK
+          end
+   ```
+
+   For egress it also allows ThrottlingTroll to do automatic retries for you:
+
+   ```mermaid
+      sequenceDiagram
+          YourService->>+HttpClient: SendAsync()
+
+          loop while 429 TooManyRequests
+              HttpClient->>+TheirService: #127760;HTTP
+              TheirService-->>-HttpClient: 429 TooManyRequests
+              HttpClient-->>HttpClient: await Task.Delay(RetryAfter)
+          end
+
+          HttpClient->>+TheirService: #127760;HTTP
+          TheirService-->>-HttpClient: 200 OK
+          HttpClient-->>-YourService: 200 OK
+   ```
 
 * **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Both [Microsoft.Extensions.Caching.Distributed.IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) and [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/Basics.html) are supported. 
 
