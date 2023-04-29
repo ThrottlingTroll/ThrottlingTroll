@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace ThrottlingTroll
 {
@@ -22,33 +20,9 @@ namespace ThrottlingTroll
         public string UniqueName { get; set; }
 
         /// <summary>
-        /// Regex patterns of URLs to be whitelisted (exempt from Rules)
+        /// Requests to be whitelisted (exempt from Rules)
         /// </summary>
-        public IList<string> WhiteList { get; set; }
-
-        internal List<Regex> WhiteListRegexes
-        {
-            get
-            {
-                if (this._whiteListRegexes == null)
-                {
-                    if (this.WhiteList == null)
-                    {
-                        this._whiteListRegexes = new List<Regex>();
-                    }
-                    else
-                    {
-                        this._whiteListRegexes = this.WhiteList
-                            .Select(url => new Regex(url, RegexOptions.IgnoreCase | RegexOptions.Compiled))
-                            .ToList();
-                    }
-                }
-
-                return this._whiteListRegexes;
-            }
-        }
-
-        private List<Regex> _whiteListRegexes;
+        public IList<RequestFilter> WhiteList { get; set; }
     }
 
     /// <summary>

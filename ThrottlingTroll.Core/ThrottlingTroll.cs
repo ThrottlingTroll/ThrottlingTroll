@@ -15,6 +15,9 @@ namespace ThrottlingTroll
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
         protected internal ThrottlingTroll
         (
             Action<LogLevel, string> log,
@@ -29,6 +32,9 @@ namespace ThrottlingTroll
             this.InitGetConfigTask(getConfigFunc, intervalToReloadConfigInSeconds);
         }
 
+        /// <summary>
+        /// Marks this instance as disposed
+        /// </summary>
         public void Dispose()
         {
             this._disposed = true;
@@ -49,7 +55,7 @@ namespace ThrottlingTroll
                 if (config.Rules != null)
                 {
                     // First checking if request whitelisted
-                    if (config.WhiteListRegexes.Any(pattern => pattern.IsMatch(request.Uri)))
+                    if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
                     {
                         this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
                     }
