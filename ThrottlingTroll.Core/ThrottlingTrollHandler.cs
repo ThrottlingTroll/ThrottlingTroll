@@ -27,7 +27,6 @@ namespace ThrottlingTroll
         /// <summary>
         /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
         /// </summary>
-        /// <param name="counterStore">Implementation of <see cref="ICounterStore"/></param>
         /// <param name="config">Throttling configuration</param>
         /// <param name="log">Logging utility</param>
         /// <param name="innerHttpMessageHandler">Instance of <see cref="HttpMessageHandler"/> to use as inner handler. When null, a default <see cref="HttpClientHandler"/> instance will be created.</param>
@@ -265,6 +264,7 @@ namespace ThrottlingTroll
             return response;
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
             this._troll.Dispose();
