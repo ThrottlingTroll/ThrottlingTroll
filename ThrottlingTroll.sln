@@ -7,13 +7,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AspNet", "T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleWeb", "samples\ThrottlingTrollSampleWeb\ThrottlingTrollSampleWeb.csproj", "{C2EC72A2-4A6B-4126-9195-390032717F9A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.Tests", "tests\ThrottlingTroll.Tests\ThrottlingTroll.Tests.csproj", "{75EC843E-720C-46CE-B4FF-420236A26108}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.Core.Tests", "tests\ThrottlingTroll.Tests\ThrottlingTroll.Core.Tests.csproj", "{75EC843E-720C-46CE-B4FF-420236A26108}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.Core", "ThrottlingTroll.Core\ThrottlingTroll.Core.csproj", "{6402D884-031B-4636-A25F-F240BE91B02F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AzureFunctions", "ThrottlingTroll.AzureFunctions\ThrottlingTroll.AzureFunctions.csproj", "{D8F80B0C-0408-4FB4-9CDB-D186CB1F130B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleFunction", "samples\ThrottlingTrollSampleFunction\ThrottlingTrollSampleFunction.csproj", "{4B0AB537-4496-49AF-8882-9F0B641A1CA8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{F87ADBF3-0FE0-4B4E-9D20-AF76EE155CDE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{EABC27FE-E387-47F1-9BF9-8B6181F98D9F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AspNet.Tests", "tests\ThrottlingTroll.AspNet.Tests\ThrottlingTroll.AspNet.Tests.csproj", "{F949EFCD-635F-4D5B-A417-45DA4E684950}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTroll.AzureFunctions.Tests", "tests\ThrottlingTroll.AzureFunctions.Tests\ThrottlingTroll.AzureFunctions.Tests.csproj", "{1018E970-C585-45E9-B170-F670C40466CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,9 +53,24 @@ Global
 		{4B0AB537-4496-49AF-8882-9F0B641A1CA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B0AB537-4496-49AF-8882-9F0B641A1CA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B0AB537-4496-49AF-8882-9F0B641A1CA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F949EFCD-635F-4D5B-A417-45DA4E684950}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F949EFCD-635F-4D5B-A417-45DA4E684950}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F949EFCD-635F-4D5B-A417-45DA4E684950}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F949EFCD-635F-4D5B-A417-45DA4E684950}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1018E970-C585-45E9-B170-F670C40466CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1018E970-C585-45E9-B170-F670C40466CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1018E970-C585-45E9-B170-F670C40466CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1018E970-C585-45E9-B170-F670C40466CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C2EC72A2-4A6B-4126-9195-390032717F9A} = {F87ADBF3-0FE0-4B4E-9D20-AF76EE155CDE}
+		{75EC843E-720C-46CE-B4FF-420236A26108} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
+		{4B0AB537-4496-49AF-8882-9F0B641A1CA8} = {F87ADBF3-0FE0-4B4E-9D20-AF76EE155CDE}
+		{F949EFCD-635F-4D5B-A417-45DA4E684950} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
+		{1018E970-C585-45E9-B170-F670C40466CF} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F213F60D-DF07-4F11-9B94-4143A16E1EE6}

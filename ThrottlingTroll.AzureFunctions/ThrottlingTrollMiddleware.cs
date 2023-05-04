@@ -9,8 +9,11 @@ using StackExchange.Redis;
 using System;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+
+[assembly: InternalsVisibleTo("ThrottlingTroll.AzureFunctions.Tests")]
 
 namespace ThrottlingTroll
 {
@@ -33,10 +36,8 @@ namespace ThrottlingTroll
         /// <summary>
         /// Is invoked by Azure Functions middleware pipeline. Handles ingress throttling.
         /// </summary>
-        public async Task Invoke(FunctionContext context, Func<Task> next)
+        public async Task<HttpResponseData> Invoke(HttpRequestData request, Func<Task> next, CancellationToken cancellationToken)
         {
-            var request = await context.GetHttpRequestDataAsync() ?? throw new ArgumentNullException("HTTP Request is null");
-
             var requestProxy = new IncomingHttpRequestProxy(request);
 
             // First trying ingress
@@ -83,7 +84,7 @@ namespace ThrottlingTroll
 
             if (result == null)
             {
-                return;
+                return null;
             }
 
             var response = request.CreateResponse(HttpStatusCode.OK);
@@ -105,7 +106,7 @@ namespace ThrottlingTroll
 
                 await response.WriteStringAsync($"Retry after {responseString}");
 
-                context.GetInvocationResult().Value = response;
+                return response;
             }
             else
             {
@@ -113,7 +114,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new IngressHttpResponseProxy(response);
 
-                await this._responseFabric(result, requestProxy, responseProxy, context.CancellationToken);
+                await this._responseFabric(result, requestProxy, responseProxy, cancellationToken);
 
                 if (responseProxy.ShouldContinueAsNormal)
                 {
@@ -123,10 +124,12 @@ namespace ThrottlingTroll
                     {
                         await next();
                     }
+
+                    return null;
                 }
                 else
                 {
-                    context.GetInvocationResult().Value = response;
+                    return response;
                 }
             }
         }
@@ -218,7 +221,14 @@ namespace ThrottlingTroll
                         }
                     }
 
-                    await throttlingTrollMiddleware.Invoke(context, next);
+                    var request = await context.GetHttpRequestDataAsync() ?? throw new ArgumentNullException("HTTP Request is null");
+
+                    var response = await throttlingTrollMiddleware.Invoke(request, next, context.CancellationToken);
+
+                    if (response != null)
+                    {
+                        context.GetInvocationResult().Value = response;
+                    }
                 }
              );
 

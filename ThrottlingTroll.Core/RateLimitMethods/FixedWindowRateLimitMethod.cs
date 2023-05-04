@@ -17,7 +17,7 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
-        internal override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
         {
             if (this.IntervalInSeconds <= 0)
             {

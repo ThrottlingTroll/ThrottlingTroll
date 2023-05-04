@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-[assembly: InternalsVisibleTo("ThrottlingTroll.Tests")]
+[assembly: InternalsVisibleTo("ThrottlingTroll.Core.Tests")]
 
 namespace ThrottlingTroll
 {
@@ -19,6 +19,6 @@ namespace ThrottlingTroll
         /// Checks if limit of calls is exceeded for a given rule (identified by its hash).
         /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
         /// </summary>
-        internal abstract Task<int> IsExceededAsync(string limitKey, ICounterStore store);
+        public abstract Task<int> IsExceededAsync(string limitKey, ICounterStore store);
     }
 }

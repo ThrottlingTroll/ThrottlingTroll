@@ -40,10 +40,9 @@ namespace ThrottlingTroll
             }
         }
 
-        private IDistributedCache _cache;
-
-        private SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
-
+        /// <summary>
+        /// Ctor
+        /// </summary>
         public DistributedCacheCounterStore(IDistributedCache cache)
         {
             this._cache = cache;
@@ -85,26 +84,71 @@ namespace ThrottlingTroll
 
                 cacheEntry.Count++;
 
-                try
-                {
-                    await this._cache.SetAsync(
-                        key,
-                        cacheEntry.ToBytes(),
-                        new DistributedCacheEntryOptions { AbsoluteExpiration = cacheEntry.ExpiresAt }
-                    );
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-                    // This means "The absolute expiration value must be in the future". The solution here is to just drop this counter from cache
-
-                    await this._cache.RemoveAsync(key);
-                }
+                await this.SetAsync(key, cacheEntry);
 
                 return cacheEntry.Count;
             }
             finally
             {
                 this._asyncLock.Release();
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task DecrementAsync(string key)
+        {
+            // This is just a local lock, but it's the best we can do with IDistributedCache
+            await this._asyncLock.WaitAsync();
+
+            try
+            {
+                CacheEntry cacheEntry;
+
+                var bytes = await this._cache.GetAsync(key);
+
+                if (bytes == null)
+                {
+                    return;
+                }
+
+                cacheEntry = new CacheEntry(bytes);
+
+                cacheEntry.Count--;
+
+                if (cacheEntry.Count > 0)
+                {
+                    await this.SetAsync(key, cacheEntry);
+                }
+                else
+                {
+                    await this._cache.RemoveAsync(key);
+                }
+            }
+            finally
+            {
+                this._asyncLock.Release();
+            }
+        }
+
+        private IDistributedCache _cache;
+
+        private SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
+
+        private async Task SetAsync(string key, CacheEntry cacheEntry)
+        {
+            try
+            {
+                await this._cache.SetAsync(
+                    key,
+                    cacheEntry.ToBytes(),
+                    new DistributedCacheEntryOptions { AbsoluteExpiration = cacheEntry.ExpiresAt }
+                );
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // This means "The absolute expiration value must be in the future". The solution here is to just drop this counter from cache
+
+                await this._cache.RemoveAsync(key);
             }
         }
     }

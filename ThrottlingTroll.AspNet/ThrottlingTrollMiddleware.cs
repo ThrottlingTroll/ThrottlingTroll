@@ -21,6 +21,9 @@ namespace ThrottlingTroll
 
         private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
+        /// <summary>
+        /// Ctor. Shold not be used externally, but needs to be public.
+        /// </summary>
         public ThrottlingTrollMiddleware
         (
             RequestDelegate next,

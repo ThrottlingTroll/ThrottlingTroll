@@ -22,12 +22,15 @@ namespace ThrottlingTroll
         (
             Action<LogLevel, string> log,
             ICounterStore counterStore,
-            Func<Task<ThrottlingTrollConfig>> getConfigFunc = null,
+            Func<Task<ThrottlingTrollConfig>> getConfigFunc,
             int intervalToReloadConfigInSeconds = 0
         )
         {
-            this._log = log ?? ((l, s) => { });
+            ArgumentNullException.ThrowIfNull(counterStore);
+            ArgumentNullException.ThrowIfNull(getConfigFunc);
+
             this._counterStore = counterStore;
+            this._log = log ?? ((l, s) => { });
 
             this.InitGetConfigTask(getConfigFunc, intervalToReloadConfigInSeconds);
         }

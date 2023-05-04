@@ -18,5 +18,10 @@ namespace ThrottlingTroll
         /// Also sets TTL for it, but only once (so that it is NOT sliding).
         /// </summary>
         Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl);
+
+        /// <summary>
+        /// Decrements counter by its key.
+        /// </summary>
+        Task DecrementAsync(string key);
     }
 }

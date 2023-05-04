@@ -27,10 +27,6 @@ namespace ThrottlingTroll
             }
         }
 
-        private readonly MemoryCache _cache = MemoryCache.Default;
-
-        private readonly SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
-
         /// <inheritdoc />
         public async Task<long> GetAsync(string key)
         {
@@ -42,7 +38,6 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl)
         {
-            // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
 
             try
@@ -70,5 +65,45 @@ namespace ThrottlingTroll
                 this._asyncLock.Release();
             }
         }
+
+        /// <inheritdoc />
+        public async Task DecrementAsync(string key)
+        {
+            await this._asyncLock.WaitAsync();
+
+            try
+            {
+                var cacheEntry = this._cache.Get(key) as CacheEntry;
+
+                if (cacheEntry == null)
+                {
+                    return;
+                }
+
+                cacheEntry.Count--;
+
+                if (cacheEntry.Count > 0)
+                {
+                    this._cache.Set
+                    (
+                        key,
+                        cacheEntry,
+                        new CacheItemPolicy { AbsoluteExpiration = cacheEntry.ExpiresAt }
+                    );
+                }
+                else
+                {
+                    this._cache.Remove(key);
+                }
+            }
+            finally
+            {
+                this._asyncLock.Release();
+            }
+        }
+
+        private readonly MemoryCache _cache = MemoryCache.Default;
+
+        private readonly SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
     }
 }

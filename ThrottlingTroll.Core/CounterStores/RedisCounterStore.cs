@@ -47,5 +47,13 @@ namespace ThrottlingTroll
 
             return val;
         }
+
+        /// <inheritdoc />
+        public async Task DecrementAsync(string key)
+        {
+            var db = this._redis.GetDatabase();
+
+            await db.StringDecrementAsync(key);
+        }
     }
 }
