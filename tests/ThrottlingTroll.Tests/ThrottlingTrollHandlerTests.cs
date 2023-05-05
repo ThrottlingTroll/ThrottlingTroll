@@ -1,5 +1,3 @@
-
-using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using Moq;
 using System.Diagnostics;
@@ -22,15 +20,40 @@ public class ThrottlingTrollHandlerTests
         {
         }
 
-        public new HttpResponseMessage Send(HttpRequestMessage request)
+        public HttpResponseMessage Send(HttpRequestMessage request)
         {
             return base.Send(request, CancellationToken.None);
         }
 
-        public new Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
+        public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
         {
             return base.SendAsync(request, CancellationToken.None);
         }
+    }
+
+    private const string LocalHost = "http://localhost:17345";
+
+    [TestMethod]
+    public async Task SendAsyncSuccessfullySendsRequest()
+    {
+        // Arrange
+
+        using var app = WebApplication.Create();
+        app.Urls.Add(LocalHost);
+        app.MapGet("/", () => Results.StatusCode((int)HttpStatusCode.PaymentRequired));
+        await app.StartAsync();
+
+        var handler = new ThrottlingTrollHandler_Accessor(null, null, new ThrottlingTrollEgressConfig());
+
+        var request = new HttpRequestMessage(HttpMethod.Get, LocalHost);
+
+        // Act
+
+        var result = await handler.SendAsync(request);
+
+        // Assert
+
+        Assert.AreEqual(HttpStatusCode.PaymentRequired, result.StatusCode);
     }
 
     [TestMethod]
@@ -221,6 +244,29 @@ public class ThrottlingTrollHandlerTests
         Assert.AreEqual(HttpStatusCode.TooManyRequests, result.StatusCode);
         Assert.AreEqual(TimeSpan.FromSeconds(1), result.Headers.RetryAfter.Delta);
         Assert.AreEqual("Retry after 1 seconds", await result.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task SendSuccessfullySendsRequest()
+    {
+        // Arrange
+
+        using var app = WebApplication.Create();
+        app.Urls.Add(LocalHost);
+        app.MapGet("/", () => Results.StatusCode((int)HttpStatusCode.PaymentRequired));
+        await app.StartAsync();
+
+        var handler = new ThrottlingTrollHandler_Accessor(null, null, new ThrottlingTrollEgressConfig());
+
+        var request = new HttpRequestMessage(HttpMethod.Get, LocalHost);
+
+        // Act
+
+        var result = handler.Send(request);
+
+        // Assert
+
+        Assert.AreEqual(HttpStatusCode.PaymentRequired, result.StatusCode);
     }
 
     [TestMethod]
