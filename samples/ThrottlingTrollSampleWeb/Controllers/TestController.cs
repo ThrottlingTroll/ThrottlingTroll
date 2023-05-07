@@ -282,6 +282,45 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Calls /lazy-dummy endpoint 
+        /// using an HttpClient that is limited to 2 concurrent requests.
+        /// Demonstrates Semaphore (Concurrency) rate limiter.
+        /// DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("egress-semaphore-2-concurrent-requests")]
+        public async Task<string> EgressTest6()
+        {
+            // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
+            using var client = new HttpClient
+            (
+                new ThrottlingTrollHandler
+                (
+                    new ThrottlingTrollEgressConfig
+                    {
+                        Rules = new[]
+                        {
+                            new ThrottlingTrollRule
+                            {
+                                LimitMethod = new SemaphoreRateLimitMethod
+                                {
+                                    PermitLimit = 2
+                                }
+                            }
+                        }
+                    }
+                )
+            );
+
+            string url = $"{this.Request.Scheme}://{this.Request.Host}/lazy-dummy";
+
+            var response = await client.GetAsync(url);
+
+            return $"Dummy endpoint returned {response.StatusCode}";
+        }
+
+        /// <summary>
         /// Dummy endpoint for testing HttpClient. Isn't throttled.
         /// </summary>
         /// <response code="200">OK</response>
@@ -289,6 +328,19 @@ namespace ThrottlingTrollSampleWeb.Controllers
         [Route("dummy")]
         public string Dummy()
         {
+            return "OK";
+        }
+
+        /// <summary>
+        /// Dummy endpoint for testing HttpClient. Sleeps for 10 seconds. Isn't throttled.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("lazy-dummy")]
+        public string LazyDummy()
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(10));
+
             return "OK";
         }
     }
