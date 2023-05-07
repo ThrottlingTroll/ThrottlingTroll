@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -115,22 +116,32 @@ namespace ThrottlingTroll
 
             while (true)
             {
+                var cleanupRoutines = new List<Task>();
+
                 // Decoupling from SynchronizationContext just in case
                 var isExceededResult = Task.Run(() =>
                 {
-                    return this._troll.IsExceededAsync(new OutgoingHttpRequestProxy(request));
+                    return this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
                 })
                 .Result;
 
-                if (isExceededResult == null)
+                try
                 {
-                    // Just making the call as normal
-                    response = base.Send(request, cancellationToken);
+                    if (isExceededResult == null)
+                    {
+                        // Just making the call as normal
+                        response = base.Send(request, cancellationToken);
+                    }
+                    else
+                    {
+                        // Creating the TooManyRequests response
+                        response = this.CreateRetryAfterResponse(request, isExceededResult);
+                    }
                 }
-                else
+                finally
                 {
-                    // Creating the TooManyRequests response
-                    response = this.CreateRetryAfterResponse(request, isExceededResult);
+                    // Decrementing counters
+                    Task.WaitAll(cleanupRoutines.ToArray());
                 }
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)
@@ -179,17 +190,27 @@ namespace ThrottlingTroll
 
             while (true)
             {
-                var isExceededResult = await this._troll.IsExceededAsync(requestProxy);
+                var cleanupRoutines = new List<Task>();
 
-                if (isExceededResult == null)
+                var isExceededResult = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
+
+                try
                 {
-                    // Just making the call as normal
-                    response = await base.SendAsync(request, cancellationToken);
+                    if (isExceededResult == null)
+                    {
+                        // Just making the call as normal
+                        response = await base.SendAsync(request, cancellationToken);
+                    }
+                    else
+                    {
+                        // Creating the TooManyRequests response
+                        response = this.CreateRetryAfterResponse(request, isExceededResult);
+                    }
                 }
-                else
+                finally
                 {
-                    // Creating the TooManyRequests response
-                    response = this.CreateRetryAfterResponse(request, isExceededResult);
+                    // Decrementing counters
+                    await Task.WhenAll(cleanupRoutines);
                 }
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)

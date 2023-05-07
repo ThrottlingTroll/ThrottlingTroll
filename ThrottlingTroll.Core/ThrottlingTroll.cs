@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -47,7 +48,7 @@ namespace ThrottlingTroll
         /// Checks if limit of calls is exceeded for a given request.
         /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request)
+        protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, List<Task> cleanupRoutines)
         {
             LimitExceededResult result = null;
 
@@ -67,24 +68,47 @@ namespace ThrottlingTroll
                         // Still need to check all limits, so that all counters get updated
                         foreach (var limit in config.Rules)
                         {
-                            var isExceeded = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+                            var limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
 
-                            if (
-                                (isExceeded != null)
-                                &&
+                            if (limitCheckResult == null)
+                            {
+                                // The request did not match this rule
+                                continue;
+                            }
+
+                            if (!limitCheckResult.IsExceeded)
+                            {
+                                // The request matched the rule, but the limit was not exceeded.
+                                // So we need to decrement the counter when request processing is finished.
+
+                                var counterDecrementTask = limit.OnSuccessfulRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId)
+                                    .ContinueWith(t =>
+                                    {
+                                        if (t.IsFaulted)
+                                        {
+                                            this._log(LogLevel.Error, $"ThrottlingTroll failed. {t.Exception}");
+                                        }
+                                    });
+
+                                cleanupRoutines.Add(counterDecrementTask);
+
+                                continue;
+                            }
+
+                            // this limit was exceeded
+                            if
+                            (
+                                (result == null)
+                                ||
                                 (
-                                    (result == null) 
-                                    ||
-                                    (
-                                        int.TryParse(result.RetryAfterHeaderValue, out int first) &&
-                                        int.TryParse(isExceeded.RetryAfterHeaderValue, out int second) &&
-                                        first < second
-                                    )
+                                    int.TryParse(result.RetryAfterHeaderValue, out int first) &&
+                                    int.TryParse(limitCheckResult.RetryAfterHeaderValue, out int second) &&
+                                    first < second
                                 )
                             )
                             {
                                 // Will return result with biggest RetryAfterInSeconds
-                                result = isExceeded;
+                                result = limitCheckResult;
                             }
                         }
                     }

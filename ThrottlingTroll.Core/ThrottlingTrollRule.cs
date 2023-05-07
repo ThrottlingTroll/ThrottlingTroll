@@ -39,7 +39,9 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
-        /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
+        /// If request does not match the rule, returns null.
+        /// If limit exceeded, returns number of seconds to retry after and unique counter ID.
+        /// Otherwise just returns unique counter ID.
         /// </summary>
         internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, ICounterStore store, string configName, Action<LogLevel, string> log)
         {
@@ -54,12 +56,20 @@ namespace ThrottlingTroll
 
             if (retryAfter <= 0)
             {
-                return null;
+                return new LimitExceededResult(false, this, string.Empty, uniqueCacheKey);
             }
 
             log(LogLevel.Warning, $"ThrottlingTroll: rule {uniqueCacheKey} exceeded by {request.Method} {request.UriWithoutQueryString}");
 
-            return new LimitExceededResult(this, retryAfter.ToString(), uniqueCacheKey);
+            return new LimitExceededResult(true, this, retryAfter.ToString(), uniqueCacheKey);
+        }
+
+        /// <summary>
+        /// Will be executed at the end of a successful (not throttled) request. Used for decrementing the counter, if needed.
+        /// </summary>
+        internal async Task OnSuccessfulRequestProcessingFinished(ICounterStore store, string uniqueCacheKey)
+        {
+            await this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
         }
 
         private RateLimitMethod _limitMethod { get; set; }

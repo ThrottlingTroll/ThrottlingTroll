@@ -51,5 +51,12 @@ namespace ThrottlingTroll
                 return 0;
             }
         }
+
+        /// <inheritdoc />
+        public override Task DecrementAsync(string limitKey, ICounterStore store)
+        {
+            // Doing nothing
+            return Task.CompletedTask;
+        }
     }
 }

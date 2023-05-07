@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,88 +42,96 @@ namespace ThrottlingTroll
         public async Task InvokeAsync(HttpContext context)
         {
             var requestProxy = new IncomingHttpRequestProxy(context.Request);
+            var cleanupRoutines = new List<Task>();
 
-            // First trying ingress
-            var result = await this.IsExceededAsync(requestProxy);
-
-            bool restOfPipelineCalled = false;
-
-            if (result == null)
+            try
             {
-                restOfPipelineCalled = true;
+                // First trying ingress
+                var result = await this.IsExceededAsync(requestProxy, cleanupRoutines);
 
-                // Also trying to propagate egress to ingress
-                try
+                bool restOfPipelineCalled = false;
+
+                if (result == null)
                 {
-                    await this._next(context);
-                }
-                catch (ThrottlingTrollTooManyRequestsException throttlingEx)
-                {
-                    // Catching propagated exception from egress
-                    result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                }
-                catch (AggregateException ex)
-                {
-                    // Catching propagated exception from egress as AggregateException
+                    restOfPipelineCalled = true;
 
-                    ThrottlingTrollTooManyRequestsException throttlingEx = null;
-
-                    foreach (var exx in ex.Flatten().InnerExceptions)
-                    {
-                        throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
-                        if (throttlingEx != null)
-                        {
-                            result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                            break;
-                        }
-                    }
-
-                    if (throttlingEx == null)
-                    {
-                        throw;
-                    }
-                }
-            }
-
-            if (result == null)
-            {
-                return;
-            }
-
-            if (this._responseFabric == null)
-            {
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-                // Formatting default Retry-After response
-
-                if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
-                {
-                    context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
-                }
-
-                string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
-                    result.RetryAfterHeaderValue :
-                    $"{result.RetryAfterHeaderValue} seconds";
-
-                await context.Response.WriteAsync($"Retry after {responseString}");
-            }
-            else
-            {
-                // Using the provided response builder
-
-                var responseProxy = new IngressHttpResponseProxy(context.Response);
-
-                await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
-
-                if (responseProxy.ShouldContinueAsNormal)
-                {
-                    // Continue with normal request processing
-
-                    if (!restOfPipelineCalled)
+                    // Also trying to propagate egress to ingress
+                    try
                     {
                         await this._next(context);
                     }
+                    catch (ThrottlingTrollTooManyRequestsException throttlingEx)
+                    {
+                        // Catching propagated exception from egress
+                        result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+                    }
+                    catch (AggregateException ex)
+                    {
+                        // Catching propagated exception from egress as AggregateException
+
+                        ThrottlingTrollTooManyRequestsException throttlingEx = null;
+
+                        foreach (var exx in ex.Flatten().InnerExceptions)
+                        {
+                            throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
+                            if (throttlingEx != null)
+                            {
+                                result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+                                break;
+                            }
+                        }
+
+                        if (throttlingEx == null)
+                        {
+                            throw;
+                        }
+                    }
                 }
+
+                if (result == null)
+                {
+                    return;
+                }
+
+                if (this._responseFabric == null)
+                {
+                    context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+                    // Formatting default Retry-After response
+
+                    if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+                    {
+                        context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+                    }
+
+                    string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
+                        result.RetryAfterHeaderValue :
+                        $"{result.RetryAfterHeaderValue} seconds";
+
+                    await context.Response.WriteAsync($"Retry after {responseString}");
+                }
+                else
+                {
+                    // Using the provided response builder
+
+                    var responseProxy = new IngressHttpResponseProxy(context.Response);
+
+                    await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
+
+                    if (responseProxy.ShouldContinueAsNormal)
+                    {
+                        // Continue with normal request processing
+
+                        if (!restOfPipelineCalled)
+                        {
+                            await this._next(context);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                await Task.WhenAll(cleanupRoutines);
             }
         }
     }

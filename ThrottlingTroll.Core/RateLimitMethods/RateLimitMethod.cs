@@ -20,5 +20,11 @@ namespace ThrottlingTroll
         /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
         /// </summary>
         public abstract Task<int> IsExceededAsync(string limitKey, ICounterStore store);
+
+        /// <summary>
+        /// Decrements the given counter _if the rate limit method supports this functionality_.
+        /// Otherwise should do nothing.
+        /// </summary>
+        public abstract Task DecrementAsync(string limitKey, ICounterStore store);
     }
 }

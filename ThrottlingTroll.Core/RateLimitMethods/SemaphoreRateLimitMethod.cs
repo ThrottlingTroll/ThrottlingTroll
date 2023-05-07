@@ -19,5 +19,11 @@ namespace ThrottlingTroll
         {
             throw new NotImplementedException();
         }
+
+        /// <inheritdoc />
+        public override async Task DecrementAsync(string limitKey, ICounterStore store)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
