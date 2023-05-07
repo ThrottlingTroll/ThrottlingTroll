@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Caching;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -10,20 +9,33 @@ namespace ThrottlingTroll
     public class SemaphoreRateLimitMethod : RateLimitMethod
     {
         /// <summary>
-        /// Window size in seconds
+        /// Timeout in seconds. Defaults to 100.
         /// </summary>
-        public int IntervalInSeconds { get; set; }
+        public int TimeoutInSeconds { get; set; } = 100;
 
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
         {
-            throw new NotImplementedException();
+            var now = DateTime.UtcNow;
+
+            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.TimeoutInSeconds);
+
+            long count = await store.IncrementAndGetAsync(limitKey, ttl, true);
+
+            if (count > this.PermitLimit)
+            {
+                return this.TimeoutInSeconds;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
         /// <inheritdoc />
-        public override async Task DecrementAsync(string limitKey, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, ICounterStore store)
         {
-            throw new NotImplementedException();
+            return store.DecrementAsync(limitKey);
         }
     }
 }

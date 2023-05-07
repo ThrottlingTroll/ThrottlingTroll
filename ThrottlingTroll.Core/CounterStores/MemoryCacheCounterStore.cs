@@ -36,7 +36,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl)
+        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, bool isTtlSliding)
         {
             await this._asyncLock.WaitAsync();
 
@@ -50,6 +50,11 @@ namespace ThrottlingTroll
                 }
 
                 cacheEntry.Count++;
+
+                if (isTtlSliding)
+                {
+                    cacheEntry.ExpiresAt = ttl;
+                }
 
                 this._cache.Set
                 (

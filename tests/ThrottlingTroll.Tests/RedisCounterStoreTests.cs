@@ -70,7 +70,7 @@ public class RedisCounterStoreTests
 
         var store = new RedisCounterStore(redisMock.Object);
 
-        long result = await store.IncrementAndGetAsync(key, ttl);
+        long result = await store.IncrementAndGetAsync(key, ttl, false);
 
         // Assert
 

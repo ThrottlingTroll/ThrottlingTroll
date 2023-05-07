@@ -62,7 +62,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl)
+        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, bool isTtlSliding)
         {
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
@@ -83,6 +83,11 @@ namespace ThrottlingTroll
                 }
 
                 cacheEntry.Count++;
+
+                if (isTtlSliding)
+                {
+                    cacheEntry.ExpiresAt = ttl;
+                }
 
                 await this.SetAsync(key, cacheEntry);
 
