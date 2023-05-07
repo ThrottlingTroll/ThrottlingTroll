@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -116,7 +117,7 @@ namespace ThrottlingTroll
 
             while (true)
             {
-                var cleanupRoutines = new List<Task>();
+                var cleanupRoutines = new List<Func<Task>>();
 
                 // Decoupling from SynchronizationContext just in case
                 var isExceededResult = Task.Run(() =>
@@ -141,7 +142,7 @@ namespace ThrottlingTroll
                 finally
                 {
                     // Decrementing counters
-                    Task.WaitAll(cleanupRoutines.ToArray());
+                    Task.WaitAll(cleanupRoutines.Select(f => f()).ToArray());
                 }
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)
@@ -190,7 +191,7 @@ namespace ThrottlingTroll
 
             while (true)
             {
-                var cleanupRoutines = new List<Task>();
+                var cleanupRoutines = new List<Func<Task>>();
 
                 var isExceededResult = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
 
@@ -210,7 +211,7 @@ namespace ThrottlingTroll
                 finally
                 {
                     // Decrementing counters
-                    await Task.WhenAll(cleanupRoutines);
+                    await Task.WhenAll(cleanupRoutines.Select(f => f()));
                 }
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)

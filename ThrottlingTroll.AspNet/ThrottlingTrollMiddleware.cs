@@ -8,6 +8,7 @@ using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,7 +43,7 @@ namespace ThrottlingTroll
         public async Task InvokeAsync(HttpContext context)
         {
             var requestProxy = new IncomingHttpRequestProxy(context.Request);
-            var cleanupRoutines = new List<Task>();
+            var cleanupRoutines = new List<Func<Task>>();
 
             try
             {
@@ -131,7 +132,7 @@ namespace ThrottlingTroll
             }
             finally
             {
-                await Task.WhenAll(cleanupRoutines);
+                await Task.WhenAll(cleanupRoutines.Select(f => f()));
             }
         }
     }

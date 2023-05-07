@@ -104,6 +104,21 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Rate limited to 2 concurrent requests.
+        /// Demonstrates Semaphore (Concurrency) rate limiter.
+        /// DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("semaphore-2-concurrent-requests")]
+        public async Task<string> Test8()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+
+            return "OK";
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>

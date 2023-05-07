@@ -201,6 +201,25 @@ namespace ThrottlingTrollSampleWeb
                 };
             });
 
+            // Demonstrates Semaphore (Concurrency) rate limiter
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/semaphore-2-concurrent-requests",
+                            LimitMethod = new SemaphoreRateLimitMethod
+                            {
+                                PermitLimit = 2
+                            }
+                        }
+                    }
+                };
+            });
+
             // </ThrottlingTroll Ingress Configuration>
 
 

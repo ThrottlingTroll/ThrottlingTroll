@@ -40,7 +40,7 @@ namespace ThrottlingTroll
         public async Task<HttpResponseData> Invoke(HttpRequestData request, Func<Task> next, CancellationToken cancellationToken)
         {
             var requestProxy = new IncomingHttpRequestProxy(request);
-            var cleanupRoutines = new List<Task>();
+            var cleanupRoutines = new List<Func<Task>>();
 
             try
             {
@@ -139,7 +139,7 @@ namespace ThrottlingTroll
             }
             finally
             {
-                await Task.WhenAll(cleanupRoutines);
+                await Task.WhenAll(cleanupRoutines.Select(f => f()));
             }
         }
     }

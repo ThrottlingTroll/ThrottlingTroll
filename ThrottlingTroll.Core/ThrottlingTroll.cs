@@ -48,7 +48,7 @@ namespace ThrottlingTroll
         /// Checks if limit of calls is exceeded for a given request.
         /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
         /// </summary>
-        protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, List<Task> cleanupRoutines)
+        protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
         {
             LimitExceededResult result = null;
 
@@ -76,22 +76,22 @@ namespace ThrottlingTroll
                                 continue;
                             }
 
+                            // Decrementing this counter at the end of request processing
+                            cleanupRoutines.Add(async () =>
+                            {
+                                try
+                                {
+                                    await limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId);
+                                }
+                                catch (Exception ex)
+                                {
+                                    this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+                                }
+                            });
+
                             if (!limitCheckResult.IsExceeded)
                             {
                                 // The request matched the rule, but the limit was not exceeded.
-                                // So we need to decrement the counter when request processing is finished.
-
-                                var counterDecrementTask = limit.OnSuccessfulRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId)
-                                    .ContinueWith(t =>
-                                    {
-                                        if (t.IsFaulted)
-                                        {
-                                            this._log(LogLevel.Error, $"ThrottlingTroll failed. {t.Exception}");
-                                        }
-                                    });
-
-                                cleanupRoutines.Add(counterDecrementTask);
-
                                 continue;
                             }
 

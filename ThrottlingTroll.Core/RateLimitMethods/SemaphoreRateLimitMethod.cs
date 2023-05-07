@@ -18,7 +18,7 @@ namespace ThrottlingTroll
         {
             var now = DateTime.UtcNow;
 
-            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.TimeoutInSeconds);
+            var ttl = now + TimeSpan.FromSeconds(this.TimeoutInSeconds);
 
             long count = await store.IncrementAndGetAsync(limitKey, ttl, true);
 

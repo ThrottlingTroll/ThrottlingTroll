@@ -65,11 +65,11 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
-        /// Will be executed at the end of a successful (not throttled) request. Used for decrementing the counter, if needed.
+        /// Will be executed at the end of request processing. Used for decrementing the counter, if needed.
         /// </summary>
-        internal async Task OnSuccessfulRequestProcessingFinished(ICounterStore store, string uniqueCacheKey)
+        internal Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey)
         {
-            await this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
+            return this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
         }
 
         private RateLimitMethod _limitMethod { get; set; }
