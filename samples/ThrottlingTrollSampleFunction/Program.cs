@@ -176,6 +176,25 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         };
     });
 
+    // Demonstrates Semaphore (Concurrency) rate limiter
+    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, options =>
+    {
+        options.Config = new ThrottlingTrollConfig
+        {
+            Rules = new[]
+            {
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/semaphore-2-concurrent-requests",
+                    LimitMethod = new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = 2
+                    }
+                }
+            }
+        };
+    });
+
 
     // </ThrottlingTroll Ingress Configuration>
 

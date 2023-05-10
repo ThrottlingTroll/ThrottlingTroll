@@ -111,6 +111,22 @@ namespace ThrottlingTrollSampleFunction
         }
 
         /// <summary>
+        /// Rate limited to 2 concurrent requests.
+        /// Demonstrates Semaphore (Concurrency) rate limiter.
+        /// DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [Function("semaphore-2-concurrent-requests")]
+        public async Task<HttpResponseData> Test8([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
@@ -228,12 +244,65 @@ namespace ThrottlingTrollSampleFunction
         }
 
         /// <summary>
+        /// Calls /dummy endpoint 
+        /// using an HttpClient that is limited to 3 requests per 5 seconds and does automatic delays and retries.
+        /// HttpClient configured in-place programmatically.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [Function("egress-semaphore-2-concurrent-requests")]
+        public async Task<HttpResponseData> EgressTest6([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
+            using var client = new HttpClient
+            (
+                new ThrottlingTrollHandler
+                (
+                    new ThrottlingTrollEgressConfig
+                    {
+                        Rules = new[]
+                        {
+                            new ThrottlingTrollRule
+                            {
+                                LimitMethod = new SemaphoreRateLimitMethod
+                                {
+                                    PermitLimit = 2
+                                }
+                            }
+                        }
+                    }
+                )
+            );
+
+            string url = $"{req.Url.Scheme}://{req.Url.Authority}/api/lazy-dummy";
+
+            var clientResponse = await client.GetAsync(url);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString($"Dummy endpoint returned {clientResponse.StatusCode}");
+            return response;
+        }
+
+        /// <summary>
         /// Dummy endpoint for testing HttpClient. Isn't throttled.
         /// </summary>
         /// <response code="200">OK</response>
         [Function("dummy")]
         public HttpResponseData Dummy([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
+        }
+
+        /// <summary>
+        /// Dummy endpoint for testing HttpClient. Sleeps for 10 seconds. Isn't throttled.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [Function("lazy-dummy")]
+        public async Task<HttpResponseData> LazyDummy([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString("OK");
             return response;
