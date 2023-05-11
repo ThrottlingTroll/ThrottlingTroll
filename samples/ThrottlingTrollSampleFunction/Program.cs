@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using StackExchange.Redis;
 using ThrottlingTroll;
 
 var builder = new HostBuilder();
@@ -14,7 +15,17 @@ builder.ConfigureAppConfiguration(configBuilder => {
 });
 
 
-builder.ConfigureServices(services => { 
+builder.ConfigureServices(services => {
+
+    // If RedisConnectionString is specified, then using RedisCounterStore.
+    // Otherwise the default MemoryCacheCounterStore will be used.
+    var redisConnString = Environment.GetEnvironmentVariable("RedisConnectionString");
+    if (!string.IsNullOrEmpty(redisConnString))
+    {
+        services.AddSingleton<ICounterStore>(
+            new RedisCounterStore(ConnectionMultiplexer.Connect(redisConnString))
+        );
+    }
 
     // <ThrottlingTroll Egress Configuration>
 

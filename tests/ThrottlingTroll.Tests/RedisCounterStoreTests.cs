@@ -49,16 +49,12 @@ public class RedisCounterStoreTests
         var redisDbMock = new Mock<IDatabase>();
 
         redisDbMock
-            .Setup(d => d.StringIncrementAsync(key, It.IsAny<long>(), It.IsAny<CommandFlags>()))
-            .Returns(Task.FromResult(val));
-
-        redisDbMock
-            .Setup(d => d.KeyExpireAsync(key, It.IsAny<TimeSpan?>(), It.IsAny<ExpireWhen>(), It.IsAny<CommandFlags>()))
-            .Callback((RedisKey key, TimeSpan? expiry, ExpireWhen when, CommandFlags flags) => {
-
-                Assert.AreEqual(expiry, ttl);
-                Assert.AreEqual(when, ExpireWhen.HasNoExpiry);
-            });
+            .Setup(d => d.ScriptEvaluateAsync(
+                It.IsAny<LuaScript>(), 
+                It.IsAny<object>(), 
+                CommandFlags.None)
+            )
+            .Returns(Task.FromResult(RedisResult.Create(val)));
 
         var redisMock = new Mock<IConnectionMultiplexer>();
 
@@ -70,7 +66,7 @@ public class RedisCounterStoreTests
 
         var store = new RedisCounterStore(redisMock.Object);
 
-        long result = await store.IncrementAndGetAsync(key, ttl, false);
+        long result = await store.IncrementAndGetAsync(key, ttl, 1);
 
         // Assert
 

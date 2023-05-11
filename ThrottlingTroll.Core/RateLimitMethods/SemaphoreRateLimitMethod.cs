@@ -20,7 +20,7 @@ namespace ThrottlingTroll
 
             var ttl = now + TimeSpan.FromSeconds(this.TimeoutInSeconds);
 
-            long count = await store.IncrementAndGetAsync(limitKey, ttl, true);
+            long count = await store.IncrementAndGetAsync(limitKey, ttl, this.PermitLimit);
 
             if (count > this.PermitLimit)
             {

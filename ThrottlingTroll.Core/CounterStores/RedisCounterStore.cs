@@ -30,32 +30,19 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, bool isTtlSliding)
+        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, long maxCounterValueToSetTtl)
         {
             var db = this._redis.GetDatabase();
 
-            var val = await db.StringIncrementAsync(key);
+            // Doing this with one atomic LUA script
+            // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
+            var script = LuaScript.Prepare(
+                $"local c = redis.call('INCR', @key) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
+            );
 
-            if (isTtlSliding)
-            {
-                await db.KeyExpireAsync(key, ttl.UtcDateTime);
-            }
-            else
-            {
-                /*
-                    KeyExpire() with ExpireWhen.HasNoExpiry was introduced in Redis 7.0, so it doesn't work in Azure Redis (which is <= 6.0) yet.
+            var val = await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, absTtlInMs = ttl.ToUnixTimeMilliseconds(), maxCounterValueToSetTtl });
 
-                    Initializing the counter with 0 and some TTL _before_ doing StringIncrement() leads to a race:
-                        if that TTL expires before StringIncrement() is called, StringIncrement() will make the key immortal.
-
-                    So the only option left is to _first_ set/increment the value and _then_ set its TTL with a conditional LUA script
-                */
-
-                var script = LuaScript.Prepare($"if redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end");
-                await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, absTtlInMs = ttl.ToUnixTimeMilliseconds() });
-            }
-
-            return val;
+            return (long)val;
         }
 
         /// <inheritdoc />
@@ -64,7 +51,9 @@ namespace ThrottlingTroll
             var db = this._redis.GetDatabase();
 
             // Atomically decrementing and removing if 0 or less
-            var script = LuaScript.Prepare($"if redis.call('DECR', @key) < 1 then redis.call('DEL', @key) end");
+            var script = LuaScript.Prepare(
+                $"if redis.call('DECR', @key) < 1 then redis.call('DEL', @key) end"
+            );
             await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key });
         }
     }

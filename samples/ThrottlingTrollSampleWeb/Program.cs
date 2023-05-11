@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Net.Http.Headers;
+using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
 
@@ -20,6 +22,15 @@ namespace ThrottlingTrollSampleWeb
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ThrottlingTrollSampleWeb.xml"));
             });
 
+            // If RedisConnectionString is specified, then using RedisCounterStore.
+            // Otherwise the default MemoryCacheCounterStore will be used.
+            var redisConnString = builder.Configuration["RedisConnectionString"];
+            if (!string.IsNullOrEmpty(redisConnString))
+            {
+                builder.Services.AddSingleton<ICounterStore>(
+                    new RedisCounterStore(ConnectionMultiplexer.Connect(redisConnString))
+                );
+            }
 
             // <ThrottlingTroll Egress Configuration>
 

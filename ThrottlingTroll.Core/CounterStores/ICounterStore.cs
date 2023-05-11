@@ -15,9 +15,9 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Increments and gets counter by its key.
-        /// Also sets TTL for it.
+        /// Also sets TTL for it, but only if the resulting counter is less or equal than maxCounterValueToSetTtl.
         /// </summary>
-        Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, bool isTtlSliding = false);
+        Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, long maxCounterValueToSetTtl = 1);
 
         /// <summary>
         /// Decrements counter by its key.
