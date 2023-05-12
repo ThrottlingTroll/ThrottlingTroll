@@ -15,6 +15,7 @@ namespace ThrottlingTroll
         private readonly ICounterStore _counterStore;
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
+        private TimeSpan _sleepTimeSpan = TimeSpan.FromMilliseconds(50);
 
         /// <summary>
         /// Ctor
@@ -56,60 +57,86 @@ namespace ThrottlingTroll
             {
                 var config = await this._getConfigTask;
 
-                if (config.Rules != null)
+                if (config.Rules == null)
                 {
-                    // First checking if request whitelisted
-                    if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
+                    return null;
+                }
+
+                // First checking if request whitelisted
+                if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
+                {
+                    this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
+                }
+                else
+                {
+                    var dtStart = DateTimeOffset.UtcNow;
+
+                    // Still need to check all limits, so that all counters get updated
+                    foreach (var limit in config.Rules)
                     {
-                        this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
-                    }
-                    else
-                    {
-                        // Still need to check all limits, so that all counters get updated
-                        foreach (var limit in config.Rules)
+                        var limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+
+                        if (limitCheckResult == null)
                         {
-                            var limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+                            // The request did not match this rule
+                            continue;
+                        }
 
-                            if (limitCheckResult == null)
+                        // Decrementing this counter at the end of request processing
+                        cleanupRoutines.Add(async () =>
+                        {
+                            try
                             {
-                                // The request did not match this rule
-                                continue;
+                                await limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId);
+                            }
+                            catch (Exception ex)
+                            {
+                                this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+                            }
+                        });
+
+                        if (!limitCheckResult.IsExceeded)
+                        {
+                            // The request matched the rule, but the limit was not exceeded.
+                            continue;
+                        }
+
+                        // Doing the delay logic
+                        if (limit.MaxDelayInSeconds > 0)
+                        {
+                            bool awaitedSuccessfully = false;
+
+                            while ((DateTimeOffset.UtcNow - dtStart).TotalSeconds <= limit.MaxDelayInSeconds)
+                            {
+                                if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId))
+                                {
+                                    awaitedSuccessfully = true;
+                                    break;
+                                }
+
+                                await Task.Delay(this._sleepTimeSpan);
                             }
 
-                            // Decrementing this counter at the end of request processing
-                            cleanupRoutines.Add(async () =>
+                            if (awaitedSuccessfully)
                             {
-                                try
-                                {
-                                    await limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId);
-                                }
-                                catch (Exception ex)
-                                {
-                                    this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
-                                }
-                            });
-
-                            if (!limitCheckResult.IsExceeded)
-                            {
-                                // The request matched the rule, but the limit was not exceeded.
                                 continue;
                             }
+                        }
 
-                            // this limit was exceeded
-                            if
+                        // this limit was exceeded
+                        if
+                        (
+                            (result == null)
+                            ||
                             (
-                                (result == null)
-                                ||
-                                (
-                                    int.TryParse(result.RetryAfterHeaderValue, out int first) &&
-                                    int.TryParse(limitCheckResult.RetryAfterHeaderValue, out int second) &&
-                                    first < second
-                                )
+                                int.TryParse(result.RetryAfterHeaderValue, out int first) &&
+                                int.TryParse(limitCheckResult.RetryAfterHeaderValue, out int second) &&
+                                first < second
                             )
-                            {
-                                // Will return result with biggest RetryAfterInSeconds
-                                result = limitCheckResult;
-                            }
+                        )
+                        {
+                            // Will return result with biggest RetryAfterInSeconds
+                            result = limitCheckResult;
                         }
                     }
                 }

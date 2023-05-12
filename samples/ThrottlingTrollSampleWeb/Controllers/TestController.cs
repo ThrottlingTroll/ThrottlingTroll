@@ -119,6 +119,22 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Rate limited to 1 concurrent request per each identity, other requests are delayed.
+        /// Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
+        /// Query string's 'id' parameter is used as identityId.
+        /// DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("named-critical-section")]
+        public async Task<string> Test9()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+
+            return "OK";
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>

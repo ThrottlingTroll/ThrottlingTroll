@@ -79,6 +79,11 @@ namespace ThrottlingTroll.AzureFunctions.Tests
         {
             return this.RetryAfterSeconds;
         }
+
+        public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     [TestClass]

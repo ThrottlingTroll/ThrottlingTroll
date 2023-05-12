@@ -53,6 +53,19 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
+        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+        {
+            if (this.IntervalInSeconds <= 0)
+            {
+                return false;
+            }
+
+            long count = await store.GetAsync(limitKey);
+
+            return count > this.PermitLimit;
+        }
+
+        /// <inheritdoc />
         public override Task DecrementAsync(string limitKey, ICounterStore store)
         {
             // Doing nothing

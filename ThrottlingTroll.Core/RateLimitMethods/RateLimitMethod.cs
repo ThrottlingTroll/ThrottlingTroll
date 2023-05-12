@@ -16,10 +16,16 @@ namespace ThrottlingTroll
         public int PermitLimit { get; set; }
 
         /// <summary>
-        /// Checks if limit of calls is exceeded for a given rule (identified by its hash).
+        /// Increments the counter and checks if limit of calls is exceeded for a given rule (identified by its hash).
         /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
         /// </summary>
         public abstract Task<int> IsExceededAsync(string limitKey, ICounterStore store);
+
+        /// <summary>
+        /// Checks if limit of calls is exceeded for a given rule (identified by its hash).
+        /// Used for implementing delayed responses.
+        /// </summary>
+        public abstract Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store);
 
         /// <summary>
         /// Decrements the given counter _if the rate limit method supports this functionality_.

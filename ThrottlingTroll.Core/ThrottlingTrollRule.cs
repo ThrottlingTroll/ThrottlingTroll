@@ -38,6 +38,12 @@ namespace ThrottlingTroll
         public RateLimitMethodSettings RateLimit { get; set; }
 
         /// <summary>
+        /// Setting this to something more than 0 makes ThrottlingTroll wait until the counter drops below the limit,
+        /// but no more than MaxDelayInSeconds. Use this setting to implement delayed responses or critical sections.
+        /// </summary>
+        public int MaxDelayInSeconds { get; set; } = 0;
+
+        /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
         /// If request does not match the rule, returns null.
         /// If limit exceeded, returns number of seconds to retry after and unique counter ID.
@@ -70,6 +76,11 @@ namespace ThrottlingTroll
         internal Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey)
         {
             return this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
+        }
+
+        internal Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey)
+        {
+            return this.LimitMethod.IsStillExceededAsync(uniqueCacheKey, store);
         }
 
         private RateLimitMethod _limitMethod { get; set; }

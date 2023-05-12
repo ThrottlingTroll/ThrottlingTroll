@@ -213,6 +213,7 @@ namespace ThrottlingTrollSampleWeb
             });
 
             // Demonstrates Semaphore (Concurrency) rate limiter
+            // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
             app.UseThrottlingTroll(options =>
             {
                 options.Config = new ThrottlingTrollConfig
@@ -227,6 +228,33 @@ namespace ThrottlingTrollSampleWeb
                                 PermitLimit = 2
                             }
                         }
+                    }
+                };
+            });
+
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/named-critical-section",
+                            LimitMethod = new SemaphoreRateLimitMethod
+                            {
+                                PermitLimit = 1
+                            },
+
+                            // This must be set to something > 0 for responses to be automatically delayed
+                            MaxDelayInSeconds = 120,
+
+                            IdentityIdExtractor = request =>
+                            {
+                                // Identifying clients by their id
+                                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                            }
+                        },
                     }
                 };
             });

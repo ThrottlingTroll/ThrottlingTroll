@@ -86,6 +86,23 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
+        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+        {
+            if (this.IntervalInSeconds <= 0 || this.NumOfBuckets <= 0)
+            {
+                return false;
+            }
+
+            // Will load contents of all buckets in parallel
+            var tasks = Enumerable.Range(0, this.NumOfBuckets).Select(bucketId => store.GetAsync($"{limitKey}-{bucketId}"));
+
+            // Aggregating all buckets
+            long count = (await Task.WhenAll(tasks)).Sum();
+
+            return count > this.PermitLimit;
+        }
+
+        /// <inheritdoc />
         public override Task DecrementAsync(string limitKey, ICounterStore store)
         {
             // Doing nothing
