@@ -353,9 +353,9 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// <response code="200">OK</response>
         [HttpGet]
         [Route("lazy-dummy")]
-        public string LazyDummy()
+        public async Task<string> LazyDummy()
         {
-            Thread.Sleep(TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromSeconds(10));
 
             return "OK";
         }
