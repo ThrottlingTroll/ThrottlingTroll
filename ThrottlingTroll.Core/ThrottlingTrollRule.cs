@@ -73,9 +73,16 @@ namespace ThrottlingTroll
         /// <summary>
         /// Will be executed at the end of request processing. Used for decrementing the counter, if needed.
         /// </summary>
-        internal Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey)
+        internal async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, Action<LogLevel, string> log)
         {
-            return this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
+            try
+            {
+                await this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
+            }
+            catch (Exception ex)
+            {
+                log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+            }
         }
 
         internal Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey)

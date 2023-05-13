@@ -82,21 +82,11 @@ namespace ThrottlingTroll
                             continue;
                         }
 
-                        // Decrementing this counter at the end of request processing
-                        cleanupRoutines.Add(async () =>
-                        {
-                            try
-                            {
-                                await limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId);
-                            }
-                            catch (Exception ex)
-                            {
-                                this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
-                            }
-                        });
-
                         if (!limitCheckResult.IsExceeded)
                         {
+                            // Decrementing this counter at the end of request processing
+                            cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, this._log));
+
                             // The request matched the rule, but the limit was not exceeded.
                             continue;
                         }
@@ -119,6 +109,9 @@ namespace ThrottlingTroll
 
                             if (awaitedSuccessfully)
                             {
+                                // Decrementing this counter at the end of request processing
+                                cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, this._log));
+
                                 continue;
                             }
                         }
