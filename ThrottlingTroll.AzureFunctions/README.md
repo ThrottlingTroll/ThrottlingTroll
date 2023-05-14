@@ -49,7 +49,8 @@ If any of the above properties is empty or not specified, this means matching **
 
 Then each Rule must specify the rate limiting algorithm to be applied for matched requests and its parameters.
 
-The following algorithms are currently supported:
+### Supported rate limiting algorithms
+
 * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Example:
 ```
   "ThrottlingTrollIngress": {
@@ -80,6 +81,22 @@ The following algorithms are currently supported:
     ]
   }
 ```
+
+* **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Example:
+```
+  "ThrottlingTrollIngress": {
+    "Rules": [
+      {
+        "RateLimit": {
+          "Algorithm": "SlidingWindow",
+          "PermitLimit": 5,
+          "TimeoutInSeconds": 60
+        }
+      }
+    ]
+  }
+```
+**TimeoutInSeconds** setting is optional, with default value set to 100. It defines the maximum time for the semaphore to be in "locked" state (when e.g. some request starts being processed and then the computing instance crashes).
 
 ### Configuring whitelist
 
