@@ -207,7 +207,8 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         };
     });
 
-    // Demonstrates Semaphore (Concurrency) rate limiter.
+    /// Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
+    /// Query string's 'id' parameter is used as identityId.
     // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
     workerAppBuilder.UseThrottlingTroll(hostBuilderContext, options =>
     {

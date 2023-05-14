@@ -232,6 +232,9 @@ namespace ThrottlingTrollSampleWeb
                 };
             });
 
+            /// Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
+            /// Query string's 'id' parameter is used as identityId.
+            // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
             app.UseThrottlingTroll(options =>
             {
                 options.Config = new ThrottlingTrollConfig
