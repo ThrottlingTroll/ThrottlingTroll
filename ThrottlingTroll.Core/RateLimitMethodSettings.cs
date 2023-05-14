@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
 
 namespace ThrottlingTroll
@@ -10,7 +9,8 @@ namespace ThrottlingTroll
     public enum RateLimitAlgorithm
     {
         FixedWindow = 0,
-        SlidingWindow
+        SlidingWindow,
+        Semaphore
     }
 
     /// <summary>
@@ -25,6 +25,7 @@ namespace ThrottlingTroll
         public int PermitLimit { get; set; }
         public int IntervalInSeconds { get; set; }
         public int NumOfBuckets { get; set; }
+        public int TimeoutInSeconds { get; set; } = 100;
 
         public RateLimitMethod ToRateLimitMethod()
         {
@@ -42,6 +43,12 @@ namespace ThrottlingTroll
                         PermitLimit = this.PermitLimit,
                         IntervalInSeconds = this.IntervalInSeconds,
                         NumOfBuckets = this.NumOfBuckets
+                    };
+                case RateLimitAlgorithm.Semaphore:
+                    return new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = this.PermitLimit,
+                        TimeoutInSeconds = this.TimeoutInSeconds
                     };
             }
 
