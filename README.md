@@ -89,6 +89,12 @@ Install from Nuget:
 
 * **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
 
+* **Supported rate limiting algorithms:**
+
+    * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**.
+    * **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`.
+    * **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**.
+
 ## How to configure and use
 
 Configuration and usage with ASP.NET and Azure Functions is very similar yet slightly different:
