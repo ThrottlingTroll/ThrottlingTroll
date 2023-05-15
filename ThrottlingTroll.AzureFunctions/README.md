@@ -105,11 +105,13 @@ Requests that should be whitelisted (exempt from the above Rules) can be specifi
   "ThrottlingTrollIngress": {
 
     "WhiteList": [
-      "/api/healthcheck",
-      "api-key=my-unlimited-api-key"
+      { "UriPattern": "/api/healthcheck" },
+      { "UriPattern": "api-key=my-unlimited-api-key" }
     ]
-  },
+  }
 ```
+Entries in the **WhiteList** array can have the same properties as in the **Rules** section. 
+
 
 ### Specifying UniqueName property when sharing a distributed cache instance
 
@@ -273,20 +275,18 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         };
     });
 });
-
 ```
 
 
-### To delay responses instead of returning errors
+If you want ThrottlingTroll to proceed with the rest of your processing pipeline (instead of shortcutting to an error response), set **ShouldContinueAsNormal** to **true** in your response fabric:
 
-Provide a response fabric implementation with a delay in it. Also set **ShouldContinueAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
 ```
 builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) => {
 
     workerAppBuilder.UseThrottlingTroll(hostBuilderContext, options =>
     {
-        // Custom response fabric, impedes the normal response for 3 seconds
-        options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+        // Custom response fabric, returns 400 BadRequest + some custom content
+        options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
         {
             await Task.Delay(TimeSpan.FromSeconds(3));
 
@@ -295,8 +295,30 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         };
     });
 });
+```
+
+
+
+### To delay responses instead of returning errors
+
+To let ThrottlingTroll spin-wait until the counter drops below the limit set **MaxDelayInSeconds** to some positive value:
 
 ```
+  "ThrottlingTrollIngress": {
+    "Rules": [
+      {
+        "RateLimit": {
+          "Algorithm": "Semaphore",
+          "PermitLimit": 5
+        },
+        
+        "MaxDelayInSeconds": 60
+      }
+    ]
+  }
+```
+
+In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/scale-tone/ThrottlingTroll/blob/68ef051b6bdfe79b22b25b733b44749d0beab5a7/samples/ThrottlingTrollSampleFunction/Program.cs#L213).
 
 
 ## How to use for Egress Throttling
