@@ -283,22 +283,6 @@ To let ThrottlingTroll spin-wait until the counter drops below the limit set **M
 In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/scale-tone/ThrottlingTroll/blob/e780fd5056b377435027f68108b208c97dc71fe7/samples/ThrottlingTrollSampleWeb/Program.cs#L238).
 
 
-Provide a response fabric implementation with a delay in it. Also set **ShouldContinueAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
-```
-app.UseThrottlingTroll(options =>
-{
-    // Custom response fabric, impedes the normal response for 3 seconds
-    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
-    {
-        await Task.Delay(TimeSpan.FromSeconds(3));
-
-        var ingressResponse = (IIngressHttpResponseProxy)responseProxy;
-        ingressResponse.ShouldContinueAsNormal = true;
-    };
-});
-```
-
-
 ## How to use for Egress Throttling
 
 ### To configure via appsettings.json
