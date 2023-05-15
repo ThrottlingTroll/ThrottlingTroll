@@ -100,8 +100,18 @@ namespace ThrottlingTroll
                             {
                                 if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId))
                                 {
-                                    awaitedSuccessfully = true;
-                                    break;
+                                    // Doing double-check
+                                    limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+
+                                    if (!limitCheckResult.IsExceeded)
+                                    {
+                                        // Decrementing this counter at the end of request processing
+                                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, this._log));
+
+                                        awaitedSuccessfully = true;
+
+                                        break;
+                                    }
                                 }
 
                                 await Task.Delay(this._sleepTimeSpan);
@@ -109,9 +119,6 @@ namespace ThrottlingTroll
 
                             if (awaitedSuccessfully)
                             {
-                                // Decrementing this counter at the end of request processing
-                                cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, this._log));
-
                                 continue;
                             }
                         }

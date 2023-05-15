@@ -99,7 +99,7 @@ namespace ThrottlingTroll
             // Aggregating all buckets
             long count = (await Task.WhenAll(tasks)).Sum();
 
-            return count > this.PermitLimit;
+            return count >= this.PermitLimit;
         }
 
         /// <inheritdoc />

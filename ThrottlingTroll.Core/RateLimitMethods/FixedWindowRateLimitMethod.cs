@@ -62,7 +62,7 @@ namespace ThrottlingTroll
 
             long count = await store.GetAsync(limitKey);
 
-            return count > this.PermitLimit;
+            return count >= this.PermitLimit;
         }
 
         /// <inheritdoc />
