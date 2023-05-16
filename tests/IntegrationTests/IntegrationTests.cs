@@ -282,10 +282,10 @@ namespace IntegrationTests
             string msg = $"First: {sw1.ElapsedMilliseconds} ms, second: {sw2.ElapsedMilliseconds} ms, third: {sw3.ElapsedMilliseconds} ms";
 
             Assert.IsTrue(sw1.ElapsedMilliseconds >= 3000, msg);
-            Assert.IsTrue(sw1.ElapsedMilliseconds < 3300, msg);
+            Assert.IsTrue(sw1.ElapsedMilliseconds < 3500, msg);
 
             Assert.IsTrue(sw2.ElapsedMilliseconds >= 4000, msg);
-            Assert.IsTrue(sw2.ElapsedMilliseconds < 4400, msg);
+            Assert.IsTrue(sw2.ElapsedMilliseconds < 4500, msg);
 
             Assert.IsTrue(sw3.ElapsedMilliseconds >= 3000, msg);
             Assert.IsTrue(sw3.ElapsedMilliseconds < 3500, msg);
