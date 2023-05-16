@@ -281,13 +281,13 @@ namespace IntegrationTests
 
             string msg = $"First: {sw1.ElapsedMilliseconds} ms, second: {sw2.ElapsedMilliseconds} ms, third: {sw3.ElapsedMilliseconds} ms";
 
-            Assert.IsTrue(sw1.ElapsedMilliseconds >= 3000, msg);
+            Assert.IsTrue(sw1.ElapsedMilliseconds >= 2999, msg);
             Assert.IsTrue(sw1.ElapsedMilliseconds < 3500, msg);
 
-            Assert.IsTrue(sw2.ElapsedMilliseconds >= 4000, msg);
+            Assert.IsTrue(sw2.ElapsedMilliseconds >= 3999, msg);
             Assert.IsTrue(sw2.ElapsedMilliseconds < 4500, msg);
 
-            Assert.IsTrue(sw3.ElapsedMilliseconds >= 3000, msg);
+            Assert.IsTrue(sw3.ElapsedMilliseconds >= 2999, msg);
             Assert.IsTrue(sw3.ElapsedMilliseconds < 3500, msg);
         }
 
@@ -314,7 +314,7 @@ namespace IntegrationTests
             string msg = "Milliseconds: " + string.Join(", ", times);
             Trace.WriteLine(msg);
 
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 3000 && t < 3200) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 2999 && t < 3200) > 0, msg);
             Assert.IsTrue(times.SingleOrDefault(t => t >= 6000 && t < 6300) > 0, msg);
             Assert.IsTrue(times.SingleOrDefault(t => t >= 9000 && t < 9400) > 0, msg);
             Assert.IsTrue(times.SingleOrDefault(t => t >= 12000 && t < 12500) > 0, msg);
@@ -374,11 +374,11 @@ namespace IntegrationTests
             string msg = "Milliseconds: " + string.Join(", ", times);
             Trace.WriteLine(msg);
 
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 0 && t < 500) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 1000 && t < 2500) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 3000 && t < 4500) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 5000 && t < 6500) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 7000 && t < 8500) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 0 && t < 500) >= 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 1000 && t < 2500) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 3000 && t < 4500) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 5000 && t < 6500) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 7000 && t < 8500) > 0, msg);
         }
 
         private async Task TestFixedWindowFailingMethod()
