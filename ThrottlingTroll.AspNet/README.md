@@ -105,11 +105,12 @@ Requests that should be whitelisted (exempt from the above Rules) can be specifi
   "ThrottlingTrollIngress": {
 
     "WhiteList": [
-      "/api/healthcheck",
-      "api-key=my-unlimited-api-key"
+      { "UriPattern": "/api/healthcheck" },
+      { "UriPattern": "api-key=my-unlimited-api-key" }
     ]
   }
 ```
+Entries in the **WhiteList** array can have the same properties as in the **Rules** section. 
 
 ### Specifying UniqueName property when sharing a distributed cache instance
 
@@ -244,9 +245,8 @@ app.UseThrottlingTroll(options =>
 });
 ```
 
-### To delay responses instead of returning errors
+If you want ThrottlingTroll to proceed with the rest of your processing pipeline (instead of shortcutting to an error response), set **ShouldContinueAsNormal** to **true** in your response fabric:
 
-Provide a response fabric implementation with a delay in it. Also set **ShouldContinueAsNormal** to **true** (this will make ThrottlingTroll do the normal request processing instead of shortcutting to a 429 status) :
 ```
 app.UseThrottlingTroll(options =>
 {
@@ -260,6 +260,27 @@ app.UseThrottlingTroll(options =>
     };
 });
 ```
+
+### To delay responses instead of returning errors
+
+To let ThrottlingTroll spin-wait until the counter drops below the limit set **MaxDelayInSeconds** to some positive value:
+
+```
+  "ThrottlingTrollIngress": {
+    "Rules": [
+      {
+        "RateLimit": {
+          "Algorithm": "Semaphore",
+          "PermitLimit": 5
+        },
+        
+        "MaxDelayInSeconds": 60
+      }
+    ]
+  }
+```
+
+In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/scale-tone/ThrottlingTroll/blob/e780fd5056b377435027f68108b208c97dc71fe7/samples/ThrottlingTrollSampleWeb/Program.cs#L238).
 
 
 ## How to use for Egress Throttling
