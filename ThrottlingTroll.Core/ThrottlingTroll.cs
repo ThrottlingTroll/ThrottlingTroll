@@ -52,6 +52,7 @@ namespace ThrottlingTroll
         protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
         {
             LimitExceededResult result = null;
+            bool shouldThrowOnExceptions = false;
 
             try
             {
@@ -74,6 +75,9 @@ namespace ThrottlingTroll
                     // Still need to check all limits, so that all counters get updated
                     foreach (var limit in config.Rules)
                     {
+                        // The limit method defines whether we should throw on our internal failures
+                        shouldThrowOnExceptions = limit.LimitMethod.ShouldThrowOnFailures;
+
                         var limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
 
                         if (limitCheckResult == null)
@@ -144,6 +148,11 @@ namespace ThrottlingTroll
             catch (Exception ex)
             {
                 this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+
+                if (shouldThrowOnExceptions)
+                {
+                    throw;
+                }
             }
 
             return result;

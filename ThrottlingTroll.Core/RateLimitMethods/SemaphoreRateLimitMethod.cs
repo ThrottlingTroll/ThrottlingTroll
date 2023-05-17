@@ -13,6 +13,14 @@ namespace ThrottlingTroll
         /// </summary>
         public int TimeoutInSeconds { get; set; } = 100;
 
+        /// <summary>
+        /// ctor
+        /// </summary>
+        public SemaphoreRateLimitMethod()
+        {
+            this.ShouldThrowOnFailures = true;
+        }
+
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
         {

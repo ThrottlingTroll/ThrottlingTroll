@@ -32,5 +32,10 @@ namespace ThrottlingTroll
         /// Otherwise should do nothing.
         /// </summary>
         public abstract Task DecrementAsync(string limitKey, ICounterStore store);
+
+        /// <summary>
+        /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
+        /// </summary>
+        public bool ShouldThrowOnFailures { get; set; } = false;
     }
 }

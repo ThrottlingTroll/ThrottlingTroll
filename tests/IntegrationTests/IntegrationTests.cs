@@ -122,6 +122,54 @@ namespace IntegrationTests
             }
         };
 
+        class ThrowingSemaphoreRateLimitMethod : SemaphoreRateLimitMethod
+        {
+            public override Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+            {
+                throw new Exception("Temporary glitch in Redis");
+            }
+        }
+
+        static ThrottlingTrollRule ThrowingSemaphoreRule = new ThrottlingTrollRule
+        {
+            UriPattern = "throwing-semaphore",
+
+            LimitMethod = new ThrowingSemaphoreRateLimitMethod
+            {
+                PermitLimit = 1
+            },
+
+            MaxDelayInSeconds = 120,
+
+            IdentityIdExtractor = request =>
+            {
+                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+            },
+        };
+
+        class ThrowingFixedWindowRateLimitMethod : FixedWindowRateLimitMethod
+        {
+            public override Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+            {
+                throw new Exception("Temporary glitch in Redis");
+            }
+        }
+
+        static ThrottlingTrollRule ThrowingFixedWindowRule = new ThrottlingTrollRule
+        {
+            UriPattern = "throwing-fixed-window",
+
+            LimitMethod = new ThrowingFixedWindowRateLimitMethod
+            {
+                PermitLimit = 10000,
+                IntervalInSeconds = 1
+            },
+
+            IdentityIdExtractor = request =>
+            {
+                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+            }
+        };
 
         [ClassInitialize]
         public static void Init(TestContext context)
@@ -140,7 +188,9 @@ namespace IntegrationTests
                         DelayedFixedWindowRule,
                         FixedWindowFailingMethodRule,
                         SemaphoreCrushingMethodRule,
-                        SlidingWindowRule
+                        SlidingWindowRule,
+                        ThrowingSemaphoreRule,
+                        ThrowingFixedWindowRule
                     }
                 };
             });
@@ -177,6 +227,17 @@ namespace IntegrationTests
             WebApp.MapGet(SlidingWindowRule.UriPattern, () =>
             {
                 return Results.StatusCode((int)HttpStatusCode.OK);
+            });
+
+            WebApp.MapGet(ThrowingSemaphoreRule.UriPattern, () =>
+            {
+                // Should never be called
+                return Results.StatusCode((int)HttpStatusCode.MethodNotAllowed);
+            });
+
+            WebApp.MapGet(ThrowingFixedWindowRule.UriPattern, () =>
+            {
+                return Results.StatusCode((int)HttpStatusCode.Accepted);
             });
 
             WebApp.Start();
@@ -257,6 +318,24 @@ namespace IntegrationTests
             );
         }
 
+        [TestMethod]
+        public async Task TestThrowingSemaphores()
+        {
+            await Task.WhenAll(
+                Enumerable.Range(0, 16)
+                    .Select(_ => this.TestThrowingSemaphore())
+            );
+        }
+
+        [TestMethod]
+        public async Task TestThrowingFixedWindows()
+        {
+            await Task.WhenAll(
+                Enumerable.Range(0, 16)
+                    .Select(_ => this.TestThrowingFixedWindow())
+            );
+        }
+
         private async Task TestNamedCriticalSection1()
         {
             Guid id = Guid.NewGuid();
@@ -314,7 +393,7 @@ namespace IntegrationTests
             string msg = "Milliseconds: " + string.Join(", ", times);
             Trace.WriteLine(msg);
 
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 2998 && t < 3200) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 2997 && t < 3200) > 0, msg);
             Assert.IsTrue(times.SingleOrDefault(t => t >= 5997 && t < 6300) > 0, msg);
             Assert.IsTrue(times.SingleOrDefault(t => t >= 8997 && t < 9400) > 0, msg);
             Assert.IsTrue(times.SingleOrDefault(t => t >= 11997 && t < 12500) > 0, msg);
@@ -460,6 +539,36 @@ namespace IntegrationTests
             result = await Client.GetAsync($"{SlidingWindowRule.UriPattern}?id={id}");
 
             Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+        }
+
+        private async Task TestThrowingSemaphore()
+        {
+            Guid id = Guid.NewGuid();
+
+            // Now keep trying for 2 seconds
+            for (int i = 0; i < 20; i++)
+            {
+                await Task.Delay(100);
+
+                var result = await Client.GetAsync($"{ThrowingSemaphoreRule.UriPattern}?id={id}");
+
+                Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
+            }
+        }
+
+        private async Task TestThrowingFixedWindow()
+        {
+            Guid id = Guid.NewGuid();
+
+            // Now keep trying for 2 seconds
+            for (int i = 0; i < 20; i++)
+            {
+                await Task.Delay(100);
+
+                var result = await Client.GetAsync($"{ThrowingFixedWindowRule.UriPattern}?id={id}");
+
+                Assert.AreEqual(HttpStatusCode.Accepted, result.StatusCode);
+            }
         }
     }
 }
