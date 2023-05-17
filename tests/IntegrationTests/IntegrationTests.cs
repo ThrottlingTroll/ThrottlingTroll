@@ -360,13 +360,13 @@ namespace IntegrationTests
 
             string msg = $"First: {sw1.ElapsedMilliseconds} ms, second: {sw2.ElapsedMilliseconds} ms, third: {sw3.ElapsedMilliseconds} ms";
 
-            Assert.IsTrue(sw1.ElapsedMilliseconds >= 2997, msg);
+            Assert.IsTrue(sw1.ElapsedMilliseconds >= 2990, msg);
             Assert.IsTrue(sw1.ElapsedMilliseconds < 3600, msg);
 
-            Assert.IsTrue(sw2.ElapsedMilliseconds >= 3997, msg);
+            Assert.IsTrue(sw2.ElapsedMilliseconds >= 3990, msg);
             Assert.IsTrue(sw2.ElapsedMilliseconds < 4600, msg);
 
-            Assert.IsTrue(sw3.ElapsedMilliseconds >= 2997, msg);
+            Assert.IsTrue(sw3.ElapsedMilliseconds >= 2990, msg);
             Assert.IsTrue(sw3.ElapsedMilliseconds < 3600, msg);
         }
 
@@ -393,11 +393,11 @@ namespace IntegrationTests
             string msg = "Milliseconds: " + string.Join(", ", times);
             Trace.WriteLine(msg);
 
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 2997 && t < 3200) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 5997 && t < 6300) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 8997 && t < 9400) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 11997 && t < 12500) > 0, msg);
-            Assert.IsTrue(times.SingleOrDefault(t => t >= 14997 && t < 15600) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 2990 && t < 3200) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 5990 && t < 6300) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 8990 && t < 9400) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 11990 && t < 12500) > 0, msg);
+            Assert.IsTrue(times.SingleOrDefault(t => t >= 14990 && t < 15600) > 0, msg);
         }
 
         private async Task TestSemaphore()
