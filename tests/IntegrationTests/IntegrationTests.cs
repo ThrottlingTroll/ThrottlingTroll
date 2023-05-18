@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using ThrottlingTroll;
@@ -171,6 +173,25 @@ namespace IntegrationTests
             }
         };
 
+        static ThrottlingTrollRule DistributedCounterRule = new ThrottlingTrollRule
+        {
+            UriPattern = "/distributed-counter",
+
+            LimitMethod = new SemaphoreRateLimitMethod
+            {
+                PermitLimit = 1
+            },
+
+            // This must be set to something > 0 for responses to be automatically delayed
+            MaxDelayInSeconds = 120,
+
+            IdentityIdExtractor = request =>
+            {
+                // Identifying counters by their id
+                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+            }
+        };
+
         [ClassInitialize]
         public static void Init(TestContext context)
         {
@@ -190,7 +211,8 @@ namespace IntegrationTests
                         SemaphoreCrushingMethodRule,
                         SlidingWindowRule,
                         ThrowingSemaphoreRule,
-                        ThrowingFixedWindowRule
+                        ThrowingFixedWindowRule,
+                        DistributedCounterRule
                     }
                 };
             });
@@ -240,6 +262,27 @@ namespace IntegrationTests
                 return Results.StatusCode((int)HttpStatusCode.Accepted);
             });
 
+            var counters = new ConcurrentDictionary<string, long>();
+
+            WebApp.MapGet(DistributedCounterRule.UriPattern, ([FromQuery] string id) =>
+            {
+                // The below code is intentionally not thread-safe
+
+                long counter = 1;
+                string counterId = $"TestCounter{id}";
+
+                if (counters.ContainsKey(counterId))
+                {
+                    counter = counters[counterId];
+
+                    counter++;
+                }
+
+                counters[counterId] = counter;
+
+                return counter;
+            });
+
             WebApp.Start();
         }
 
@@ -247,6 +290,15 @@ namespace IntegrationTests
         public static void TearDown()
         {
             WebApp.DisposeAsync();
+        }
+
+        [TestMethod]
+        public async Task TestCounters()
+        {
+            await Task.WhenAll(
+                Enumerable.Range(0, 64)
+                    .Select(_ => this.TestCounter())
+            );
         }
 
         [TestMethod]
@@ -569,6 +621,31 @@ namespace IntegrationTests
 
                 Assert.AreEqual(HttpStatusCode.Accepted, result.StatusCode);
             }
+        }
+
+        private async Task TestCounter()
+        {
+            Guid id = Guid.NewGuid();
+
+            var bag = new ConcurrentBag<long>();
+
+            int attempts = 64;
+
+            await Task.WhenAll(
+                Enumerable.Range(0, attempts)
+                    .Select(async _ =>
+                    {
+                        var response = await Client.GetAsync($"{DistributedCounterRule.UriPattern}?id={id}");
+
+                        long counter = long.Parse(await response.Content.ReadAsStringAsync());
+
+                        bag.Add(counter);
+                    })
+            );
+
+            long diff = bag.Max() - bag.Min();
+
+            Assert.AreEqual(attempts - 1, diff, id.ToString());
         }
     }
 }

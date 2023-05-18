@@ -262,6 +262,35 @@ namespace ThrottlingTrollSampleWeb
                 };
             });
 
+            // Demonstrates how to make a distributed counter with SemaphoreRateLimitMethod
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/distributed-counter",
+                            LimitMethod = new SemaphoreRateLimitMethod
+                            {
+                                PermitLimit = 1
+                            },
+
+                            // This must be set to something > 0 for responses to be automatically delayed
+                            MaxDelayInSeconds = 120,
+
+                            IdentityIdExtractor = request =>
+                            {
+                                // Identifying counters by their id
+                                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                            }
+                        },
+                    }
+                };
+            });
+
+
             // </ThrottlingTroll Ingress Configuration>
 
 

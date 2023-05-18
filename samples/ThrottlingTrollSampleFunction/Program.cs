@@ -22,9 +22,11 @@ builder.ConfigureServices(services => {
     var redisConnString = Environment.GetEnvironmentVariable("RedisConnectionString");
     if (!string.IsNullOrEmpty(redisConnString))
     {
-        services.AddSingleton<ICounterStore>(
-            new RedisCounterStore(ConnectionMultiplexer.Connect(redisConnString))
-        );
+        var redis = ConnectionMultiplexer.Connect(redisConnString);
+
+        services.AddSingleton<IConnectionMultiplexer>(redis);
+
+        services.AddSingleton<ICounterStore>(new RedisCounterStore(redis));
     }
 
     // <ThrottlingTroll Egress Configuration>
@@ -236,6 +238,35 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
             }
         };
     });
+
+    // Demonstrates how to make a distributed counter with SemaphoreRateLimitMethod
+    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, options =>
+    {
+        options.Config = new ThrottlingTrollConfig
+        {
+            Rules = new[]
+            {
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/distributed-counter",
+                    LimitMethod = new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = 1
+                    },
+
+                    // This must be set to something > 0 for responses to be automatically delayed
+                    MaxDelayInSeconds = 120,
+
+                    IdentityIdExtractor = request =>
+                    {
+                        // Identifying counters by their id
+                        return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                    }
+                },
+            }
+        };
+    });
+
 
     // </ThrottlingTroll Ingress Configuration>
 

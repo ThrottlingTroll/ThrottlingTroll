@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using StackExchange.Redis;
 using ThrottlingTroll;
 
 namespace ThrottlingTrollSampleFunction
@@ -8,10 +9,12 @@ namespace ThrottlingTrollSampleFunction
     public class Functions
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConnectionMultiplexer _redis;
 
-        public Functions(IHttpClientFactory httpClientFactory)
+        public Functions(IHttpClientFactory httpClientFactory, IConnectionMultiplexer redis = null)
         {
             this._httpClientFactory = httpClientFactory;
+            this._redis = redis;
         }
 
         /// <summary>
@@ -140,6 +143,47 @@ namespace ThrottlingTrollSampleFunction
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString("OK");
+            return response;
+        }
+
+        private static Dictionary<string, long> Counters = new Dictionary<string, long>();
+
+        /// <summary>
+        /// Endpoint for testing Semaphores. Increments a counter value, but NOT atomically.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [Function("distributed-counter")]
+        public async Task<HttpResponseData> Test10([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            long counter = 1;
+            string counterId = $"TestCounter{req.Query["id"]}";
+
+            // The below code is intentionally not thread-safe
+
+            if (this._redis != null)
+            {
+                var db = this._redis.GetDatabase();
+
+                counter = (long)await db.StringGetAsync(counterId);
+
+                counter++;
+
+                await db.StringSetAsync(counterId, counter);
+            }
+            else
+            {
+                if (Counters.ContainsKey(counterId))
+                {
+                    counter = Counters[counterId];
+
+                    counter++;
+                }
+
+                Counters[counterId] = counter;
+            }
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString(counter.ToString());
             return response;
         }
 

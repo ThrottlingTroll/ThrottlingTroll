@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RestSharp;
+using StackExchange.Redis;
 using ThrottlingTroll;
 
 namespace ThrottlingTrollSampleWeb.Controllers
@@ -8,10 +9,12 @@ namespace ThrottlingTrollSampleWeb.Controllers
     public class TestController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConnectionMultiplexer _redis;
 
-        public TestController(IHttpClientFactory httpClientFactory)
+        public TestController(IHttpClientFactory httpClientFactory, IConnectionMultiplexer redis = null)
         {
             this._httpClientFactory = httpClientFactory;
+            this._redis = redis;
         }
 
         /// <summary>
@@ -132,6 +135,46 @@ namespace ThrottlingTrollSampleWeb.Controllers
             await Task.Delay(TimeSpan.FromSeconds(10));
 
             return "OK";
+        }
+
+        private static Dictionary<string, long> Counters = new Dictionary<string, long>();
+
+        /// <summary>
+        /// Endpoint for testing Semaphores. Increments a counter value, but NOT atomically.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("distributed-counter")]
+        public async Task<long> Test10([FromQuery] string? id)
+        {
+            long counter = 1;
+            string counterId = $"TestCounter{id}";
+
+            // The below code is intentionally not thread-safe
+
+            if (this._redis != null)
+            {
+                var db = this._redis.GetDatabase();
+
+                counter = (long)await db.StringGetAsync(counterId);
+
+                counter++;
+
+                await db.StringSetAsync(counterId, counter);
+            }
+            else
+            {
+                if (Counters.ContainsKey(counterId))
+                {
+                    counter = Counters[counterId];
+
+                    counter++;
+                }
+
+                Counters[counterId] = counter;
+            }
+
+            return counter;
         }
 
         /// <summary>
