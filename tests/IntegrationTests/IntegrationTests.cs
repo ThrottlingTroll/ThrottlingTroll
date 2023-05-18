@@ -278,6 +278,8 @@ namespace IntegrationTests
                     counter++;
                 }
 
+                Thread.Sleep(Random.Shared.Next(100));
+
                 counters[counterId] = counter;
 
                 return counter;
