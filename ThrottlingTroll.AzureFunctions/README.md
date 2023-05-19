@@ -88,7 +88,7 @@ Then each Rule must specify the rate limiting algorithm to be applied for matche
     "Rules": [
       {
         "RateLimit": {
-          "Algorithm": "SlidingWindow",
+          "Algorithm": "Semaphore",
           "PermitLimit": 5,
           "TimeoutInSeconds": 60
         }
