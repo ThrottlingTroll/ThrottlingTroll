@@ -4,7 +4,7 @@ This [Azure Functions (.NET Isolated)](https://learn.microsoft.com/en-us/azure/a
 
 ## How to run locally
 
-As a prerequisite, you will need [Azure Functions Core Tools installed](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
+As a prerequisite, you will need [Azure Functions Core Tools globally installed](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
 
 If you run this code on a GitHub Codespaces instance, then everything (including Redis server) should be pre-installed and ready for you.
 
