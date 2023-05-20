@@ -91,7 +91,7 @@ Install from Nuget:
 
 * **Supported rate limiting algorithms:**
 
-    * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 9 seconds:
+    * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 8 seconds:
     
       <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/17f9bfb3-1d05-4fdd-bf66-18f3a0bb830a" height="200px" />
 
