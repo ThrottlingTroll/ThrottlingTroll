@@ -62,16 +62,16 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         {
             Rules = new[]
             {
-            new ThrottlingTrollRule
-            {
-                UriPattern = "/fixed-window-1-request-per-2-seconds-configured-programmatically",
-                LimitMethod = new FixedWindowRateLimitMethod
+                new ThrottlingTrollRule
                 {
-                    PermitLimit = 1,
-                    IntervalInSeconds = 2
+                    UriPattern = "/fixed-window-1-request-per-2-seconds-configured-programmatically",
+                    LimitMethod = new FixedWindowRateLimitMethod
+                    {
+                        PermitLimit = 1,
+                        IntervalInSeconds = 2
+                    }
                 }
-            }
-        },
+            },
 
             // Specifying UniqueName is needed when multiple services store their
             // rate limit counters in the same cache instance, to prevent those services
