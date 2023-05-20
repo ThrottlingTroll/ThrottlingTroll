@@ -31,7 +31,7 @@ builder.ConfigureServices(services => {
 
     // <ThrottlingTroll Egress Configuration>
 
-    // Configuring a named HttpClient for egress throttling. Rules and limits taken from appsettings.json
+    // Configuring a named HttpClient for egress throttling. Rules and limits taken from host.json
     services.AddHttpClient("my-throttled-httpclient").AddThrottlingTrollMessageHandler();
 
     // Configuring a named HttpClient that does automatic retries with respect to Retry-After response header
