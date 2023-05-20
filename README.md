@@ -91,9 +91,23 @@ Install from Nuget:
 
 * **Supported rate limiting algorithms:**
 
-    * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**.
-    * **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`.
-    * **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. If you set  **PermitLimit** to  **1** and use  **RedisCounterStore**, then ThrottlingTroll will act as a distributed lock. If you add an **IdentityIdExtractor** (identifying requests by e.g. a query string parameter), then it will turn into *named* distributed locks. 
+    * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**: 
+    
+      <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/17f9bfb3-1d05-4fdd-bf66-18f3a0bb830a" height="200px" />
+
+
+    * **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**: 
+    
+      <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/a9844726-85b1-43cb-9e44-cd8839822541" height="200px"/>  
+    
+     The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`.
+     
+     
+    * **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**: 
+
+      <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/c4a70880-27e4-407d-9fd0-3369ba481b61" height="200px"/>  
+   
+     If you set  **PermitLimit** to  **1** and use  **RedisCounterStore**, then ThrottlingTroll will act as a distributed lock. If you add an **IdentityIdExtractor** (identifying requests by e.g. a query string parameter), then it will turn into *named* distributed locks. 
 
 ## How to configure and use
 
