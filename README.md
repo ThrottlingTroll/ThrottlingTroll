@@ -93,8 +93,7 @@ Install from Nuget:
 
 * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 8 seconds:
     
-     <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/17f9bfb3-1d05-4fdd-bf66-18f3a0bb830a" height="300px"/>
-
+     <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/ffb0bdc8-736b-4c6f-9eb4-db54ce72e034" height="300px"/>
 
 * **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`. Here is an illustration for the case of no more than 2 requests per each 8 seconds with 2 buckets:
     
