@@ -101,8 +101,7 @@ Install from Nuget:
           
 * **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Here is an illustration for the case of no more than 3 concurrent requests:
 
-     <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/c4a70880-27e4-407d-9fd0-3369ba481b61" height="300px"/>  
-      
+     <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/0beeac73-5d35-482a-a790-a3fe9ea6e38b" height="300px"/>  
    
      If you set Semaphore's **PermitLimit** to  **1** and use  **RedisCounterStore**, then ThrottlingTroll will act as a distributed lock. If you add an **IdentityIdExtractor** (identifying requests by e.g. a query string parameter), then it will turn into *named* distributed locks. 
 
