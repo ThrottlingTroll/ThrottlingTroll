@@ -89,6 +89,8 @@ Install from Nuget:
 
 * **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
 
+* **IdentityIdExtractor**s, that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
+
 ## Supported rate limiting algorithms
 
 * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 8 seconds:
