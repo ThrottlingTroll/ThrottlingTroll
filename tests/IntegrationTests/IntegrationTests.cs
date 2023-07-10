@@ -16,6 +16,8 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule NamedCriticalSectionRule = new ThrottlingTrollRule
         {
+            Method = "GET",
+
             UriPattern = "named-critical-section",
 
             LimitMethod = new SemaphoreRateLimitMethod
@@ -33,6 +35,8 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule SemaphoreRule = new ThrottlingTrollRule
         {
+            Method = "POST,GET",
+
             UriPattern = "semaphore-2-concurrent-requests",
 
             LimitMethod = new SemaphoreRateLimitMethod
@@ -48,6 +52,8 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule DelayedFixedWindowRule = new ThrottlingTrollRule
         {
+            Method = "post, get, delete",
+
             UriPattern = "delayed-fixed-window",
 
             LimitMethod = new FixedWindowRateLimitMethod

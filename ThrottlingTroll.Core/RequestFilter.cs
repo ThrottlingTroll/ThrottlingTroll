@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System;
+using System.Linq;
 
 namespace ThrottlingTroll
 {
@@ -16,7 +17,7 @@ namespace ThrottlingTroll
         public string UriPattern { get; set; }
 
         /// <summary>
-        /// Request's HTTP method. E.g. "POST". Empty string or null means any method.
+        /// Comma-separated request's HTTP methods. E.g. "GET,POST". Empty string or null means any method.
         /// </summary>
         public string Method { get; set; }
 
@@ -122,7 +123,11 @@ namespace ThrottlingTroll
                 return true;
             }
 
-            return request.Method.ToLower() == this.Method.ToLower();
+            return this.Method
+                .ToLower()
+                .Split(',')
+                .Select(s => s.Trim())
+                .Contains(request.Method.ToLower());
         }
 
         private bool IsHeaderMatch(IHttpRequestProxy request)
