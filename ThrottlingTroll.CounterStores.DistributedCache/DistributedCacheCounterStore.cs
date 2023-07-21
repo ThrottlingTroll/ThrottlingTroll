@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ThrottlingTroll
+namespace ThrottlingTroll.CounterStores.DistributedCache
 {
     /// <summary>
     /// Implements Store for rate limit counters with IDistributedCache

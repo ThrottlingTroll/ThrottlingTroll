@@ -33,6 +33,7 @@ namespace ThrottlingTroll
 
             this._counterStore = counterStore;
             this._log = log ?? ((l, s) => { });
+            this._counterStore.Log = this._log;
 
             this.InitGetConfigTask(getConfigFunc, intervalToReloadConfigInSeconds);
         }

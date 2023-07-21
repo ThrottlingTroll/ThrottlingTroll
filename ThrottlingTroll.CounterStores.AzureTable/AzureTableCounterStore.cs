@@ -2,12 +2,11 @@
 using Azure.Data.Tables;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ThrottlingTroll.CounterStores.Redis
+namespace ThrottlingTroll.CounterStores.AzureTable
 {
     /// <summary>
     /// Implements Store for rate limit counters using Azure Tables / Cosmos DB for Table
@@ -55,7 +54,7 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public Action<LogLevel, string> Log { get; set; }
+        public Action<LogLevel, string> Log { private get; set; }
 
         /// <inheritdoc />
         public async Task<long> GetAsync(string key)
@@ -172,7 +171,6 @@ namespace ThrottlingTroll.CounterStores.Redis
                 {
                     if (retryCount < 0)
                     {
-                        Trace.WriteLine(">>>> Too many retries");
                         throw;
                     }
 
