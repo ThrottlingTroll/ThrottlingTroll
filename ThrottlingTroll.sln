@@ -25,6 +25,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AzureFuncti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{FCF14C9B-EB92-4255-9853-34B87C82F845}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStores.Redis", "ThrottlingTroll.CounterStores.Redis\ThrottlingTroll.CounterStores.Redis.csproj", "{792D52CE-FC03-41A5-8E58-289AB1464F8F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStores.AzureTable", "ThrottlingTroll.CounterStores.AzureTable\ThrottlingTroll.CounterStores.AzureTable.csproj", "{AB365F13-C28B-48E2-9C9D-F32F46ECA993}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStores.DistributedCache", "ThrottlingTroll.CounterStores.DistributedCache\ThrottlingTroll.CounterStores.DistributedCache.csproj", "{1D2CC7BF-1624-4331-803A-CA339A4E27E0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +73,18 @@ Global
 		{FCF14C9B-EB92-4255-9853-34B87C82F845}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCF14C9B-EB92-4255-9853-34B87C82F845}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FCF14C9B-EB92-4255-9853-34B87C82F845}.Release|Any CPU.Build.0 = Release|Any CPU
+		{792D52CE-FC03-41A5-8E58-289AB1464F8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{792D52CE-FC03-41A5-8E58-289AB1464F8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{792D52CE-FC03-41A5-8E58-289AB1464F8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{792D52CE-FC03-41A5-8E58-289AB1464F8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB365F13-C28B-48E2-9C9D-F32F46ECA993}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB365F13-C28B-48E2-9C9D-F32F46ECA993}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB365F13-C28B-48E2-9C9D-F32F46ECA993}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB365F13-C28B-48E2-9C9D-F32F46ECA993}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

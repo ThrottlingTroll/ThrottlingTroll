@@ -1,11 +1,9 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -261,26 +259,7 @@ namespace ThrottlingTroll
 
             if (counterStore == null)
             {
-                var redis = context.InstanceServices.GetService<IConnectionMultiplexer>();
-
-                if (redis != null)
-                {
-                    counterStore = new RedisCounterStore(redis);
-                }
-                else
-                {
-                    var distributedCache = context.InstanceServices.GetService<IDistributedCache>();
-
-                    if (distributedCache != null)
-                    {
-                        counterStore = new DistributedCacheCounterStore(distributedCache);
-                    }
-                    else
-                    {
-                        // Defaulting to MemoryCacheCounterStore
-                        counterStore = new MemoryCacheCounterStore();
-                    }
-                }
+                counterStore = new MemoryCacheCounterStore();
             }
 
             return counterStore;

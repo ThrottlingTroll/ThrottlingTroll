@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -23,5 +24,10 @@ namespace ThrottlingTroll
         /// Decrements counter by its key.
         /// </summary>
         Task DecrementAsync(string key);
+
+        /// <summary>
+        /// Logging utility to use. Will be set by ThrottlingTroll, so don't override it yourself.
+        /// </summary>
+        public Action<LogLevel, string> Log { set; }
     }
 }

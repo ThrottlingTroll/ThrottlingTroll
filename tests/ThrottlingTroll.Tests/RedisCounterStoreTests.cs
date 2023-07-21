@@ -1,5 +1,6 @@
 using Moq;
 using StackExchange.Redis;
+using ThrottlingTroll.CounterStores.Redis;
 
 namespace ThrottlingTroll.Tests;
 

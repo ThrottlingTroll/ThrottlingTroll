@@ -1,8 +1,9 @@
-﻿using StackExchange.Redis;
+﻿using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System;
 using System.Threading.Tasks;
 
-namespace ThrottlingTroll
+namespace ThrottlingTroll.CounterStores.Redis
 {
     /// <summary>
     /// Implements Store for rate limit counters using Redis
@@ -18,6 +19,9 @@ namespace ThrottlingTroll
         {
             this._redis = redis;
         }
+
+        /// <inheritdoc />
+        public Action<LogLevel, string> Log { private get; set; }
 
         /// <inheritdoc />
         public async Task<long> GetAsync(string key)
