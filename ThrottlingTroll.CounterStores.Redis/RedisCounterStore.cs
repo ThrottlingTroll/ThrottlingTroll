@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using System;
 using System.Threading.Tasks;
 
-namespace ThrottlingTroll
+namespace ThrottlingTroll.CounterStores.Redis
 {
     /// <summary>
     /// Implements Store for rate limit counters using Redis

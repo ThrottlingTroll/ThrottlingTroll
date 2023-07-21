@@ -3,6 +3,7 @@ using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
+using ThrottlingTroll.CounterStores.Redis;
 
 namespace ThrottlingTrollSampleWeb
 {
@@ -21,7 +22,7 @@ namespace ThrottlingTrollSampleWeb
             {
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ThrottlingTrollSampleWeb.xml"));
             });
-
+/*
             // If RedisConnectionString is specified, then using RedisCounterStore.
             // Otherwise the default MemoryCacheCounterStore will be used.
             var redisConnString = builder.Configuration["RedisConnectionString"];
@@ -31,6 +32,11 @@ namespace ThrottlingTrollSampleWeb
                     new RedisCounterStore(ConnectionMultiplexer.Connect(redisConnString))
                 );
             }
+*/
+
+            builder.Services.AddSingleton<ICounterStore>(
+                new AzureTableCounterStore(builder.Configuration["StorageConnectionString"], "ThrottlingTroll")
+            );
 
             // <ThrottlingTroll Egress Configuration>
 

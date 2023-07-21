@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading;
@@ -47,6 +48,9 @@ namespace ThrottlingTroll
         {
             this._cache = cache;
         }
+
+        /// <inheritdoc />
+        public Action<LogLevel, string> Log { get; set; }
 
         /// <inheritdoc />
         public async Task<long> GetAsync(string key)

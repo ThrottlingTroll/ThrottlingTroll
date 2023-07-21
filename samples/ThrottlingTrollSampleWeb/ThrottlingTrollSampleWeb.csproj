@@ -13,4 +13,8 @@
     <PackageReference Include="ThrottlingTroll" Version="3.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\ThrottlingTroll.CounterStores.AzureTable\ThrottlingTroll.CounterStores.AzureTable.csproj" />
+  </ItemGroup>
+
 </Project>

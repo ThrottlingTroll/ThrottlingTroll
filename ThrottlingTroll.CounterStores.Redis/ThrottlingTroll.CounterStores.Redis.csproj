@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<IncludeSymbols>true</IncludeSymbols>		
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="StackExchange.Redis" Version="2.6.90" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
+	</ItemGroup>
+	
+</Project>

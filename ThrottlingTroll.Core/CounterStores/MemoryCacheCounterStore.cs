@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,6 +27,9 @@ namespace ThrottlingTroll
                 this.ExpiresAt = expiresAt;
             }
         }
+
+        /// <inheritdoc />
+        public Action<LogLevel, string> Log { get; set; }
 
         /// <inheritdoc />
         public async Task<long> GetAsync(string key)
