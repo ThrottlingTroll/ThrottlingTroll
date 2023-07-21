@@ -4,5 +4,5 @@
 implementation that uses Azure Tables (or Cosmos DB with Table API).
 
 Easiest to configure (only takes a Storage connection string), but not recommended for production workloads, 
-because contention around the table might get very high (remember that Azure Storage only supports 
+because contention around the table might get very high (remember that Azure Storage Tables only support 
 optimistic concurrency and no atomic operations).
