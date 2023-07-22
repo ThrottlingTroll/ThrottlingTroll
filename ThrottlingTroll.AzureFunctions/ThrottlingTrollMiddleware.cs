@@ -27,7 +27,7 @@ namespace ThrottlingTroll
         (
             ThrottlingTrollOptions options
 
-        ) : base(options.Log, options.CounterStore, options.GetConfigFunc, options.IntervalToReloadConfigInSeconds)
+        ) : base(options.Log, options.CounterStore, options.GetConfigFunc, options.IdentityIdExtractor, options.IntervalToReloadConfigInSeconds)
         {
             this._responseFabric = options.ResponseFabric;
         }

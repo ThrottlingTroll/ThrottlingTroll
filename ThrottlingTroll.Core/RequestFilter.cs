@@ -40,6 +40,7 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Identity ID extraction routine to be used for extracting Identity IDs from requests.
+        /// Overrides <see cref="ThrottlingTrollOptions.IdentityIdExtractor"/>.
         /// </summary>
         public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
 

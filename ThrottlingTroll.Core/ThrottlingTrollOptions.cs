@@ -33,6 +33,11 @@ namespace ThrottlingTroll
         public ICounterStore CounterStore { get; set; }
 
         /// <summary>
+        /// Identity ID extraction routine to be used for extracting Identity IDs from requests.
+        /// </summary>
+        public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
+
+        /// <summary>
         /// Logging utility to use
         /// </summary>
         public Action<LogLevel, string> Log { get; set; }

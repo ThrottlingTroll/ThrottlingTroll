@@ -29,7 +29,7 @@ namespace ThrottlingTroll
             RequestDelegate next,
             ThrottlingTrollOptions options
 
-        ) : base(options.Log, options.CounterStore, options.GetConfigFunc, options.IntervalToReloadConfigInSeconds)
+        ) : base(options.Log, options.CounterStore, options.GetConfigFunc, options.IdentityIdExtractor, options.IntervalToReloadConfigInSeconds)
         {
             this._next = next;
             this._responseFabric = options.ResponseFabric;
