@@ -11,11 +11,9 @@
     <repository url="https://github.com/scale-tone/ThrottlingTroll" />
     <dependencies>
       <group targetFramework="net7.0">
-        <dependency id="Microsoft.Azure.Functions.Worker" version="1.13.0" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Caching.StackExchangeRedis" version="6.0.9" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Azure.Functions.Worker" version="1.18.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Extensions.Configuration.Binder" version="7.0.2" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="7.0.0" exclude="Build,Analyzers" />
-        <dependency id="System.Runtime.Caching" version="7.0.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>
