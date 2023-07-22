@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
-    <id>ThrottlingTroll</id>
+    <id>ThrottlingTroll.CounterStores.Redis</id>
     <version>4.0.0</version>
     <authors>ThrottlingTroll</authors>
     <license type="file">LICENSE</license>
     <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
-    <description>Rate limiting library for .NET/ASP.NET Core</description>
-    <tags>Rate Limiting;Throttling;ASP.NET;Redis</tags>
+    <description>CounterStore for ThrottlingTroll. Stores counters in Redis.</description>
+    <tags>Rate Limiting;Throttling;ThrottlingTroll;Redis</tags>
     <repository url="https://github.com/scale-tone/ThrottlingTroll" />
     <dependencies>
       <group targetFramework="net6.0">
-        <dependency id="Microsoft.AspNetCore.Http" version="2.2.2" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Configuration.Binder" version="7.0.2" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Http" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="StackExchange.Redis" version="2.6.122" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>

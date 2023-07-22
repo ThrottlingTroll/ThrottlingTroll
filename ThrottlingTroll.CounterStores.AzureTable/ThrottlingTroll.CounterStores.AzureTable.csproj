@@ -3,8 +3,17 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<IncludeSymbols>true</IncludeSymbols>		
-	</PropertyGroup>
+		<IncludeSymbols>true</IncludeSymbols>
+
+    <PackageId>ThrottlingTroll.CounterStores.AzureTable</PackageId>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <PackageTags>Rate Limiting;Throttling;ThrottlingTroll</PackageTags>
+    <Description>CounterStore for ThrottlingTroll. Stores counters in an Azure Table/Cosmos DB with Table API.</Description>
+    <Authors>ThrottlingTroll</Authors>
+    <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Azure.Data.Tables" Version="12.8.0" />
@@ -12,6 +21,11 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
-	</ItemGroup>
+
+    <Content Include="..\LICENSE">
+      <PackagePath>/</PackagePath>
+      <Pack>true</Pack>
+    </Content>
+  </ItemGroup>
 	
 </Project>
