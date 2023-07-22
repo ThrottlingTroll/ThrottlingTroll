@@ -6,7 +6,7 @@
 		<IncludeSymbols>true</IncludeSymbols>
 
 		<PackageId>ThrottlingTroll</PackageId>
-		<VersionPrefix>4.0.0</VersionPrefix>
+		<VersionPrefix>4.0.4</VersionPrefix>
 		<PackageTags>Rate Limiting;Throttling;ASP.NET;Redis</PackageTags>
 		<Description>Rate limiting library for .NET/ASP.NET Core</Description>
 		<Authors>ThrottlingTroll</Authors>
@@ -19,6 +19,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+		<PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

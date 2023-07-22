@@ -3,6 +3,7 @@ using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
+using ThrottlingTroll.CounterStores.Redis;
 
 namespace ThrottlingTrollSampleWeb
 {
