@@ -30,4 +30,5 @@ optimistic concurrency and no atomic operations).
     ```
     
 The second parameter - table name - can be anything you like. That table will be auto-created, if not exists yet.
+
 IMPORTANT: if you use Cosmos DB, then its default consistency level should be set to either `STRONG` or `BOUNDED STALENESS`.
