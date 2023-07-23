@@ -439,7 +439,7 @@ By default ThrottlingTroll will store rate counters in memory, using [MemoryCach
 
 Other, distributed counter stores come as separate NuGet packages:
   - [ThrottlingTroll.CounterStores.Redis](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.Redis) - most recommended one, uses Redis.
-  - [ThrottlingTroll.CounterStores.AzureTable](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.AzureTable) - uses Azure Tables (or Cosmos DB with Table API), easiest to configure (only takes a storage connection string), not recommended for production scenarios due to a potentially high contention.
+  - [ThrottlingTroll.CounterStores.AzureTable](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.AzureTable) - uses Azure Tables (or Cosmos DB with Table API), easiest to configure (only takes a storage connection string), yet not recommended for production scenarios due to a potentially high contention.
   - [ThrottlingTroll.CounterStores.DistributedCache](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.DistributedCache) - uses ASP.NET Core's IDistributedCache and therefore not entirely consistent (because IDistributedCache lacks atomic operations).
 
 You can also create your custom Counter Store by implementing the [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) interface.
