@@ -85,7 +85,10 @@ Install from Nuget:
           HttpClient-->>-YourService:✅ 200 OK
    ```
 
-* **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Both [Microsoft.Extensions.Caching.Distributed.IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) and [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/Basics.html) are supported. 
+* **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Supported distributed counter stores are:
+  * [ThrottlingTroll.CounterStores.Redis](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.Redis)
+  * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.AzureTable)
+  * [ThrottlingTroll.CounterStores.DistributedCache](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.DistributedCache)
 
 * **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
 
