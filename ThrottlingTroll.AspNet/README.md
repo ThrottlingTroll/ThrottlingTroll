@@ -437,10 +437,10 @@ HttpClient will then first wait for the amount of time suggested by **Retry-Afte
 
 By default ThrottlingTroll will store rate counters in memory, using [MemoryCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/MemoryCacheCounterStore.cs) (which internally uses [System.Runtime.Caching.MemoryCache](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache)).
 
-Other supported options are:
-
-* [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/DistributedCacheCounterStore.cs). Uses [IDistributedCache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#idistributedcache-interface) instance taken from DI container. 
-* [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs). Specifically designed to work with Redis. Prefer this one over [DistributedCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/DistributedCacheCounterStore.cs) + [Distributed Redis Cache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed?view=aspnetcore-7.0#distributed-redis-cache).
+Other, distributed counter stores come as separate NuGet packages:
+  - [ThrottlingTroll.CounterStores.Redis](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.Redis) - most recommended one, uses Redis.
+  - [ThrottlingTroll.CounterStores.AzureTable](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.AzureTable) - uses Azure Tables (or Cosmos DB with Table API), easiest to configure (only takes a storage connection string), not recommended for production scenarios due to a potentially high contention.
+  - [ThrottlingTroll.CounterStores.DistributedCache](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.DistributedCache) - uses ASP.NET Core's IDistributedCache and therefore not entirely consistent (because IDistributedCache lacks atomic operations).
 
 You can also create your custom Counter Store by implementing the [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) interface.
 
