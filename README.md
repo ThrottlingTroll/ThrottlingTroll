@@ -85,7 +85,7 @@ Install from Nuget:
           HttpClient-->>-YourService:✅ 200 OK
    ```
 
-* **Storing rate counters in a distributed cache**, making your throttling policy consistent across all your computing instances. Supported distributed counter stores are:
+* **Storing rate counters in a distributed cache**, making your rate limiting policy consistent across all your computing instances. Supported distributed counter stores are:
   * [ThrottlingTroll.CounterStores.Redis](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.Redis)
   * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.AzureTable)
   * [ThrottlingTroll.CounterStores.DistributedCache](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.DistributedCache)
