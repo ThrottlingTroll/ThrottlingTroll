@@ -1,31 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<IncludeSymbols>true</IncludeSymbols>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <IncludeSymbols>true</IncludeSymbols>
 
-    <PackageId>ThrottlingTroll.CounterStores.DistributedCache</PackageId>
-    <VersionPrefix>4.0.4</VersionPrefix>
-    <PackageTags>Rate Limiting;Throttling;ThrottlingTroll</PackageTags>
-    <Description>CounterStore for ThrottlingTroll. Stores counters in ASP.Net Core's IDistributedCache.</Description>
-    <Authors>ThrottlingTroll</Authors>
-    <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageId>ThrottlingTroll.CounterStores.DistributedCache</PackageId>
+        <VersionPrefix>4.0.5</VersionPrefix>
+        <PackageTags>Rate Limiting;Throttling;ThrottlingTroll</PackageTags>
+        <Description>CounterStore for ThrottlingTroll. Stores counters in ASP.Net Core's IDistributedCache.</Description>
+        <Authors>ThrottlingTroll</Authors>
+        <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
-  </PropertyGroup>
+    </PropertyGroup>
 
-	<ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
+    </ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
+    <ItemGroup>
+        <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
 
-    <Content Include="..\LICENSE">
-      <PackagePath>/</PackagePath>
-      <Pack>true</Pack>
-    </Content>
-  </ItemGroup>
-	
+        <Content Include="..\LICENSE">
+            <PackagePath>/</PackagePath>
+            <Pack>true</Pack>
+        </Content>
+    </ItemGroup>
+
 </Project>

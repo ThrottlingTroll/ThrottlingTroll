@@ -1,40 +1,40 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<IncludeSymbols>true</IncludeSymbols>
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <IncludeSymbols>true</IncludeSymbols>
 
-		<PackageId>ThrottlingTroll.AzureFunctions</PackageId>
-		<VersionPrefix>4.0.4</VersionPrefix>
-		<PackageTags>Rate Limiting;Throttling;Azure Functions;Redis</PackageTags>
-		<Description>Rate limiting library for Azure Functions</Description>
-		<Authors>ThrottlingTroll</Authors>
-		<RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		
-	</PropertyGroup>
+        <PackageId>ThrottlingTroll.AzureFunctions</PackageId>
+        <VersionPrefix>4.0.5</VersionPrefix>
+        <PackageTags>Rate Limiting;Throttling;Azure Functions;Redis</PackageTags>
+        <Description>Rate limiting library for Azure Functions</Description>
+        <Authors>ThrottlingTroll</Authors>
+        <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
-	<ItemGroup>
+    </PropertyGroup>
 
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.18.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-    <PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
+    <ItemGroup>
 
-  </ItemGroup>
+        <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.18.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.2" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+        <PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
 
-	<ItemGroup>
+    </ItemGroup>
 
-		<Content Include="..\LICENSE">
-			<PackagePath>/</PackagePath>
-			<Pack>true</Pack>
-		</Content>
+    <ItemGroup>
 
-	</ItemGroup>
+        <Content Include="..\LICENSE">
+            <PackagePath>/</PackagePath>
+            <Pack>true</Pack>
+        </Content>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
-	</ItemGroup>	
-	
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
+    </ItemGroup>
+
 </Project>

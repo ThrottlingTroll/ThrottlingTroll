@@ -1,38 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<IncludeSymbols>true</IncludeSymbols>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <IncludeSymbols>true</IncludeSymbols>
 
-		<PackageId>ThrottlingTroll</PackageId>
-		<VersionPrefix>4.0.4</VersionPrefix>
-		<PackageTags>Rate Limiting;Throttling;ASP.NET;Redis</PackageTags>
-		<Description>Rate limiting library for .NET/ASP.NET Core</Description>
-		<Authors>ThrottlingTroll</Authors>
-		<RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		
-	</PropertyGroup>
+        <PackageId>ThrottlingTroll</PackageId>
+        <VersionPrefix>4.0.5</VersionPrefix>
+        <PackageTags>Rate Limiting;Throttling;ASP.NET;Redis</PackageTags>
+        <Description>Rate limiting library for .NET/ASP.NET Core</Description>
+        <Authors>ThrottlingTroll</Authors>
+        <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-		<PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
-	</ItemGroup>
+    </PropertyGroup>
 
-	<ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+        <PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
+    </ItemGroup>
 
-		<Content Include="..\LICENSE">
-			<PackagePath>/</PackagePath>
-			<Pack>true</Pack>
-		</Content>
+    <ItemGroup>
 
-	</ItemGroup>
+        <Content Include="..\LICENSE">
+            <PackagePath>/</PackagePath>
+            <Pack>true</Pack>
+        </Content>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
-	</ItemGroup>	
-	
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
+    </ItemGroup>
+
 </Project>
