@@ -305,9 +305,10 @@ namespace ThrottlingTrollSampleFunction
         }
 
         /// <summary>
-        /// Calls /dummy endpoint 
-        /// using an HttpClient that is limited to 3 requests per 5 seconds and does automatic delays and retries.
-        /// HttpClient configured in-place programmatically.
+        /// Calls /lazy-dummy endpoint 
+        /// using an HttpClient that is limited to 2 concurrent requests.
+        /// Demonstrates Semaphore (Concurrency) rate limiter.
+        /// DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
         /// </summary>
         /// <response code="200">OK</response>
         [Function("egress-semaphore-2-concurrent-requests")]
