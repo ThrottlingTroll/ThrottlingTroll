@@ -1,0 +1,7 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "@KeeShepherd(MyStorageConnString)",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet"
+  }
+}
