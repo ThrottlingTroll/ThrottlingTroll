@@ -90,6 +90,8 @@ Install from Nuget:
   * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.AzureTable)
   * [ThrottlingTroll.CounterStores.DistributedCache](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.DistributedCache)
 
+  And [you can implement your own](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs).
+
 * **Dynamically configuring rate limits**, so that those limits can be adjusted on-the-go, without restarting the service.
 
 * **IdentityIdExtractor**s, that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
