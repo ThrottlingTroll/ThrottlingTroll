@@ -21,7 +21,7 @@ style TestOrchestration fill:#D9D9FF,stroke-width:2px
 TestOrchestration_HttpStart ---> TestOrchestration
 ```
 
-Activity Function uses a ThrottlingTroll-equipped HttpClient instance to make API calls. That HttpClient instance is configured to make no more than 1 request per 5 seconds. When that limit is exceeded, it will automatically wait _without_ making the actual call. Orchestration execution timeline is therefore typically looks like this:
+Activity Function uses a ThrottlingTroll-equipped HttpClient instance to make API calls. That HttpClient instance is configured to make no more than 1 request per 5 seconds. When that limit is exceeded, it will automatically wait _without_ making the actual call. Orchestration execution timeline therefore typically looks like this:
 ```mermaid
 gantt 
 title TestOrchestration(2e89fdfaadc14cdca6f01fd406c8ec98) 
