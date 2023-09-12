@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStores.DistributedCache", "ThrottlingTroll.CounterStores.DistributedCache\ThrottlingTroll.CounterStores.DistributedCache.csproj", "{1D2CC7BF-1624-4331-803A-CA339A4E27E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTroll.AzureFunctionsAspNet", "ThrottlingTroll.AzureFunctionsAspNet\ThrottlingTroll.AzureFunctionsAspNet.csproj", "{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D2CC7BF-1624-4331-803A-CA339A4E27E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
