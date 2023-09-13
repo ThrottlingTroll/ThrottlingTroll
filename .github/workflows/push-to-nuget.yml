@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-push:
-
+  push-throttlingTroll:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,6 +23,16 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.AspNet/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
 
+  push-throttlingTroll-azurefunctions:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
     - name: Build ThrottlingTroll.AzureFunctions
       run: dotnet build -c Release ThrottlingTroll.AzureFunctions
     - name: Pack ThrottlingTroll.AzureFunctions
@@ -32,6 +41,16 @@ jobs:
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.AzureFunctions/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+  push-throttlingTroll-counterstores-azuretable:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
 
     - name: Build ThrottlingTroll.CounterStores.AzureTable
       run: dotnet build -c Release ThrottlingTroll.CounterStores.AzureTable
@@ -42,6 +61,16 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.CounterStores.AzureTable/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
 
+  push-throttlingTroll-counterstores-redis:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
     - name: Build ThrottlingTroll.CounterStores.Redis
       run: dotnet build -c Release ThrottlingTroll.CounterStores.Redis
     - name: Pack ThrottlingTroll.CounterStores.Redis
@@ -51,6 +80,16 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.CounterStores.Redis/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
 
+  push-throttlingTroll-counterstores-distributed-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
     - name: Build ThrottlingTroll.CounterStores.DistributedCache
       run: dotnet build -c Release ThrottlingTroll.CounterStores.DistributedCache
     - name: Pack ThrottlingTroll.CounterStores.DistributedCache
@@ -59,4 +98,3 @@ jobs:
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.CounterStores.DistributedCache/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
-
