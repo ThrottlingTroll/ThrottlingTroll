@@ -176,7 +176,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var exception = new ThrottlingTrollTooManyRequestsException
             {
-                RetryAfterHeaderValue = DateTimeOffset.UtcNow.ToString("ddd, dd MMM yyy HH:mm:ss 'GMT'")
+                RetryAfterHeaderValue = DateTimeOffset.UtcNow.ToString("R")
             };
 
             var middleware = new ThrottlingTrollMiddleware(options);
@@ -218,7 +218,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var exception = new ThrottlingTrollTooManyRequestsException
             {
-                RetryAfterHeaderValue = DateTimeOffset.UtcNow.ToString("ddd, dd MMM yyy HH:mm:ss 'GMT'")
+                RetryAfterHeaderValue = DateTimeOffset.UtcNow.ToString("R")
             };
 
             var middleware = new ThrottlingTrollMiddleware(options);
