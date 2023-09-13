@@ -8,8 +8,11 @@ using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+
+[assembly: InternalsVisibleTo("ThrottlingTroll.AzureFunctionsAspNet.Tests")]
 
 namespace ThrottlingTroll
 {
@@ -34,8 +37,15 @@ namespace ThrottlingTroll
         /// </summary>
         public async Task Invoke(FunctionContext context, Func<Task> next)
         {
-            HttpContext httpContext = context.GetHttpContext()
-                ?? throw new InvalidOperationException($"{nameof(context)} has no http context associated with it.");
+            await InvokeOnHttpContext(context.GetHttpContext(), next);
+        }
+
+        internal async Task InvokeOnHttpContext(HttpContext httpContext, Func<Task> next)
+        {
+            if (httpContext == null)
+            {
+                throw new InvalidOperationException("FunctionContext has no http context associated with it.");
+            }
 
             var requestProxy = new IncomingHttpRequestProxy(httpContext.Request);
             var cleanupRoutines = new List<Func<Task>>();

@@ -31,9 +31,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStores.DistributedCache", "ThrottlingTroll.CounterStores.DistributedCache\ThrottlingTroll.CounterStores.DistributedCache.csproj", "{1D2CC7BF-1624-4331-803A-CA339A4E27E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTrollSampleAspNetFunction", "samples\ThrottlingTrollSampleAspNetFunction\ThrottlingTrollSampleAspNetFunction.csproj", "{E8FE0FB0-0515-4AED-AD65-9A652745A516}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleAspNetFunction", "samples\ThrottlingTrollSampleAspNetFunction\ThrottlingTrollSampleAspNetFunction.csproj", "{E8FE0FB0-0515-4AED-AD65-9A652745A516}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTroll.AzureFunctionsAspNet", "ThrottlingTroll.AzureFunctionsAspNet\ThrottlingTroll.AzureFunctionsAspNet.csproj", "{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AzureFunctionsAspNet", "ThrottlingTroll.AzureFunctionsAspNet\ThrottlingTroll.AzureFunctionsAspNet.csproj", "{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTroll.AzureFunctionsAspNet.Tests", "tests\ThrottlingTroll.AzureFunctionsAspNet.Tests\ThrottlingTroll.AzureFunctionsAspNet.Tests.csproj", "{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,6 +99,10 @@ Global
 		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,6 +115,7 @@ Global
 		{1018E970-C585-45E9-B170-F670C40466CF} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 		{FCF14C9B-EB92-4255-9853-34B87C82F845} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 		{E8FE0FB0-0515-4AED-AD65-9A652745A516} = {F87ADBF3-0FE0-4B4E-9D20-AF76EE155CDE}
+		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F213F60D-DF07-4F11-9B94-4143A16E1EE6}
