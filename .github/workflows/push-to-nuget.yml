@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-push:
 
     runs-on: ubuntu-latest
 
@@ -19,7 +19,44 @@ jobs:
       run: dotnet build -c Release ThrottlingTroll.AspNet
     - name: Pack ThrottlingTroll
       run: dotnet pack ThrottlingTroll.AspNet/ThrottlingTroll.AspNet.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.AspNet/output
-    - name: Push ThrottlingTrol
+    - name: Push ThrottlingTroll
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.AspNet/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+    - name: Build ThrottlingTroll.AzureFunctions
+      run: dotnet build -c Release ThrottlingTroll.AzureFunctions
+    - name: Pack ThrottlingTroll.AzureFunctions
+      run: dotnet pack ThrottlingTroll.AzureFunctions/ThrottlingTroll.AzureFunctions.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.AzureFunctions/output
+    - name: Push ThrottlingTroll.AzureFunctions
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ThrottlingTroll.AzureFunctions/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+    - name: Build ThrottlingTroll.CounterStores.AzureTable
+      run: dotnet build -c Release ThrottlingTroll.CounterStores.AzureTable
+    - name: Pack ThrottlingTroll.CounterStores.AzureTable
+      run: dotnet pack ThrottlingTroll.CounterStores.AzureTable/ThrottlingTroll.CounterStores.AzureTable.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.CounterStores.AzureTable/output
+    - name: Push ThrottlingTroll.CounterStores.AzureTable
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ThrottlingTroll.CounterStores.AzureTable/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+    - name: Build ThrottlingTroll.CounterStores.Redis
+      run: dotnet build -c Release ThrottlingTroll.CounterStores.Redis
+    - name: Pack ThrottlingTroll.CounterStores.Redis
+      run: dotnet pack ThrottlingTroll.CounterStores.Redis/ThrottlingTroll.CounterStores.Redis.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.CounterStores.Redis/output
+    - name: Push ThrottlingTroll.CounterStores.Redis
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ThrottlingTroll.CounterStores.Redis/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+    - name: Build ThrottlingTroll.CounterStores.DistributedCache
+      run: dotnet build -c Release ThrottlingTroll.CounterStores.DistributedCache
+    - name: Pack ThrottlingTroll.CounterStores.DistributedCache
+      run: dotnet pack ThrottlingTroll.CounterStores.DistributedCache/ThrottlingTroll.CounterStores.DistributedCache.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.CounterStores.DistributedCache/output
+    - name: Push ThrottlingTroll.CounterStores.DistributedCache
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ThrottlingTroll.CounterStores.DistributedCache/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
