@@ -10,13 +10,13 @@ Rate limiting/throttling middleware for ASP.NET and Azure Functions.
 
 Install from Nuget:
 
-| ASP.NET                                   | Asure Functions                                          |
-| -                                         | -                                                        |
-| ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |
+| ASP.NET                                   | Azure Functions                                          | Azure Functions (ASP.NET Core Integration)                    |
+| -                                         | -                                                        | -                                                             |
+| ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |```dotnet add package ThrottlingTroll.AzureFunctionsAspNet```  |
 
 ## Features
 
-* **Both [ASP.NET](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll) and [Azure Functions (.NET Isolated)](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) are supported**. 
+* **Supports [ASP.NET](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions (.NET Isolated)](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions),and [Azure Functions (ASP.NET Core Integration)](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctionsaspnet)**. 
 * **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
@@ -118,18 +118,20 @@ Install from Nuget:
 
 Configuration and usage with ASP.NET and Azure Functions is very similar yet slightly different:
 
-| ASP.NET                                   | Asure Functions                                          |
+| ASP.NET                                   | Azure Functions                                          |
 | -                                         | -                                                        |
 | [How to use with ASP.NET](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
+|                                                                                                                            | [How to use with Azure Functions (ASP.NET Core)](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
 
 
 ## Samples
 
 Sample projects that demonstrate all the above concepts:
 
-| ASP.NET | Asure Functions |
+| ASP.NET | Azure Functions |
 | -       | -               |
 | [ThrottlingTrollSampleWeb](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb) | [ThrottlingTrollSampleFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction)  |
+|                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  |
 
 
 ## Contributing

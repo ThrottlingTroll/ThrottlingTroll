@@ -1,0 +1,66 @@
+@base_url=http://localhost:7061
+
+### Rate limited to 3 requests per a fixed window of 10 seconds. Configured via appsettings.json.
+GET {{base_url}}/api/fixed-window-3-requests-per-10-seconds-configured-via-appsettings
+
+### Rate limited to 5 requests per a sliding window of 15 seconds split into 5 buckets. Configured via appsettings.json.
+GET {{base_url}}/api/sliding-window-5-requests-per-15-seconds-with-5-buckets-configured-via-appsettings
+
+### Rate limited to 1 request per a fixed window of 2 seconds. Configured programmatically.
+GET {{base_url}}/api/fixed-window-1-request-per-2-seconds-configured-programmatically
+
+### Rate limited to 7 requests per a sliding window of 20 seconds split into 4 buckets. Configured dynamically (via a callback, that's being re-executed periodically).
+GET {{base_url}}/api/sliding-window-7-requests-per-20-seconds-with-4-buckets-configured-dynamically
+
+### Rate limited to 3 requests per a fixed window of 15 seconds per each identity.
+### Query string's 'api-key' parameter is used as identityId.
+GET {{base_url}}/api/fixed-window-3-requests-per-15-seconds-per-each-api-key?api-key=12345
+
+### Rate limited to 1 request per a fixed window of 2 seconds.
+### Custom throttled response is returned, with 400 BadRequest status code and custom body.
+GET {{base_url}}/api/fixed-window-1-request-per-2-seconds-response-fabric
+
+### Rate limited to 1 request per a fixed window of 2 seconds.
+### Throttled response is delayed for 3 seconds (instead of returning an error).
+GET {{base_url}}/api/fixed-window-1-request-per-2-seconds-delayed-response
+
+### Rate limited to 2 concurrent requests.
+### Demonstrates Semaphore (Concurrency) rate limiter.
+### DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+GET {{base_url}}/api/semaphore-2-concurrent-requests
+
+### Rate limited to 1 concurrent request per each identity, other requests are delayed.
+### Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
+### Query string's 'id' parameter is used as identityId.
+### DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+GET {{base_url}}/api/named-critical-section?id=abcde
+
+### Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
+GET {{base_url}}/api/egress-fixed-window-2-requests-per-5-seconds-configured-via-appsettings
+
+### Calls /fixed-window-3-requests-per-10-seconds-configured-via-appsettings endpoint 
+### using an HttpClient that is configured to propagate 429 responses.
+GET {{base_url}}/api/egress-fixed-window-3-requests-per-10-seconds-configured-programmatically
+
+### Calls /fixed-window-3-requests-per-10-seconds-configured-via-appsettings endpoint 
+### using an HttpClient that is configured to do retries.
+GET {{base_url}}/api/egress-fixed-window-3-requests-per-10-seconds-with-retries
+
+### Calls /dummy endpoint 
+### using an HttpClient that is limited to 3 requests per 5 seconds and does automatic delays and retries.
+GET {{base_url}}/api/egress-fixed-window-3-requests-per-5-seconds-with-delays
+
+### Calls /lazy-dummy endpoint 
+### using an HttpClient that is limited to 2 concurrent requests.
+### Demonstrates Semaphore (Concurrency) rate limiter.
+### DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+GET {{base_url}}/api/egress-semaphore-2-concurrent-requests
+
+### Endpoint for testing Semaphores. Increments a counter value, but NOT atomically.
+GET {{base_url}}/api/distributed-counter
+
+### Dummy endpoint for testing HttpClient. Isn't throttled.
+GET {{base_url}}/api/dummy
+
+### Dummy endpoint for testing HttpClient. Sleeps for 10 seconds. Isn't throttled.
+GET {{base_url}}/api/lazy-dummy
