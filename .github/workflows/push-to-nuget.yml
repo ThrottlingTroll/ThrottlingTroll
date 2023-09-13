@@ -15,7 +15,11 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    - name: Build ThrottlingTroll.AspNet
+    - name: Build ThrottlingTroll
       run: dotnet build -c Release ThrottlingTroll.AspNet
-    - name: Pack ThrottlingTroll.AspNet
-      run: dotnet pack ThrottlingTroll.AspNet/ThrottlingTroll.AspNet.csproj -p:NuspecFile=ThrottlingTroll.AspNet/nuspec.nuspec
+    - name: Pack ThrottlingTroll
+      run: dotnet pack ThrottlingTroll.AspNet/ThrottlingTroll.AspNet.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.AspNet/output
+    - name: Push ThrottlingTrol
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ThrottlingTroll.AspNet/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
