@@ -10,7 +10,7 @@ Rate limiting/throttling middleware for ASP.NET and Azure Functions.
 
 Install from Nuget:
 
-| ASP.NET                                   | Azure Functions                                          | Azure Functions (ASP.NET Core Integration)                    |
+| ASP.NET                                   | Azure Functions                                          | Azure Functions with ASP.NET Core Integration                 |
 | -                                         | -                                                        | -                                                             |
 | ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |```dotnet add package ThrottlingTroll.AzureFunctionsAspNet```  |
 
