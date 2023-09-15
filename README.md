@@ -121,7 +121,7 @@ Configuration and usage with ASP.NET and Azure Functions is very similar yet sli
 | ASP.NET                                   | Azure Functions                                          |
 | -                                         | -                                                        |
 | [How to use with ASP.NET](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
-|                                                                                                                            | [How to use with Azure Functions (ASP.NET Core)](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
+|                                                                                                                            | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/scale-tone/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
 
 
 ## Samples
@@ -131,7 +131,7 @@ Sample projects that demonstrate all the above concepts:
 | ASP.NET | Azure Functions |
 | -       | -               |
 | [ThrottlingTrollSampleWeb](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb) | [ThrottlingTrollSampleFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction)  |
-|                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  |
+|                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  | [ThrottlingTrollSampleDotNet6InProcDurableFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleDotNet6InProcDurableFunction)  
 
 
 ## Contributing
