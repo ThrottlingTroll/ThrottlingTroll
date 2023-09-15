@@ -1,6 +1,6 @@
 # ThrottlingTroll.AzureFunctionsAspNet
 
-Rate limiting/throttling middleware for Azure Functions (ASP.NET Core Integration).
+Rate limiting/throttling middleware for [Azure Functions with ASP.NET Core Integration](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#aspnet-core-integration).
 
 Install from NuGet:
 ```
