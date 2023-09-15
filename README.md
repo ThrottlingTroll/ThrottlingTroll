@@ -131,7 +131,8 @@ Sample projects that demonstrate all the above concepts:
 | ASP.NET | Azure Functions |
 | -       | -               |
 | [ThrottlingTrollSampleWeb](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb) | [ThrottlingTrollSampleFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction)  |
-|                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  | [ThrottlingTrollSampleDotNet6InProcDurableFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleDotNet6InProcDurableFunction)  
+|                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  
+|                                                                                                                      | [ThrottlingTrollSampleDotNet6InProcDurableFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleDotNet6InProcDurableFunction)  
 
 
 ## Contributing
