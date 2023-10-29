@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using Moq;
+using System.Net.Http;
 
 namespace ThrottlingTroll.AspNet.Tests
 {
@@ -439,6 +440,145 @@ namespace ThrottlingTroll.AspNet.Tests
 
             Assert.AreEqual(StatusCodes.Status200OK, httpContext.Response.StatusCode);
             Assert.IsTrue(nextWasCalled);
+        }
+
+        class CostCheckingMethod : RateLimitMethod
+        {
+            public readonly int Cost = DateTimeOffset.UtcNow.Second;
+
+            public override Task DecrementAsync(string limitKey, long count, ICounterStore store)
+            {
+                return Task.CompletedTask;
+            }
+
+            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
+            {
+                Assert.AreEqual(cost, this.Cost);
+
+                return 0;
+            }
+
+            public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        [TestMethod]
+        public async Task InvokeAsyncTest_RandomRequestCostPassedViaRule_CostExtractorInvoked()
+        {
+            // Arrange 
+
+            var counterStoreMock = new Mock<ICounterStore>();
+
+            var limitMethod = new CostCheckingMethod();
+
+            bool costExtractorWasCalled = false;
+
+            var config = new ThrottlingTrollConfig
+            {
+                Rules = new[]
+                {
+                    new ThrottlingTrollRule
+                    {
+                        LimitMethod = limitMethod,
+                        CostExtractor = r =>
+                        {
+                            Assert.IsFalse(costExtractorWasCalled);
+
+                            costExtractorWasCalled = true;
+
+                            return limitMethod.Cost;
+                        }
+                    }
+                }
+            };
+
+            var options = new ThrottlingTrollOptions
+            {
+                CounterStore = counterStoreMock.Object,
+                GetConfigFunc = () => Task.FromResult(config)
+            };
+
+            bool nextWasCalled = false;
+
+            var middleware = new ThrottlingTrollMiddleware(async _ => {
+
+                Assert.IsFalse(nextWasCalled);
+
+                nextWasCalled = true;
+
+            }, options);
+
+            var httpContext = new DefaultHttpContext();
+
+            // Act
+
+            await middleware.InvokeAsync(httpContext);
+
+            // Assert
+
+            Assert.IsTrue(nextWasCalled);
+            Assert.IsTrue(costExtractorWasCalled);
+        }
+
+
+        [TestMethod]
+        public async Task InvokeAsyncTest_RandomRequestCostPassedViaOptions_CostExtractorInvoked()
+        {
+            // Arrange 
+
+            var counterStoreMock = new Mock<ICounterStore>();
+
+            var limitMethod = new CostCheckingMethod();
+
+            var config = new ThrottlingTrollConfig
+            {
+                Rules = new[]
+                {
+                    new ThrottlingTrollRule
+                    {
+                        LimitMethod = limitMethod
+                    }
+                }
+            };
+
+            bool costExtractorWasCalled = false;
+
+            var options = new ThrottlingTrollOptions
+            {
+                CounterStore = counterStoreMock.Object,
+                GetConfigFunc = () => Task.FromResult(config),
+                CostExtractor = r =>
+                {
+                    Assert.IsFalse(costExtractorWasCalled);
+
+                    costExtractorWasCalled = true;
+
+                    return limitMethod.Cost;
+                }
+            };
+
+            bool nextWasCalled = false;
+
+            var middleware = new ThrottlingTrollMiddleware(async _ => {
+
+                Assert.IsFalse(nextWasCalled);
+
+                nextWasCalled = true;
+
+            }, options);
+
+            var httpContext = new DefaultHttpContext();
+
+            // Act
+
+            await middleware.InvokeAsync(httpContext);
+
+            // Assert
+
+            Assert.IsTrue(nextWasCalled);
+            Assert.IsTrue(costExtractorWasCalled);
         }
     }
 }
