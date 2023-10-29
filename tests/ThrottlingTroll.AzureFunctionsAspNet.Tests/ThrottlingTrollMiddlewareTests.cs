@@ -214,12 +214,12 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
         {
             public readonly int RetryAfterSeconds = DateTimeOffset.UtcNow.Second;
 
-            public override Task DecrementAsync(string limitKey, ICounterStore store)
+            public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
             {
                 return Task.CompletedTask;
             }
 
-            public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
             {
                 return this.RetryAfterSeconds;
             }

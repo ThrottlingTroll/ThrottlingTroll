@@ -72,7 +72,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
         {
             this.RunCleanupIfNeeded();
 
@@ -88,9 +88,9 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                     if (!entity.HasValue)
                     {
                         // Just adding a new record - and that's it
-                        var res = await this._tableClient.AddEntityAsync(new CounterEntity { PartitionKey = key, RowKey = key, Count = 1, ExpiresAt = ttl });
+                        var res = await this._tableClient.AddEntityAsync(new CounterEntity { PartitionKey = key, RowKey = key, Count = cost, ExpiresAt = ttl });
 
-                        return 1;
+                        return cost;
                     }
 
                     var counter = entity.Value;
@@ -98,13 +98,13 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                     if (counter.ExpiresAt < DateTimeOffset.UtcNow || counter.Count < 1)
                     {
                         // Recreating the entity
-                        counter.Count = 1;
+                        counter.Count = cost;
                         counter.ExpiresAt = ttl;
                     }
                     else
                     {
                         // Incrementing the counter
-                        counter.Count++;
+                        counter.Count += cost;
 
                         if (counter.Count <= maxCounterValueToSetTtl)
                         {
@@ -136,7 +136,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key)
+        public async Task DecrementAsync(string key, long cost)
         {
             this.RunCleanupIfNeeded();
 
@@ -161,7 +161,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                         return;
                     }
 
-                    counter.Count--;
+                    counter.Count -= cost;
 
                     await this._tableClient.UpdateEntityAsync(counter, counter.ETag);
 

@@ -22,17 +22,17 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
         {
             var now = DateTime.UtcNow;
 
             var ttl = now + TimeSpan.FromSeconds(this.TimeoutInSeconds);
 
-            long count = await store.IncrementAndGetAsync(limitKey, ttl, this.PermitLimit);
+            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl, this.PermitLimit);
 
             if (count > this.PermitLimit)
             {
-                await store.DecrementAsync(limitKey);
+                await store.DecrementAsync(limitKey, cost);
 
                 return this.TimeoutInSeconds;
             }
@@ -51,9 +51,9 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
         {
-            return store.DecrementAsync(limitKey);
+            return store.DecrementAsync(limitKey, cost);
         }
     }
 }

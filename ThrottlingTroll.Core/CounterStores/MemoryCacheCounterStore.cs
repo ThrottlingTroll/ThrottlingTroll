@@ -40,7 +40,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
         {
             await this._asyncLock.WaitAsync();
 
@@ -53,7 +53,7 @@ namespace ThrottlingTroll
                     cacheEntry = new CacheEntry(0, ttl);
                 }
 
-                cacheEntry.Count++;
+                cacheEntry.Count += cost;
 
                 if (cacheEntry.Count <= maxCounterValueToSetTtl)
                 {
@@ -76,7 +76,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key)
+        public async Task DecrementAsync(string key, long cost)
         {
             await this._asyncLock.WaitAsync();
 
@@ -89,7 +89,7 @@ namespace ThrottlingTroll
                     return;
                 }
 
-                cacheEntry.Count--;
+                cacheEntry.Count -= cost;
 
                 if (cacheEntry.Count > 0)
                 {

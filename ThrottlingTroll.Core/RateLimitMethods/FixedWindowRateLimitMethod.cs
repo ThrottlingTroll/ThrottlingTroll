@@ -17,7 +17,7 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
-        public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
         {
             if (this.IntervalInSeconds <= 0)
             {
@@ -37,7 +37,7 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
 
             // Now checking the actual count
-            long count = await store.IncrementAndGetAsync(limitKey, ttl);
+            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl);
 
             if (count > this.PermitLimit)
             {
@@ -66,7 +66,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
         {
             // Doing nothing
             return Task.CompletedTask;

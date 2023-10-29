@@ -31,7 +31,7 @@ public class SlidingWindowRateLimitMethodTests
         var stopAt = DateTime.UtcNow + TimeSpan.FromSeconds(5);
         while (DateTime.UtcNow < stopAt)
         {
-            await limiter.IsExceededAsync(key, store);
+            await limiter.IsExceededAsync(key, 1, store);
         }
 
         // Assert
@@ -88,8 +88,8 @@ public class SlidingWindowRateLimitMethodTests
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Making two requests");
 
-        results.Add(await limiter.IsExceededAsync(key, store));
-        results.Add(await limiter.IsExceededAsync(key, store));
+        results.Add(await limiter.IsExceededAsync(key, 1, store));
+        results.Add(await limiter.IsExceededAsync(key, 1, store));
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Sleeping 1 sec");
 
@@ -97,12 +97,12 @@ public class SlidingWindowRateLimitMethodTests
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Making other two requests");
 
-        results.Add(await limiter.IsExceededAsync(key, store));
-        results.Add(await limiter.IsExceededAsync(key, store));
+        results.Add(await limiter.IsExceededAsync(key, 1, store));
+        results.Add(await limiter.IsExceededAsync(key, 1, store));
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Making final request");
 
-        int finalResult = await limiter.IsExceededAsync(key, store);
+        int finalResult = await limiter.IsExceededAsync(key, 1, store);
 
         // Assert
 
@@ -148,7 +148,7 @@ public class SlidingWindowRateLimitMethodTests
         {
             await Task.Delay(TimeSpan.FromMilliseconds(300));
 
-            results.Add(new Tuple<int, int>(DateTime.UtcNow.Millisecond, await limiter.IsExceededAsync(key, store)));
+            results.Add(new Tuple<int, int>(DateTime.UtcNow.Millisecond, await limiter.IsExceededAsync(key, 1, store)));
         }
 
         // Assert
@@ -192,13 +192,13 @@ public class SlidingWindowRateLimitMethodTests
 
         for (int i = 0; i < limiter.PermitLimit; i++)
         {
-            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, 1, store));
         }
 
         // Now we should exceed
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
 
         // Now waiting for the next second to start
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting till next second");
@@ -215,11 +215,11 @@ public class SlidingWindowRateLimitMethodTests
         // Now we should be good again
         for (int i = 0; i < limiter.PermitLimit; i++)
         {
-            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, 1, store));
         }
 
         // Now we should exceed again
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Finished");
     }
@@ -249,13 +249,13 @@ public class SlidingWindowRateLimitMethodTests
 
         for (int i = 0; i < limiter.PermitLimit; i++)
         {
-            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, 1, store));
         }
 
         // Now we should exceed
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
 
         // Now waiting for two seconds
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting");
@@ -274,11 +274,11 @@ public class SlidingWindowRateLimitMethodTests
         // Now we should be good again
         for (int i = 0; i < limiter.PermitLimit; i++)
         {
-            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, 1, store));
         }
 
         // Now we should exceed again
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Finished");
     }

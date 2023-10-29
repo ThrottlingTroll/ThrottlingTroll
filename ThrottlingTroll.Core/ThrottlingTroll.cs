@@ -14,6 +14,7 @@ namespace ThrottlingTroll
         private readonly Action<LogLevel, string> _log;
         private readonly ICounterStore _counterStore;
         private readonly Func<IHttpRequestProxy, string> _identityIdExtractor;
+        private readonly Func<IHttpRequestProxy, long> _costExtractor;
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
         private TimeSpan _sleepTimeSpan = TimeSpan.FromMilliseconds(50);
@@ -27,6 +28,7 @@ namespace ThrottlingTroll
             ICounterStore counterStore,
             Func<Task<ThrottlingTrollConfig>> getConfigFunc,
             Func<IHttpRequestProxy, string> identityIdExtractor,
+            Func<IHttpRequestProxy, long> costExtractor,
             int intervalToReloadConfigInSeconds = 0
         )
         {
@@ -58,7 +60,7 @@ namespace ThrottlingTroll
             bool shouldThrowOnExceptions = false;
             try
             {
-                var config = this.ApplyGlobalIdentityIdExtractor(await this._getConfigTask);
+                var config = this.ApplyGlobalExtractors(await this._getConfigTask);
 
                 if (config.Rules == null)
                 {
@@ -81,7 +83,9 @@ namespace ThrottlingTroll
                     // The limit method defines whether we should throw on our internal failures
                     shouldThrowOnExceptions = limit.LimitMethod.ShouldThrowOnFailures;
 
-                    var limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+                    long requestCost = limit.GetCost(request);
+
+                    var limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
 
                     if (limitCheckResult == null)
                     {
@@ -92,7 +96,7 @@ namespace ThrottlingTroll
                     if (!limitCheckResult.IsExceeded)
                     {
                         // Decrementing this counter at the end of request processing
-                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, this._log));
+                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));
 
                         // The request matched the rule, but the limit was not exceeded.
                         continue;
@@ -108,12 +112,12 @@ namespace ThrottlingTroll
                             if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId))
                             {
                                 // Doing double-check
-                                limitCheckResult = await limit.IsExceededAsync(request, this._counterStore, config.UniqueName, this._log);
+                                limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
 
                                 if (!limitCheckResult.IsExceeded)
                                 {
                                     // Decrementing this counter at the end of request processing
-                                    cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, this._log));
+                                    cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));
 
                                     awaitedSuccessfully = true;
 
@@ -191,7 +195,7 @@ namespace ThrottlingTroll
             this._getConfigTask = task;
         }
 
-        private ThrottlingTrollConfig ApplyGlobalIdentityIdExtractor(ThrottlingTrollConfig config)
+        private ThrottlingTrollConfig ApplyGlobalExtractors(ThrottlingTrollConfig config)
         {
             if (config.Rules != null)
             {
@@ -200,6 +204,11 @@ namespace ThrottlingTroll
                     if (rule.IdentityIdExtractor == null)
                     {
                         rule.IdentityIdExtractor = this._identityIdExtractor;
+                    }
+
+                    if (rule.CostExtractor == null)
+                    {
+                        rule.CostExtractor = this._costExtractor;
                     }
                 }
             }

@@ -38,6 +38,11 @@ namespace ThrottlingTroll
         public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
 
         /// <summary>
+        /// Request's cost extraction routine. The default cost (weight) of a request is 1, but this routine allows to override that.
+        /// </summary>
+        public Func<IHttpRequestProxy, long> CostExtractor { get; set; }
+
+        /// <summary>
         /// Logging utility to use
         /// </summary>
         public Action<LogLevel, string> Log { get; set; }

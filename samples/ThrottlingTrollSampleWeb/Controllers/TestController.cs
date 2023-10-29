@@ -178,6 +178,18 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// A balance of 10 coins per a fixed window of 20 seconds. Cost of a request is taken from 'cost' query string parameter. 
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="429">TooManyRequests</response>
+        [HttpGet]
+        [Route("fixed-window-balance-of-10-per-20-seconds")]
+        public string Test11()
+        {
+            return "OK";
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>

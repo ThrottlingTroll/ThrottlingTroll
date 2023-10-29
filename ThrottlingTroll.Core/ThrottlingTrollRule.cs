@@ -44,12 +44,18 @@ namespace ThrottlingTroll
         public int MaxDelayInSeconds { get; set; } = 0;
 
         /// <summary>
+        /// Request's cost extraction routine. The default cost (weight) of a request is 1, but this routine allows to override that.
+        /// Overrides <see cref="ThrottlingTrollOptions.CostExtractor"/>.
+        /// </summary>
+        public Func<IHttpRequestProxy, long> CostExtractor { get; set; }
+
+        /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
         /// If request does not match the rule, returns null.
         /// If limit exceeded, returns number of seconds to retry after and unique counter ID.
         /// Otherwise just returns unique counter ID.
         /// </summary>
-        internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, ICounterStore store, string configName, Action<LogLevel, string> log)
+        internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, long cost, ICounterStore store, string configName, Action<LogLevel, string> log)
         {
             if (!this.IsMatch(request) || this.LimitMethod == null)
             {
@@ -58,7 +64,7 @@ namespace ThrottlingTroll
 
             string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
-            var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, store);
+            var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store);
 
             if (retryAfter <= 0)
             {
@@ -73,16 +79,28 @@ namespace ThrottlingTroll
         /// <summary>
         /// Will be executed at the end of request processing. Used for decrementing the counter, if needed.
         /// </summary>
-        internal async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, Action<LogLevel, string> log)
+        internal async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, long cost, Action<LogLevel, string> log)
         {
             try
             {
-                await this.LimitMethod.DecrementAsync(uniqueCacheKey, store);
+                await this.LimitMethod.DecrementAsync(uniqueCacheKey, cost, store);
             }
             catch (Exception ex)
             {
                 log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
             }
+        }
+
+        internal long GetCost(IHttpRequestProxy request)
+        {
+            if (this.CostExtractor == null)
+            {
+                return 1;
+            }
+
+            long cost = this.CostExtractor(request);
+
+            return cost > 0 ? cost : 1;
         }
 
         internal Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey)

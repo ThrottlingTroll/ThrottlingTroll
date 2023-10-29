@@ -291,6 +291,34 @@ namespace ThrottlingTrollSampleWeb
                 };
             });
 
+            // Demonstrates how to delay the response instead of returning 429
+            app.UseThrottlingTroll(options =>
+            {
+                options.Config = new ThrottlingTrollConfig
+                {
+                    Rules = new[]
+                    {
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/fixed-window-balance-of-10-per-20-seconds",
+                            LimitMethod = new FixedWindowRateLimitMethod
+                            {
+                                PermitLimit = 10,
+                                IntervalInSeconds = 20
+                            },
+
+                            // Specifying a routine to calculate the cost (weight) of each request
+                            CostExtractor = request =>
+                            {
+                                // Cost comes as a 'cost' query string parameter
+                                string? cost = ((IIncomingHttpRequestProxy)request).Request.Query["cost"];
+
+                                return long.TryParse(cost, out long val) ? val : 1;
+                            }
+                        }
+                    }
+                };
+            });
 
             // </ThrottlingTroll Ingress Configuration>
 

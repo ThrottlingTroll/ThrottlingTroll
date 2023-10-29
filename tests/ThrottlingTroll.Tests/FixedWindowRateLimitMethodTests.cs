@@ -28,13 +28,13 @@ public class FixedWindowRateLimitMethodTests
 
         for (int i = 0; i < limiter.PermitLimit; i++) 
         {
-            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, 1, store));
         }
 
         // Now we should exceed
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
 
         // Now waiting for the next second to start
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting till next second");
@@ -51,11 +51,11 @@ public class FixedWindowRateLimitMethodTests
         // Now we should be good again
         for (int i = 0; i < limiter.PermitLimit; i++)
         {
-            Assert.AreEqual(0, await limiter.IsExceededAsync(key, store));
+            Assert.AreEqual(0, await limiter.IsExceededAsync(key, 1, store));
         }
 
         // Now we should exceed again
-        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, store));
+        Assert.AreNotEqual(0, await limiter.IsExceededAsync(key, 1, store));
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Finished");
     }

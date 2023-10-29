@@ -98,7 +98,7 @@ namespace ThrottlingTroll
 
         ) : base(innerHttpMessageHandler ?? new HttpClientHandler())
         {
-            this._troll = new ThrottlingTroll(log, counterStore ?? new MemoryCacheCounterStore(), async () => config, identityIdExtractor);
+            this._troll = new ThrottlingTroll(log, counterStore ?? new MemoryCacheCounterStore(), async () => config, identityIdExtractor, null);
             this._propagateToIngress = config.PropagateToIngress;
             this._responseFabric = responseFabric;
         }
@@ -123,7 +123,7 @@ namespace ThrottlingTroll
 
                 return config;
 
-            }, options.IdentityIdExtractor, options.IntervalToReloadConfigInSeconds);
+            }, options.IdentityIdExtractor, options.CostExtractor, options.IntervalToReloadConfigInSeconds);
         }
 
         /// <summary>
