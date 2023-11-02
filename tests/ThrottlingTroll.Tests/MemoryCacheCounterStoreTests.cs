@@ -19,7 +19,7 @@ public class MemoryCacheCounterStoreTests
 
         Parallel.For(0, numOfTries, new ParallelOptions { MaxDegreeOfParallelism = numOfTries }, i => {
 
-            store.IncrementAndGetAsync(key, ttl, 1).Wait();
+            store.IncrementAndGetAsync(key, 1, ttl, 1).Wait();
 
         });
 

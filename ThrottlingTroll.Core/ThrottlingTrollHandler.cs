@@ -96,9 +96,33 @@ namespace ThrottlingTroll
             Action<LogLevel, string> log = null,
             HttpMessageHandler innerHttpMessageHandler = null
 
+        ) : this(null, identityIdExtractor, responseFabric, counterStore, config, log, innerHttpMessageHandler)
+        {
+        }
+
+        /// <summary>
+        /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
+        /// </summary>
+        /// <param name="costExtractor">Request's cost extraction routine</param>
+        /// <param name="identityIdExtractor">Identity ID extraction routine to be used for extracting Identity IDs from requests</param>
+        /// <param name="responseFabric">Routine for generating custom HTTP responses and/or controlling built-in retries</param>
+        /// <param name="counterStore">Implementation of <see cref="ICounterStore"/></param>
+        /// <param name="config">Throttling configuration</param>
+        /// <param name="log">Logging utility</param>
+        /// <param name="innerHttpMessageHandler">Instance of <see cref="HttpMessageHandler"/> to use as inner handler. When null, a default <see cref="HttpClientHandler"/> instance will be created.</param>
+        public ThrottlingTrollHandler
+        (
+            Func<IHttpRequestProxy, long> costExtractor,
+            Func<IHttpRequestProxy, string> identityIdExtractor,
+            Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
+            ICounterStore counterStore,
+            ThrottlingTrollEgressConfig config,
+            Action<LogLevel, string> log = null,
+            HttpMessageHandler innerHttpMessageHandler = null
+
         ) : base(innerHttpMessageHandler ?? new HttpClientHandler())
         {
-            this._troll = new ThrottlingTroll(log, counterStore ?? new MemoryCacheCounterStore(), async () => config, identityIdExtractor);
+            this._troll = new ThrottlingTroll(log, counterStore ?? new MemoryCacheCounterStore(), async () => config, identityIdExtractor, costExtractor);
             this._propagateToIngress = config.PropagateToIngress;
             this._responseFabric = responseFabric;
         }
@@ -123,7 +147,7 @@ namespace ThrottlingTroll
 
                 return config;
 
-            }, options.IdentityIdExtractor, options.IntervalToReloadConfigInSeconds);
+            }, options.IdentityIdExtractor, options.CostExtractor, options.IntervalToReloadConfigInSeconds);
         }
 
         /// <summary>

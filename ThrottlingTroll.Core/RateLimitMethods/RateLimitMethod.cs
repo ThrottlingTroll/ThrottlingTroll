@@ -16,10 +16,10 @@ namespace ThrottlingTroll
         public int PermitLimit { get; set; }
 
         /// <summary>
-        /// Increments the counter and checks if limit of calls is exceeded for a given rule (identified by its hash).
+        /// Increments the counter by cost and checks if limit of calls is exceeded for a given rule (identified by its hash).
         /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
         /// </summary>
-        public abstract Task<int> IsExceededAsync(string limitKey, ICounterStore store);
+        public abstract Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store);
 
         /// <summary>
         /// Checks if limit of calls is exceeded for a given rule (identified by its hash).
@@ -28,10 +28,10 @@ namespace ThrottlingTroll
         public abstract Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store);
 
         /// <summary>
-        /// Decrements the given counter _if the rate limit method supports this functionality_.
+        /// Decrements the given counter by cost _if the rate limit method supports this functionality_.
         /// Otherwise should do nothing.
         /// </summary>
-        public abstract Task DecrementAsync(string limitKey, ICounterStore store);
+        public abstract Task DecrementAsync(string limitKey, long cost, ICounterStore store);
 
         /// <summary>
         /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.

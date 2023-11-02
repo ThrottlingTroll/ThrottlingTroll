@@ -24,7 +24,7 @@ namespace ThrottlingTroll
         public int NumOfBuckets { get; set; }
 
         /// <inheritdoc />
-        public override async Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
         {
             if (this.IntervalInSeconds <= 0 || this.NumOfBuckets <= 0)
             {
@@ -49,7 +49,7 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds * this.NumOfBuckets);
 
             // Incrementing and getting the current bucket
-            tasks.Add(store.IncrementAndGetAsync(curBucketKey, ttl));
+            tasks.Add(store.IncrementAndGetAsync(curBucketKey, cost, ttl));
 
             // Now checking our local memory cache for the "counter exceeded" flag.
             // Need to do that _after_ the current bucket gets incremented, since for a sliding window the correct count in each bucket matters.
@@ -103,7 +103,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
         {
             // Doing nothing
             return Task.CompletedTask;

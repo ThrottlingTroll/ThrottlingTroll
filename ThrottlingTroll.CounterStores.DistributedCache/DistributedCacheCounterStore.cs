@@ -66,7 +66,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
         {
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
@@ -86,7 +86,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
                     cacheEntry = new CacheEntry(bytes);
                 }
 
-                cacheEntry.Count++;
+                cacheEntry.Count += cost;
 
                 if (cacheEntry.Count <= maxCounterValueToSetTtl)
                 {
@@ -104,7 +104,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key)
+        public async Task DecrementAsync(string key, long cost)
         {
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
@@ -122,7 +122,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
 
                 cacheEntry = new CacheEntry(bytes);
 
-                cacheEntry.Count--;
+                cacheEntry.Count -= cost;
 
                 if (cacheEntry.Count > 0)
                 {

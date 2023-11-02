@@ -34,31 +34,31 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
         {
             var db = this._redis.GetDatabase();
 
             // Doing this with one atomic LUA script
             // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
             var script = LuaScript.Prepare(
-                $"local c = redis.call('INCR', @key) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
+                $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
             );
 
-            var val = await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, absTtlInMs = ttl.ToUnixTimeMilliseconds(), maxCounterValueToSetTtl });
+            var val = await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, cost, absTtlInMs = ttl.ToUnixTimeMilliseconds(), maxCounterValueToSetTtl });
 
             return (long)val;
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key)
+        public async Task DecrementAsync(string key, long cost)
         {
             var db = this._redis.GetDatabase();
 
             // Atomically decrementing and removing if 0 or less
             var script = LuaScript.Prepare(
-                $"if redis.call('DECR', @key) < 1 then redis.call('DEL', @key) end"
+                $"if redis.call('DECRBY', @key, @cost) < 1 then redis.call('DEL', @key) end"
             );
-            await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key });
+            await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, cost });
         }
     }
 }

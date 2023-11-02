@@ -64,7 +64,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -105,7 +105,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -142,7 +142,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -195,7 +195,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -277,7 +277,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -318,7 +318,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -355,7 +355,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig
@@ -408,7 +408,7 @@ public class ThrottlingTrollHandlerTests
         var counterStoreMock = new Mock<ICounterStore>();
 
         counterStoreMock
-            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), 1))
+            .Setup(s => s.IncrementAndGetAsync(It.IsAny<string>(), 1L, It.IsAny<DateTimeOffset>(), 1L))
             .Returns(Task.FromResult(2L));
 
         var options = new ThrottlingTrollEgressConfig

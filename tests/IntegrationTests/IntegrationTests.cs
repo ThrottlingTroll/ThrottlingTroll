@@ -88,7 +88,7 @@ namespace IntegrationTests
 
         class MalfunctioningSemaphoreRateLimitMethod : SemaphoreRateLimitMethod
         {
-            public override Task DecrementAsync(string limitKey, ICounterStore store)
+            public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
             {
                 // Emulating endpoint that crushes in the middle and forgets to decrement the counter
                 return Task.CompletedTask;
@@ -132,7 +132,7 @@ namespace IntegrationTests
 
         class ThrowingSemaphoreRateLimitMethod : SemaphoreRateLimitMethod
         {
-            public override Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+            public override Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
             {
                 throw new Exception("Temporary glitch in Redis");
             }
@@ -157,7 +157,7 @@ namespace IntegrationTests
 
         class ThrowingFixedWindowRateLimitMethod : FixedWindowRateLimitMethod
         {
-            public override Task<int> IsExceededAsync(string limitKey, ICounterStore store)
+            public override Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
             {
                 throw new Exception("Temporary glitch in Redis");
             }
