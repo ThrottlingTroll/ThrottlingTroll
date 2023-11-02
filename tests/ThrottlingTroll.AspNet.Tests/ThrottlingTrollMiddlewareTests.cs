@@ -219,7 +219,7 @@ namespace ThrottlingTroll.AspNet.Tests
         {
             public readonly int RetryAfterSeconds = DateTimeOffset.UtcNow.Second;
 
-            public override Task DecrementAsync(string limitKey, long count, ICounterStore store)
+            public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
             {
                 return Task.CompletedTask;
             }
