@@ -291,7 +291,7 @@ namespace ThrottlingTrollSampleWeb
                 };
             });
 
-            // Demonstrates how to delay the response instead of returning 429
+            // Demonstrates how to use cost extractors
             app.UseThrottlingTroll(options =>
             {
                 options.Config = new ThrottlingTrollConfig
@@ -301,6 +301,7 @@ namespace ThrottlingTrollSampleWeb
                         new ThrottlingTrollRule
                         {
                             UriPattern = "/fixed-window-balance-of-10-per-20-seconds",
+
                             LimitMethod = new FixedWindowRateLimitMethod
                             {
                                 PermitLimit = 10,
