@@ -55,5 +55,14 @@ namespace ThrottlingTroll
         {
             return store.DecrementAsync(limitKey, cost);
         }
+
+        /// <inheritdoc/>
+        public override string GetCacheKey()
+        {
+            string key = $"<{this.PermitLimit}>|<{this.TimeoutInSeconds}>";
+
+            return key;
+
+        }
     }
 }

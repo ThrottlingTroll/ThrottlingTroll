@@ -78,8 +78,6 @@ namespace ThrottlingTroll
                 var dtStart = DateTimeOffset.UtcNow;
                 LimitExceededResult result = null;
 
-                //limitCounter
-                int counterNum = 0;
                 // Still need to check all limits, so that all counters get updated
                 foreach (var limit in config.Rules)
                 {
@@ -88,11 +86,7 @@ namespace ThrottlingTroll
 
                     long requestCost = limit.GetCost(request);
 
-                    //add Counter to UniqueName to avoid collision of rules and give each Rule unique key
-                    var ruleName = string.Concat(config.UniqueName, counterNum.ToString());
-                    counterNum++;
-
-                    var limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, ruleName, this._log);
+                    var limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
 
                     if (limitCheckResult == null)
                     {
@@ -119,7 +113,7 @@ namespace ThrottlingTroll
                             if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId))
                             {
                                 // Doing double-check
-                                limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, ruleName, this._log);
+                                limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
 
                                 if (!limitCheckResult.IsExceeded)
                                 {

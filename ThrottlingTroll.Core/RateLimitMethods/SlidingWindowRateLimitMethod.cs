@@ -108,5 +108,14 @@ namespace ThrottlingTroll
             // Doing nothing
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc/>
+        public override string GetCacheKey()
+        {
+            string key = $"<{this.PermitLimit}>|<{this.IntervalInSeconds}>|<{this.NumOfBuckets}>";
+
+            return key;
+
+        }
     }
 }

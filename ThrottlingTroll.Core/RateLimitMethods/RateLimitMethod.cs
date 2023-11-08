@@ -34,6 +34,12 @@ namespace ThrottlingTroll
         public abstract Task DecrementAsync(string limitKey, long cost, ICounterStore store);
 
         /// <summary>
+        /// Generate a unique key per rule
+        /// Otherwise should do nothing.
+        /// </summary>
+        public abstract string GetCacheKey();
+
+        /// <summary>
         /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
         /// </summary>
         public bool ShouldThrowOnFailures { get; set; } = false;
