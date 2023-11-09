@@ -61,7 +61,8 @@ namespace ThrottlingTroll
             {
                 return null;
             }
-
+            
+            configName = $"<{configName}>|<{ this._limitMethod.GetCacheKey()}>";
             string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
             var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store);
