@@ -112,10 +112,7 @@ namespace ThrottlingTroll
         /// <inheritdoc/>
         public override string GetCacheKey()
         {
-            string key = $"<{this.PermitLimit}>|<{this.IntervalInSeconds}>|<{this.NumOfBuckets}>";
-
-            return key;
-
+            return $"{nameof(SlidingWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds},{this.NumOfBuckets})";
         }
     }
 }

@@ -84,6 +84,10 @@ namespace ThrottlingTroll.AzureFunctions.Tests
         {
             throw new NotImplementedException();
         }
+        public override string GetCacheKey()
+        {
+            return string.Empty;
+        }
     }
 
     [TestClass]

@@ -1,6 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using System.Security.Cryptography;
-using System.Text;
 using System;
 using System.Linq;
 
@@ -76,37 +74,6 @@ namespace ThrottlingTroll
             }
         }
 
-        /// <summary>
-        /// Constructs a cache key for the limit counter, based on this filter's values.
-        /// If <see cref="IdentityIdExtractor"/> is set, applies it as well.
-        /// </summary>
-        protected string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
-        {
-            if (this.IdentityIdExtractor == null)
-            {
-                // Our key is static, so calculating its hash only once for optimization purposes
-                if (string.IsNullOrEmpty(this._cacheKey))
-                {
-                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>";
-
-                    this._cacheKey = this.GetHash(key);
-                }
-
-                return $"{configName}|{this._cacheKey}";
-            }
-            else
-            {
-                // If IdentityExtractor is set, then adding request's identityId to the cache key,
-                // so that different identities get different counters.
-
-                string identityId = this.IdentityIdExtractor(request);
-
-                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{identityId}>";
-
-                return $"{configName}|{this.GetHash(key)}";
-            }
-        }
-
         private bool IsUrlMatch(IHttpRequestProxy request)
         {
             if (this.UrlRegex == null)
@@ -165,18 +132,6 @@ namespace ThrottlingTroll
             return identityId == this.IdentityId;
         }
 
-        private string GetHash(string str)
-        {
-            // HashAlgorithm instances should NOT be reused
-            using (var sha256 = SHA256.Create())
-            {
-                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(str));
-
-                return Convert.ToBase64String(bytes);
-            }
-        }
-
         private Regex _uriRegex;
-        private string _cacheKey;
     }
 }

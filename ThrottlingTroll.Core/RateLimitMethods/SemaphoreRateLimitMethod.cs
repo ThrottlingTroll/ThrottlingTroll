@@ -59,10 +59,7 @@ namespace ThrottlingTroll
         /// <inheritdoc/>
         public override string GetCacheKey()
         {
-            string key = $"<{this.PermitLimit}>|<{this.TimeoutInSeconds}>";
-
-            return key;
-
+            return $"{nameof(SemaphoreRateLimitMethod)}({this.PermitLimit},{this.TimeoutInSeconds})";
         }
     }
 }

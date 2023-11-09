@@ -228,6 +228,11 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public override string GetCacheKey()
+            {
+                return string.Empty;
+            }
         }
 
         [TestMethod]

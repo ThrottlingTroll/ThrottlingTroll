@@ -75,10 +75,7 @@ namespace ThrottlingTroll
         /// <inheritdoc/>
         public override string GetCacheKey()
         {
-            string key = $"<{this.PermitLimit}>|<{this.IntervalInSeconds}>";
-
-            return key;
-        
+            return $"{nameof(FixedWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds})";
         }
     }
 }

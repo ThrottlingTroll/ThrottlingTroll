@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -62,7 +64,6 @@ namespace ThrottlingTroll
                 return null;
             }
             
-            configName = $"<{configName}>|<{ this._limitMethod.GetCacheKey()}>";
             string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
             var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store);
@@ -110,5 +111,48 @@ namespace ThrottlingTroll
         }
 
         private RateLimitMethod _limitMethod { get; set; }
+        private string _cacheKey;
+
+        /// <summary>
+        /// Constructs a cache key for the limit counter, based on this filter's values.
+        /// If <see cref="RequestFilter.IdentityIdExtractor"/> is set, applies it as well.
+        /// </summary>
+        private string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
+        {
+            if (this.IdentityIdExtractor == null)
+            {
+                // Our key is static, so calculating its hash only once for optimization purposes
+                if (string.IsNullOrEmpty(this._cacheKey))
+                {
+                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod.GetCacheKey()}>";
+
+                    this._cacheKey = this.GetHash(key);
+                }
+
+                return $"{configName}|{this._cacheKey}";
+            }
+            else
+            {
+                // If IdentityExtractor is set, then adding request's identityId to the cache key,
+                // so that different identities get different counters.
+
+                string identityId = this.IdentityIdExtractor(request);
+
+                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod.GetCacheKey()}>|<{identityId}>";
+
+                return $"{configName}|{this.GetHash(key)}";
+            }
+        }
+
+        private string GetHash(string str)
+        {
+            // HashAlgorithm instances should NOT be reused
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(str));
+
+                return Convert.ToBase64String(bytes);
+            }
+        }
     }
 }
