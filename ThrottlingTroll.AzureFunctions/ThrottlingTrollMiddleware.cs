@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using Azure.Core;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,105 +40,75 @@ namespace ThrottlingTroll
         {
             var requestProxy = new IncomingHttpRequestProxy(request);
             var cleanupRoutines = new List<Func<Task>>();
-
             try
             {
-                // First trying ingress
-                var result = await this.IsExceededAsync(requestProxy, cleanupRoutines);
-
-                bool restOfPipelineCalled = false;
-
-                if (result == null)
-                {
-                    restOfPipelineCalled = true;
-
-                    // Also trying to propagate egress to ingress
-                    try
+                // Need to call the rest of the pipeline no more than one time
+                bool nextCalled = false;
+                var callNextOnce = async () => {
+                    if (!nextCalled)
                     {
+                        nextCalled = true;
                         await next();
                     }
-                    catch (ThrottlingTrollTooManyRequestsException throttlingEx)
-                    {
-                        // Catching propagated exception from egress
-                        result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                    }
-                    catch (AggregateException ex)
-                    {
-                        // Catching propagated exception from egress as AggregateException
+                };
 
-                        ThrottlingTrollTooManyRequestsException throttlingEx = null;
+                var result = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
-                        foreach (var exx in ex.Flatten().InnerExceptions)
-                        {
-                            throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
-                            if (throttlingEx != null)
-                            {
-                                result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                                break;
-                            }
-                        }
-
-                        if (throttlingEx == null)
-                        {
-                            throw;
-                        }
-                    }
-                }
-
-                if (result == null)
-                {
-                    return null;
-                }
-
-                var response = request.CreateResponse(HttpStatusCode.OK);
-
-                if (this._responseFabric == null)
-                {
-                    response.StatusCode = HttpStatusCode.TooManyRequests;
-
-                    // Formatting default Retry-After response
-
-                    if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
-                    {
-                        response.Headers.Add("Retry-After", result.RetryAfterHeaderValue);
-                    }
-
-                    string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
-                        result.RetryAfterHeaderValue :
-                        $"{result.RetryAfterHeaderValue} seconds";
-
-                    await response.WriteStringAsync($"Retry after {responseString}");
-
-                    return response;
-                }
-                else
-                {
-                    // Using the provided response builder
-
-                    var responseProxy = new IngressHttpResponseProxy(response);
-
-                    await this._responseFabric(result, requestProxy, responseProxy, cancellationToken);
-
-                    if (responseProxy.ShouldContinueAsNormal)
-                    {
-                        // Continue with normal request processing
-
-                        if (!restOfPipelineCalled)
-                        {
-                            await next();
-                        }
-
-                        return null;
-                    }
-                    else
-                    {
-                        return response;
-                    }
-                }
+                return await this.ConstructResponse(request, result, requestProxy, callNextOnce, cancellationToken);
             }
             finally
             {
                 await Task.WhenAll(cleanupRoutines.Select(f => f()));
+            }
+        }
+
+        private async Task<HttpResponseData> ConstructResponse(HttpRequestData request, LimitExceededResult result, IHttpRequestProxy requestProxy, Func<Task> callNextOnce, CancellationToken cancellationToken)
+        {
+            if (result == null)
+            {
+                return null;
+            }
+
+            var response = request.CreateResponse(HttpStatusCode.OK);
+
+            if (this._responseFabric == null)
+            {
+                response.StatusCode = HttpStatusCode.TooManyRequests;
+
+                // Formatting default Retry-After response
+
+                if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+                {
+                    response.Headers.Add("Retry-After", result.RetryAfterHeaderValue);
+                }
+
+                string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
+                    result.RetryAfterHeaderValue :
+                    $"{result.RetryAfterHeaderValue} seconds";
+
+                await response.WriteStringAsync($"Retry after {responseString}");
+
+                return response;
+            }
+            else
+            {
+                // Using the provided response builder
+
+                var responseProxy = new IngressHttpResponseProxy(response);
+
+                await this._responseFabric(result, requestProxy, responseProxy, cancellationToken);
+
+                if (responseProxy.ShouldContinueAsNormal)
+                {
+                    // Continue with normal request processing
+                    await callNextOnce();
+
+                    return null;
+                }
+                else
+                {
+                    return response;
+                }
             }
         }
     }

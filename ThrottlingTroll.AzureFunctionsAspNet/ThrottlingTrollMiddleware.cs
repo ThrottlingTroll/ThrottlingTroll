@@ -35,108 +35,70 @@ namespace ThrottlingTroll
         /// <summary>
         /// Is invoked by Azure Functions middleware pipeline. Handles ingress throttling.
         /// </summary>
-        public async Task Invoke(FunctionContext context, Func<Task> next)
+        public async Task Invoke(FunctionContext functionContext, Func<Task> next)
         {
-            await InvokeOnHttpContext(context.GetHttpContext(), next);
-        }
-
-        internal async Task InvokeOnHttpContext(HttpContext httpContext, Func<Task> next)
-        {
-            if (httpContext == null)
-            {
-                throw new InvalidOperationException("FunctionContext has no http context associated with it.");
-            }
-
-            var requestProxy = new IncomingHttpRequestProxy(httpContext.Request);
+            var context = functionContext.GetHttpContext();
+            var requestProxy = new IncomingHttpRequestProxy(context.Request);
             var cleanupRoutines = new List<Func<Task>>();
-
             try
             {
-                // First trying ingress
-                var result = await this.IsExceededAsync(requestProxy, cleanupRoutines);
-
-                bool restOfPipelineCalled = false;
-
-                if (result == null)
-                {
-                    restOfPipelineCalled = true;
-
-                    // Also trying to propagate egress to ingress
-                    try
+                // Need to call the rest of the pipeline no more than one time
+                bool nextCalled = false;
+                var callNextOnce = async () => {
+                    if (!nextCalled) 
                     {
+                        nextCalled = true;
                         await next();
                     }
-                    catch (ThrottlingTrollTooManyRequestsException throttlingEx)
-                    {
-                        // Catching propagated exception from egress
-                        result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                    }
-                    catch (AggregateException ex)
-                    {
-                        // Catching propagated exception from egress as AggregateException
+                };
 
-                        ThrottlingTrollTooManyRequestsException throttlingEx = null;
+                var result = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
-                        foreach (var exx in ex.Flatten().InnerExceptions)
-                        {
-                            throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
-                            if (throttlingEx != null)
-                            {
-                                result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                                break;
-                            }
-                        }
-
-                        if (throttlingEx == null)
-                        {
-                            throw;
-                        }
-                    }
-                }
-
-                if (result == null)
-                {
-                    return;
-                }
-
-                if (this._responseFabric == null)
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-                    // Formatting default Retry-After response
-
-                    if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
-                    {
-                        httpContext.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
-                    }
-
-                    string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
-                        result.RetryAfterHeaderValue :
-                        $"{result.RetryAfterHeaderValue} seconds";
-
-                    await httpContext.Response.WriteAsync($"Retry after {responseString}");
-                }
-                else
-                {
-                    // Using the provided response builder
-                    var responseProxy = new IngressHttpResponseProxy(httpContext.Response);
-
-                    await this._responseFabric(result, requestProxy, responseProxy, httpContext.RequestAborted);
-
-                    if (responseProxy.ShouldContinueAsNormal)
-                    {
-                        // Continue with normal request processing
-
-                        if (!restOfPipelineCalled)
-                        {
-                            await next();
-                        }
-                    }
-                }
+                await this.ConstructResponse(context, result, requestProxy, callNextOnce);
             }
             finally
             {
                 await Task.WhenAll(cleanupRoutines.Select(f => f()));
+            }
+        }
+
+        private async Task ConstructResponse(HttpContext context, LimitExceededResult result, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
+        {
+            if (result == null)
+            {
+                return;
+            }
+
+            if (this._responseFabric == null)
+            {
+                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+                // Formatting default Retry-After response
+
+                if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+                {
+                    context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+                }
+
+                string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
+                    result.RetryAfterHeaderValue :
+                    $"{result.RetryAfterHeaderValue} seconds";
+
+                await context.Response.WriteAsync($"Retry after {responseString}");
+            }
+            else
+            {
+                // Using the provided response builder
+
+                var responseProxy = new IngressHttpResponseProxy(context.Response);
+
+                await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
+
+                if (responseProxy.ShouldContinueAsNormal)
+                {
+                    // Continue with normal request processing
+                    await callNextOnce();
+                }
             }
         }
     }

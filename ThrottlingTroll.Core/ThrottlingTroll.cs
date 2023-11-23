@@ -53,8 +53,56 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
+        /// Checks if ingress limit is exceeded for a given request.
+        /// Also checks whether there're any <see cref="ThrottlingTrollTooManyRequestsException"/>s from egress.
+        /// If exceeded, returns a <see cref="LimitExceededResult"/>. Otherwise returns null.
+        /// </summary>
+        protected async Task<LimitExceededResult> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
+        {
+            // First trying ingress
+            var result = await this.IsExceededAsync(request, cleanupRoutines);
+
+            if (result == null)
+            {
+                // Also trying to propagate egress to ingress
+                try
+                {
+                    await nextAction();
+                }
+                catch (ThrottlingTrollTooManyRequestsException throttlingEx)
+                {
+                    // Catching propagated exception from egress
+                    result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+                }
+                catch (AggregateException ex)
+                {
+                    // Catching propagated exception from egress as AggregateException
+
+                    ThrottlingTrollTooManyRequestsException throttlingEx = null;
+
+                    foreach (var exx in ex.Flatten().InnerExceptions)
+                    {
+                        throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
+                        if (throttlingEx != null)
+                        {
+                            result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+                            break;
+                        }
+                    }
+
+                    if (throttlingEx == null)
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
-        /// If exceeded, returns number of seconds to retry after and unique counter ID. Otherwise returns null.
+        /// If exceeded, returns the outcome of checking the limit. Otherwise returns null.
         /// </summary>
         protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
         {

@@ -1,9 +1,32 @@
+using Azure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Net.Http.Headers;
 using Moq;
 
 namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 {
+
+    class FakeFunctionContext : FunctionContext
+    {
+        public override IDictionary<object, object> Items { get; set; } = new Dictionary<object, object>() { { "HttpRequestContext", new DefaultHttpContext() } };
+
+        public override string InvocationId => throw new NotImplementedException();
+
+        public override string FunctionId => throw new NotImplementedException();
+
+        public override TraceContext TraceContext => throw new NotImplementedException();
+
+        public override BindingContext BindingContext => throw new NotImplementedException();
+
+        public override RetryContext RetryContext => throw new NotImplementedException();
+
+        public override IServiceProvider InstanceServices { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public override FunctionDefinition FunctionDefinition => throw new NotImplementedException();
+
+        public override IInvocationFeatures Features => throw new NotImplementedException();
+    }
 
     [TestClass]
     public class ThrottlingTrollMiddlewareTests
@@ -29,7 +52,7 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             // Act
 
-            await middleware.InvokeOnHttpContext(new DefaultHttpContext(), async () =>
+            await middleware.Invoke(new FakeFunctionContext(), async () =>
             {
                 Assert.IsFalse(nextWasCalled);
 
@@ -63,7 +86,7 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             // Act
 
-            Func<Task> act = () => middleware.InvokeOnHttpContext(new DefaultHttpContext(), async () =>
+            Func<Task> act = () => middleware.Invoke(new FakeFunctionContext(), async () =>
             {
                 throw exception;
 
@@ -97,12 +120,14 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
             };
 
             var middleware = new ThrottlingTrollMiddleware(options);
-            var httpContext = new DefaultHttpContext();
+
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
             httpContext.Response.Body = new MemoryStream();
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(functionContext, async () =>
             {
                 throw exception;
 
@@ -142,12 +167,13 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
-            var httpContext = new DefaultHttpContext();
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
             httpContext.Response.Body = new MemoryStream();
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(functionContext, async () =>
             {
                 Task.Run(() => { throw exception; }).Wait();
 
@@ -187,12 +213,13 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
-            var httpContext = new DefaultHttpContext();
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
             httpContext.Response.Body = new MemoryStream();
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(functionContext, async () =>
             {
                 throw exception;
 
@@ -263,12 +290,13 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
-            var httpContext = new DefaultHttpContext();
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
             httpContext.Response.Body = new MemoryStream();
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(functionContext, async () =>
             {
                 Assert.Fail("_next() should not be called");
 
@@ -323,12 +351,13 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
-            var httpContext = new DefaultHttpContext();
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
             httpContext.Response.Body = new MemoryStream();
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(functionContext, async () =>
             {
                 Assert.Fail("_next() should not be called");
 
@@ -384,7 +413,7 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(new FakeFunctionContext(), async () =>
             {
                 Assert.IsFalse(nextWasCalled);
                 nextWasCalled = true;
@@ -427,7 +456,7 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             // Act
 
-            await middleware.InvokeOnHttpContext(httpContext, async () =>
+            await middleware.Invoke(new FakeFunctionContext(), async () =>
             {
                 Assert.IsFalse(nextWasCalled);
                 nextWasCalled = true;
