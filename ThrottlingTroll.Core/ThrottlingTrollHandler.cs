@@ -164,15 +164,21 @@ namespace ThrottlingTroll
                 var cleanupRoutines = new List<Func<Task>>();
 
                 // Decoupling from SynchronizationContext just in case
-                var isExceededResult = Task.Run(() =>
+                var checkList = Task.Run(() =>
                 {
                     return this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
                 })
                 .Result;
 
+                var exceededRules = checkList
+                    .Where(r => r.IsExceeded)
+                    // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
+                    .OrderByDescending(r => { return int.TryParse(r.RetryAfterHeaderValue, out int retryAfterInSeconds) ? retryAfterInSeconds : 0; })
+                    .ToArray();
+
                 try
                 {
-                    if (isExceededResult == null)
+                    if (exceededRules.Length <= 0)
                     {
                         // Just making the call as normal
                         response = base.Send(request, cancellationToken);
@@ -180,7 +186,7 @@ namespace ThrottlingTroll
                     else
                     {
                         // Creating the TooManyRequests response
-                        response = this.CreateRetryAfterResponse(request, isExceededResult);
+                        response = this.CreateRetryAfterResponse(request, exceededRules.First());
                     }
                 }
                 finally
@@ -197,7 +203,7 @@ namespace ThrottlingTroll
                     // Decoupling from SynchronizationContext just in case
                     Task.Run(() =>
                     {
-                        return this._responseFabric(isExceededResult, requestProxy, responseProxy, cancellationToken);
+                        return this._responseFabric(exceededRules.FirstOrDefault(), requestProxy, responseProxy, cancellationToken);
                     })
                     .Wait();
 
@@ -237,11 +243,17 @@ namespace ThrottlingTroll
             {
                 var cleanupRoutines = new List<Func<Task>>();
 
-                var isExceededResult = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
+                var checkList = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
+
+                var exceededRules = checkList
+                    .Where(r => r.IsExceeded)
+                    // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
+                    .OrderByDescending(r => { return int.TryParse(r.RetryAfterHeaderValue, out int retryAfterInSeconds) ? retryAfterInSeconds : 0; })
+                    .ToArray();
 
                 try
                 {
-                    if (isExceededResult == null)
+                    if (exceededRules.Length <= 0)
                     {
                         // Just making the call as normal
                         response = await base.SendAsync(request, cancellationToken);
@@ -249,7 +261,7 @@ namespace ThrottlingTroll
                     else
                     {
                         // Creating the TooManyRequests response
-                        response = this.CreateRetryAfterResponse(request, isExceededResult);
+                        response = this.CreateRetryAfterResponse(request, exceededRules.First());
                     }
                 }
                 finally
@@ -263,7 +275,7 @@ namespace ThrottlingTroll
                     // Using custom response fabric
                     var responseProxy = new EgressHttpResponseProxy(response, retryCount++);
 
-                    await this._responseFabric(isExceededResult, requestProxy, responseProxy, cancellationToken);
+                    await this._responseFabric(exceededRules.FirstOrDefault(), requestProxy, responseProxy, cancellationToken);
 
                     if (responseProxy.ShouldRetry)
                     {

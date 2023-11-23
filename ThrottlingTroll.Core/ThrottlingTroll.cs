@@ -60,52 +60,60 @@ namespace ThrottlingTroll
         protected async Task<LimitExceededResult> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
         {
             // First trying ingress
-            var result = await this.IsExceededAsync(request, cleanupRoutines);
+            var checkList = await this.IsExceededAsync(request, cleanupRoutines);
 
-            if (result == null)
+            var exceededRules = checkList
+                .Where(r => r.IsExceeded)
+                // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
+                .OrderByDescending(r => { return int.TryParse(r.RetryAfterHeaderValue, out int retryAfterInSeconds) ? retryAfterInSeconds : 0; } )
+                .ToArray();
+
+            if (exceededRules.Length > 0)
             {
-                // Also trying to propagate egress to ingress
-                try
-                {
-                    await nextAction();
-                }
-                catch (ThrottlingTrollTooManyRequestsException throttlingEx)
-                {
-                    // Catching propagated exception from egress
-                    result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                }
-                catch (AggregateException ex)
-                {
-                    // Catching propagated exception from egress as AggregateException
+                return exceededRules.First();
+            }
 
-                    ThrottlingTrollTooManyRequestsException throttlingEx = null;
+            // Also trying to propagate egress to ingress
+            try
+            {
+                await nextAction();
+            }
+            catch (ThrottlingTrollTooManyRequestsException throttlingEx)
+            {
+                // Catching propagated exception from egress
+                return new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+            }
+            catch (AggregateException ex)
+            {
+                // Catching propagated exception from egress as AggregateException
 
-                    foreach (var exx in ex.Flatten().InnerExceptions)
+                ThrottlingTrollTooManyRequestsException throttlingEx = null;
+
+                foreach (var exx in ex.Flatten().InnerExceptions)
+                {
+                    throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
+                    if (throttlingEx != null)
                     {
-                        throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
-                        if (throttlingEx != null)
-                        {
-                            result = new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
-                            break;
-                        }
+                        return new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
                     }
+                }
 
-                    if (throttlingEx == null)
-                    {
-                        throw;
-                    }
+                if (throttlingEx == null)
+                {
+                    throw;
                 }
             }
 
-            return result;
+            return null;
         }
 
         /// <summary>
-        /// Checks if limit of calls is exceeded for a given request.
-        /// If exceeded, returns the outcome of checking the limit. Otherwise returns null.
+        /// Checks which limits were exceeded for a given request.
+        /// Returns a list of check results for rules that this request matched.
         /// </summary>
-        protected internal async Task<LimitExceededResult> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
+        protected internal async Task<List<LimitExceededResult>> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
         {
+            var result = new List<LimitExceededResult>();
             bool shouldThrowOnExceptions = false;
             try
             {
@@ -113,18 +121,17 @@ namespace ThrottlingTroll
 
                 if (config.Rules == null)
                 {
-                    return null;
+                    return result;
                 }
 
                 // First checking if request whitelisted
                 if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
                 {
                     this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
-                    return null;
+                    return result;
                 }
 
                 var dtStart = DateTimeOffset.UtcNow;
-                LimitExceededResult result = null;
 
                 // Still need to check all limits, so that all counters get updated
                 foreach (var limit in config.Rules)
@@ -142,20 +149,9 @@ namespace ThrottlingTroll
                         continue;
                     }
 
-                    if (!limitCheckResult.IsExceeded)
+                    if (limitCheckResult.IsExceeded && limit.MaxDelayInSeconds > 0)
                     {
-                        // Decrementing this counter at the end of request processing
-                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));
-
-                        // The request matched the rule, but the limit was not exceeded.
-                        continue;
-                    }
-
-                    // Doing the delay logic
-                    if (limit.MaxDelayInSeconds > 0)
-                    {
-                        bool awaitedSuccessfully = false;
-
+                        // Doing the delay logic
                         while ((DateTimeOffset.UtcNow - dtStart).TotalSeconds <= limit.MaxDelayInSeconds)
                         {
                             if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId))
@@ -165,42 +161,22 @@ namespace ThrottlingTroll
 
                                 if (!limitCheckResult.IsExceeded)
                                 {
-                                    // Decrementing this counter at the end of request processing
-                                    cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));
-
-                                    awaitedSuccessfully = true;
-
                                     break;
                                 }
                             }
 
                             await Task.Delay(this._sleepTimeSpan);
                         }
-
-                        if (awaitedSuccessfully)
-                        {
-                            continue;
-                        }
                     }
 
-                    // this limit was exceeded
-                    if
-                    (
-                        (result == null)
-                        ||
-                        (
-                            int.TryParse(result.RetryAfterHeaderValue, out int first) &&
-                            int.TryParse(limitCheckResult.RetryAfterHeaderValue, out int second) &&
-                            first < second
-                        )
-                    )
+                    if (!limitCheckResult.IsExceeded)
                     {
-                        // Will return result with biggest RetryAfterInSeconds
-                        result = limitCheckResult;
+                        // Decrementing this counter at the end of request processing
+                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));
                     }
-                }
 
-                return result;
+                    result.Add(limitCheckResult);
+                }
             }
             catch (Exception ex)
             {
@@ -212,7 +188,7 @@ namespace ThrottlingTroll
                 }
             }
 
-            return null;
+            return result;
         }
 
         /// <summary>
