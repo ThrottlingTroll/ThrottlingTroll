@@ -24,7 +24,7 @@ namespace ThrottlingTroll
         public int NumOfBuckets { get; set; }
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds { get { return this.NumOfBuckets == 0 ? 0 : this.IntervalInSeconds / this.NumOfBuckets; } }
+        public override int RetryAfterInSeconds => this.NumOfBuckets == 0 ? 0 : this.IntervalInSeconds / this.NumOfBuckets;
 
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)

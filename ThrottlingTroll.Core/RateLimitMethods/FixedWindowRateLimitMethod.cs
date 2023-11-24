@@ -17,7 +17,7 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds { get { return this.IntervalInSeconds; } }
+        public override int RetryAfterInSeconds => this.IntervalInSeconds;
 
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)

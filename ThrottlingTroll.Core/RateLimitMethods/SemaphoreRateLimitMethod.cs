@@ -14,7 +14,7 @@ namespace ThrottlingTroll
         public int TimeoutInSeconds { get; set; } = 100;
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds { get { return this.TimeoutInSeconds; } }
+        public override int RetryAfterInSeconds => this.TimeoutInSeconds;
 
         /// <summary>
         /// ctor
