@@ -13,6 +13,9 @@ namespace ThrottlingTroll
         /// </summary>
         public int TimeoutInSeconds { get; set; } = 100;
 
+        /// <inheritdoc />
+        public override int RetryAfterInSeconds { get { return this.TimeoutInSeconds; } }
+
         /// <summary>
         /// ctor
         /// </summary>
@@ -34,11 +37,11 @@ namespace ThrottlingTroll
             {
                 await store.DecrementAsync(limitKey, cost);
 
-                return this.TimeoutInSeconds;
+                return -1;
             }
             else
             {
-                return 0;
+                return this.PermitLimit - (int)count;
             }
         }
 

@@ -24,18 +24,21 @@ namespace ThrottlingTroll
         public int NumOfBuckets { get; set; }
 
         /// <inheritdoc />
+        public override int RetryAfterInSeconds { get { return this.NumOfBuckets == 0 ? 0 : this.IntervalInSeconds / this.NumOfBuckets; } }
+
+        /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
         {
             if (this.IntervalInSeconds <= 0 || this.NumOfBuckets <= 0)
             {
-                return 0;
+                return int.MaxValue;
             }
 
             int bucketSizeInSeconds = this.IntervalInSeconds / this.NumOfBuckets;
 
             if (bucketSizeInSeconds <= 0)
             {
-                return 0;
+                return int.MaxValue;
             }
 
             var now = DateTime.UtcNow;
@@ -58,7 +61,7 @@ namespace ThrottlingTroll
             if (this._cache.Get(limitKeyExceededKey) != null)
             {
                 // But in this case it's OK to abandon the increment task, so the optimization still takes place.
-                return bucketSizeInSeconds;
+                return -1;
             }
 
             // Also getting values from other buckets
@@ -77,11 +80,11 @@ namespace ThrottlingTroll
                 var limitKeyExceededTtl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds);
                 this._cache.Set(limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = limitKeyExceededTtl });
 
-                return bucketSizeInSeconds;
+                return -1;
             }
             else
             {
-                return 0;
+                return this.PermitLimit - (int)count;
             }
         }
 

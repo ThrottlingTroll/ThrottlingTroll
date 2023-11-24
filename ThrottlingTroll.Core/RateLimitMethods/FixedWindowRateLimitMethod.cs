@@ -17,11 +17,14 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
+        public override int RetryAfterInSeconds { get { return this.IntervalInSeconds; } }
+
+        /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
         {
             if (this.IntervalInSeconds <= 0)
             {
-                return 0;
+                return int.MaxValue;
             }
 
             // First checking our local memory cache for the "counter exceeded" flag
@@ -29,7 +32,7 @@ namespace ThrottlingTroll
 
             if (this._cache.Get(limitKeyExceededKey) != null)
             {
-                return this.IntervalInSeconds;
+                return -1;
             }
 
             var now = DateTime.UtcNow;
@@ -44,11 +47,11 @@ namespace ThrottlingTroll
                 // Remember the fact that this counter exceeded in local cache
                 this._cache.Set( limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = ttl } );
 
-                return this.IntervalInSeconds;
+                return -1;
             }
             else
             {
-                return 0;
+                return this.PermitLimit - (int)count;
             }
         }
 

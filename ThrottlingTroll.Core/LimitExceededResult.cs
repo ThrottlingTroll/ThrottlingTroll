@@ -22,6 +22,12 @@ namespace ThrottlingTroll
         public int RetryAfterInSeconds { get; private set; }
 
         /// <summary>
+        /// The remaining amount of requests allowed within current timeframe.
+        /// When limit is exceeded, contains 0.
+        /// </summary>
+        public int RequestsRemaining { get; set; }
+
+        /// <summary>
         /// Unique ID of the counter that was exceeded. Basically it is a hash of the relevant Rate Limiting Rule
         /// plus optional Identity ID (if <see cref="RequestFilter.IdentityIdExtractor"/> is specified).
         /// Will be null for egress-to-ingress-propagated results.

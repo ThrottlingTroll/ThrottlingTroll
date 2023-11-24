@@ -17,7 +17,7 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Increments the counter by cost and checks if limit of calls is exceeded for a given rule (identified by its hash).
-        /// If exceeded, returns number of seconds to retry after. Otherwise returns 0.
+        /// Returns the remaining number of requests allowed (-1, if the limit is exceeded).
         /// </summary>
         public abstract Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store);
 
@@ -43,5 +43,10 @@ namespace ThrottlingTroll
         /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
         /// </summary>
         public bool ShouldThrowOnFailures { get; set; } = false;
+
+        /// <summary>
+        /// Suggested number of seconds to retry after, when a limit is exceeded.
+        /// </summary>
+        public abstract int RetryAfterInSeconds { get; }
     }
 }

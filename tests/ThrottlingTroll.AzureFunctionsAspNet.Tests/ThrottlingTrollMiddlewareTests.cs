@@ -239,7 +239,7 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
         class AlwaysExceededMethod : RateLimitMethod
         {
-            public readonly int RetryAfterSeconds = DateTimeOffset.UtcNow.Second;
+            public override int RetryAfterInSeconds => DateTimeOffset.UtcNow.Second;
 
             public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
             {
@@ -248,7 +248,7 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 
             public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
             {
-                return this.RetryAfterSeconds;
+                return -1;
             }
 
             public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
@@ -305,12 +305,12 @@ namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
             // Assert
 
             Assert.AreEqual(StatusCodes.Status429TooManyRequests, httpContext.Response.StatusCode);
-            Assert.AreEqual(limitMethod.RetryAfterSeconds.ToString(), httpContext.Response.Headers[HeaderNames.RetryAfter].ToString());
+            Assert.AreEqual(limitMethod.RetryAfterInSeconds.ToString(), httpContext.Response.Headers[HeaderNames.RetryAfter].ToString());
 
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
             using (var reader = new StreamReader(httpContext.Response.Body))
             {
-                Assert.AreEqual($"Retry after {limitMethod.RetryAfterSeconds} seconds", reader.ReadToEnd());
+                Assert.AreEqual($"Retry after {limitMethod.RetryAfterInSeconds} seconds", reader.ReadToEnd());
             }
         }
 

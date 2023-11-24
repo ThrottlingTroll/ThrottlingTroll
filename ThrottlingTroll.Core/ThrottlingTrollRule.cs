@@ -66,16 +66,16 @@ namespace ThrottlingTroll
             
             string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
-            var retryAfter = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store);
+            var requestsRemaining = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store);
 
-            if (retryAfter <= 0)
+            if (requestsRemaining >= 0)
             {
                 return new LimitExceededResult(false, this, 0, uniqueCacheKey);
             }
 
             log(LogLevel.Warning, $"ThrottlingTroll: rule {uniqueCacheKey} exceeded by {request.Method} {request.UriWithoutQueryString}");
 
-            return new LimitExceededResult(true, this, retryAfter, uniqueCacheKey);
+            return new LimitExceededResult(true, this, this.LimitMethod.RetryAfterInSeconds, uniqueCacheKey);
         }
 
         /// <summary>
