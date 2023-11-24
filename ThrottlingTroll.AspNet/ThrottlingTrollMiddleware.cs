@@ -67,7 +67,7 @@ namespace ThrottlingTroll
         private async Task ConstructResponse(HttpContext context, List<LimitExceededResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
             var result = checkList
-                .Where(r => r.IsExceeded)
+                .Where(r => r.RequestsRemaining < 0)
                 // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                 .OrderByDescending(r => r.RetryAfterInSeconds)
                 .FirstOrDefault();

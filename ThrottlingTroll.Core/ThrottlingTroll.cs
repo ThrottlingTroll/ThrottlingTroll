@@ -62,7 +62,7 @@ namespace ThrottlingTroll
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
 
-            if (checkList.Any(r => r.IsExceeded))
+            if (checkList.Any(r => r.RequestsRemaining < 0))
             {
                 return checkList;
             }
@@ -145,7 +145,7 @@ namespace ThrottlingTroll
                         continue;
                     }
 
-                    if (limitCheckResult.IsExceeded && limit.MaxDelayInSeconds > 0)
+                    if ((limitCheckResult.RequestsRemaining < 0) && limit.MaxDelayInSeconds > 0)
                     {
                         // Doing the delay logic
                         while ((DateTimeOffset.UtcNow - dtStart).TotalSeconds <= limit.MaxDelayInSeconds)
@@ -155,7 +155,7 @@ namespace ThrottlingTroll
                                 // Doing double-check
                                 limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
 
-                                if (!limitCheckResult.IsExceeded)
+                                if (limitCheckResult.RequestsRemaining >= 0)
                                 {
                                     break;
                                 }
@@ -165,7 +165,7 @@ namespace ThrottlingTroll
                         }
                     }
 
-                    if (!limitCheckResult.IsExceeded)
+                    if (limitCheckResult.RequestsRemaining >= 0)
                     {
                         // Decrementing this counter at the end of request processing
                         cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));

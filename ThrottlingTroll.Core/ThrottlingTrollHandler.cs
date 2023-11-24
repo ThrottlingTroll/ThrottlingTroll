@@ -171,7 +171,7 @@ namespace ThrottlingTroll
                 .Result;
 
                 var exceededRules = checkList
-                    .Where(r => r.IsExceeded)
+                    .Where(r => r.RequestsRemaining < 0)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                     .OrderByDescending(r => r.RetryAfterInSeconds)
                     .ToArray();
@@ -246,7 +246,7 @@ namespace ThrottlingTroll
                 var checkList = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
 
                 var exceededRules = checkList
-                    .Where(r => r.IsExceeded)
+                    .Where(r => r.RequestsRemaining < 0)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                     .OrderByDescending(r => r.RetryAfterInSeconds)
                     .ToArray();
