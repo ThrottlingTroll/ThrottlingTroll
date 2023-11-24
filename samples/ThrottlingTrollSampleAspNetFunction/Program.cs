@@ -38,7 +38,7 @@ builder.ConfigureServices(services => {
     // Configuring a named HttpClient that does automatic retries with respect to Retry-After response header
     services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
     {
-        options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
+        options.ResponseFabric = async (checkResults, requestProxy, responseProxy, cancelToken) =>
         {
             var egressResponse = (IEgressHttpResponseProxy)responseProxy;
 
@@ -124,8 +124,15 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
         };
 
         // Custom response fabric, returns 400 BadRequest + some custom content
-        options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+        options.ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
         {
+            // Getting the rule that was exceeded and with the biggest RetryAfter value
+            var limitExceededResult = checkResults.OrderByDescending(r => r.RetryAfterInSeconds).FirstOrDefault(r => r.RequestsRemaining < 0);
+            if (limitExceededResult == null)
+            {
+                return;
+            }
+
             responseProxy.StatusCode = (int)HttpStatusCode.BadRequest;
 
             responseProxy.SetHttpHeader("Retry-After", limitExceededResult.RetryAfterHeaderValue);
@@ -154,7 +161,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
         };
 
         // Custom response fabric, impedes the normal response for 3 seconds
-        options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+        options.ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
         {
             await Task.Delay(TimeSpan.FromSeconds(3));
 

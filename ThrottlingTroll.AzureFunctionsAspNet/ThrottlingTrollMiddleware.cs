@@ -21,7 +21,7 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollMiddleware : ThrottlingTroll
     {
-        private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         internal ThrottlingTrollMiddleware
         (
@@ -98,7 +98,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new IngressHttpResponseProxy(context.Response);
 
-                await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
+                await this._responseFabric(checkList, requestProxy, responseProxy, context.RequestAborted);
 
                 if (responseProxy.ShouldContinueAsNormal)
                 {

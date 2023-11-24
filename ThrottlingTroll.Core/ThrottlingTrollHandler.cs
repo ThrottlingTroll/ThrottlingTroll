@@ -22,7 +22,7 @@ namespace ThrottlingTroll
         private readonly ThrottlingTroll _troll;
         private bool _propagateToIngress;
 
-        private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         /// <summary>
         /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
@@ -68,7 +68,7 @@ namespace ThrottlingTroll
         /// <param name="innerHttpMessageHandler">Instance of <see cref="HttpMessageHandler"/> to use as inner handler. When null, a default <see cref="HttpClientHandler"/> instance will be created.</param>
         public ThrottlingTrollHandler
         (
-            Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
+            Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             ICounterStore counterStore,
             ThrottlingTrollEgressConfig config,
             Action<LogLevel, string> log = null,
@@ -90,7 +90,7 @@ namespace ThrottlingTroll
         public ThrottlingTrollHandler
         (
             Func<IHttpRequestProxy, string> identityIdExtractor,
-            Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
+            Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             ICounterStore counterStore,
             ThrottlingTrollEgressConfig config,
             Action<LogLevel, string> log = null,
@@ -114,7 +114,7 @@ namespace ThrottlingTroll
         (
             Func<IHttpRequestProxy, long> costExtractor,
             Func<IHttpRequestProxy, string> identityIdExtractor,
-            Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
+            Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             ICounterStore counterStore,
             ThrottlingTrollEgressConfig config,
             Action<LogLevel, string> log = null,
@@ -203,7 +203,7 @@ namespace ThrottlingTroll
                     // Decoupling from SynchronizationContext just in case
                     Task.Run(() =>
                     {
-                        return this._responseFabric(exceededRules.FirstOrDefault(), requestProxy, responseProxy, cancellationToken);
+                        return this._responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
                     })
                     .Wait();
 
@@ -275,7 +275,7 @@ namespace ThrottlingTroll
                     // Using custom response fabric
                     var responseProxy = new EgressHttpResponseProxy(response, retryCount++);
 
-                    await this._responseFabric(exceededRules.FirstOrDefault(), requestProxy, responseProxy, cancellationToken);
+                    await this._responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
 
                     if (responseProxy.ShouldRetry)
                     {

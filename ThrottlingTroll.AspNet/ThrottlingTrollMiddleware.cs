@@ -19,7 +19,7 @@ namespace ThrottlingTroll
     {
         private readonly RequestDelegate _next;
 
-        private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         /// <summary>
         /// Ctor. Shold not be used externally, but needs to be public.
@@ -100,7 +100,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new IngressHttpResponseProxy(context.Response);
 
-                await this._responseFabric(result, requestProxy, responseProxy, context.RequestAborted);
+                await this._responseFabric(checkList, requestProxy, responseProxy, context.RequestAborted);
 
                 if (responseProxy.ShouldContinueAsNormal)
                 {

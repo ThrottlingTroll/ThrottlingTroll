@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +21,7 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollMiddleware : ThrottlingTroll
     {
-        private readonly Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         internal ThrottlingTrollMiddleware
         (
@@ -36,7 +35,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Is invoked by Azure Functions middleware pipeline. Handles ingress throttling.
         /// </summary>
-        public async Task<HttpResponseData> Invoke(HttpRequestData request, Func<Task> next, CancellationToken cancellationToken)
+        public async Task<HttpResponseData> InvokeAsync(HttpRequestData request, Func<Task> next, CancellationToken cancellationToken)
         {
             var requestProxy = new IncomingHttpRequestProxy(request);
             var cleanupRoutines = new List<Func<Task>>();
@@ -102,7 +101,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new IngressHttpResponseProxy(response);
 
-                await this._responseFabric(result, requestProxy, responseProxy, cancellationToken);
+                await this._responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
 
                 if (responseProxy.ShouldContinueAsNormal)
                 {
@@ -207,7 +206,7 @@ namespace ThrottlingTroll
 
                     var request = await context.GetHttpRequestDataAsync() ?? throw new ArgumentNullException("HTTP Request is null");
 
-                    var response = await throttlingTrollMiddleware.Invoke(request, next, context.CancellationToken);
+                    var response = await throttlingTrollMiddleware.InvokeAsync(request, next, context.CancellationToken);
 
                     if (response != null)
                     {

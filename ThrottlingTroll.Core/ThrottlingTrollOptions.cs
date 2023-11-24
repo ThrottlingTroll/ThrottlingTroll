@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,11 +50,11 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Custom response creation routine.<br/>
-        /// Takes <see cref="LimitExceededResult"/> (represents the Rule that was exceeded),<br/>
+        /// Takes <see cref="List{LimitExceededResult}"/> (represents the list of rules the request matched and the corresponding check results),<br/>
         /// <see cref="IHttpRequestProxy"/> (provides info about the ongoing request), <br/> 
         /// <see cref="IHttpResponseProxy"/> (which should be customized by your code) and <br/>
         /// <see cref="CancellationToken"/> (which indicates that the request was aborted from outside)
         /// </summary>
-        public Func<LimitExceededResult, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
+        public Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
     }
 }

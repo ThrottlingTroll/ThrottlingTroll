@@ -114,7 +114,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 Assert.IsFalse(nextWasCalled);
 
@@ -149,7 +149,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            Func<Task<HttpResponseData>> act = () => middleware.Invoke(new FakeHttpRequestData(), async () =>
+            Func<Task<HttpResponseData>> act = () => middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 throw exception;
 
@@ -187,7 +187,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 throw exception;
 
@@ -229,7 +229,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 Task.Run(() => { throw exception; }).Wait();
 
@@ -271,7 +271,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 throw exception;
 
@@ -319,7 +319,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 Assert.Fail("_next() should not be called");
 
@@ -376,7 +376,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 Assert.Fail("_next() should not be called");
 
@@ -430,7 +430,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 Assert.IsFalse(nextWasCalled);
                 nextWasCalled = true;
@@ -471,7 +471,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.Invoke(new FakeHttpRequestData(), async () =>
+            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
             {
                 Assert.IsFalse(nextWasCalled);
                 nextWasCalled = true;
