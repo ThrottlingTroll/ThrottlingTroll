@@ -55,22 +55,16 @@ namespace ThrottlingTroll
         /// <summary>
         /// Checks if ingress limit is exceeded for a given request.
         /// Also checks whether there're any <see cref="ThrottlingTrollTooManyRequestsException"/>s from egress.
-        /// If exceeded, returns a <see cref="LimitExceededResult"/>. Otherwise returns null.
+        /// Returns a list of check results for rules that this request matched.
         /// </summary>
-        protected async Task<LimitExceededResult> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
+        protected async Task<List<LimitExceededResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
         {
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
 
-            var exceededRules = checkList
-                .Where(r => r.IsExceeded)
-                // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
-                .OrderByDescending(r => { return int.TryParse(r.RetryAfterHeaderValue, out int retryAfterInSeconds) ? retryAfterInSeconds : 0; } )
-                .ToArray();
-
-            if (exceededRules.Length > 0)
+            if (checkList.Any(r => r.IsExceeded))
             {
-                return exceededRules.First();
+                return checkList;
             }
 
             // Also trying to propagate egress to ingress
@@ -81,11 +75,12 @@ namespace ThrottlingTroll
             catch (ThrottlingTrollTooManyRequestsException throttlingEx)
             {
                 // Catching propagated exception from egress
-                return new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+                checkList.Add(new LimitExceededResult(throttlingEx.RetryAfterHeaderValue));
             }
             catch (AggregateException ex)
             {
                 // Catching propagated exception from egress as AggregateException
+                // TODO: refactor to LINQ
 
                 ThrottlingTrollTooManyRequestsException throttlingEx = null;
 
@@ -94,7 +89,8 @@ namespace ThrottlingTroll
                     throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
                     if (throttlingEx != null)
                     {
-                        return new LimitExceededResult(throttlingEx.RetryAfterHeaderValue);
+                        checkList.Add(new LimitExceededResult(throttlingEx.RetryAfterHeaderValue));
+                        break;
                     }
                 }
 
@@ -104,7 +100,7 @@ namespace ThrottlingTroll
                 }
             }
 
-            return null;
+            return checkList;
         }
 
         /// <summary>

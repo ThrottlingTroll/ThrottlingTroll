@@ -7,9 +7,19 @@ namespace ThrottlingTroll
     public class LimitExceededResult
     {
         /// <summary>
+        /// Whether the given limit was exceeded or not
+        /// </summary>
+        public bool IsExceeded { get; private set; }
+
+        /// <summary>
         /// Suggested value for Retry-After response header
         /// </summary>
         public string RetryAfterHeaderValue { get; private set; }
+
+        /// <summary>
+        /// Suggested number of seconds to retry after
+        /// </summary>
+        public int RetryAfterInSeconds { get; private set; }
 
         /// <summary>
         /// Unique ID of the counter that was exceeded. Basically it is a hash of the relevant Rate Limiting Rule
@@ -24,11 +34,12 @@ namespace ThrottlingTroll
         /// </summary>
         public ThrottlingTrollRule RuleThatWasExceeded { get; private set; }
 
-        internal LimitExceededResult(bool isExceeded, ThrottlingTrollRule rule, string retryAfter, string counterId)
+        internal LimitExceededResult(bool isExceeded, ThrottlingTrollRule rule, int retryAfterInSeconds, string counterId)
         {
             this.IsExceeded = isExceeded;
             this.RuleThatWasExceeded = rule;
-            this.RetryAfterHeaderValue = retryAfter;
+            this.RetryAfterInSeconds = retryAfterInSeconds;
+            this.RetryAfterHeaderValue = retryAfterInSeconds.ToString();
             this.CounterId = counterId;
         }
 
@@ -38,8 +49,7 @@ namespace ThrottlingTroll
         public LimitExceededResult(string retryAfter)
         {
             this.RetryAfterHeaderValue = retryAfter;
+            this.IsExceeded = true;
         }
-
-        internal bool IsExceeded { get; private set; }
     }
 }

@@ -54,9 +54,9 @@ namespace ThrottlingTroll
                     }
                 };
 
-                var result = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
+                var checkList = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
-                await this.ConstructResponse(context, result, requestProxy, callNextOnce);
+                await this.ConstructResponse(context, checkList, requestProxy, callNextOnce);
             }
             finally
             {
@@ -64,8 +64,14 @@ namespace ThrottlingTroll
             }
         }
 
-        private async Task ConstructResponse(HttpContext context, LimitExceededResult result, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
+        private async Task ConstructResponse(HttpContext context, List<LimitExceededResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
+            var result = checkList
+                .Where(r => r.IsExceeded)
+                // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
+                .OrderByDescending(r => r.RetryAfterInSeconds)
+                .FirstOrDefault();
+
             if (result == null)
             {
                 return;

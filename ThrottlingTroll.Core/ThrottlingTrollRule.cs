@@ -70,12 +70,12 @@ namespace ThrottlingTroll
 
             if (retryAfter <= 0)
             {
-                return new LimitExceededResult(false, this, string.Empty, uniqueCacheKey);
+                return new LimitExceededResult(false, this, 0, uniqueCacheKey);
             }
 
             log(LogLevel.Warning, $"ThrottlingTroll: rule {uniqueCacheKey} exceeded by {request.Method} {request.UriWithoutQueryString}");
 
-            return new LimitExceededResult(true, this, retryAfter.ToString(), uniqueCacheKey);
+            return new LimitExceededResult(true, this, retryAfter, uniqueCacheKey);
         }
 
         /// <summary>

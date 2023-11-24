@@ -173,7 +173,7 @@ namespace ThrottlingTroll
                 var exceededRules = checkList
                     .Where(r => r.IsExceeded)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
-                    .OrderByDescending(r => { return int.TryParse(r.RetryAfterHeaderValue, out int retryAfterInSeconds) ? retryAfterInSeconds : 0; })
+                    .OrderByDescending(r => r.RetryAfterInSeconds)
                     .ToArray();
 
                 try
@@ -248,7 +248,7 @@ namespace ThrottlingTroll
                 var exceededRules = checkList
                     .Where(r => r.IsExceeded)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
-                    .OrderByDescending(r => { return int.TryParse(r.RetryAfterHeaderValue, out int retryAfterInSeconds) ? retryAfterInSeconds : 0; })
+                    .OrderByDescending(r => r.RetryAfterInSeconds)
                     .ToArray();
 
                 try
