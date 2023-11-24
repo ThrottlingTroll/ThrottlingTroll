@@ -4,7 +4,7 @@ namespace ThrottlingTroll
     /// <summary>
     /// Result of checking a limit
     /// </summary>
-    public class LimitExceededResult
+    public class LimitCheckResult
     {
         /// <summary>
         /// The remaining amount of requests allowed within current timeframe.
@@ -35,7 +35,7 @@ namespace ThrottlingTroll
         /// </summary>
         public ThrottlingTrollRule Rule { get; private set; }
 
-        internal LimitExceededResult(int requestsRemaining, ThrottlingTrollRule rule, int retryAfterInSeconds, string counterId)
+        internal LimitCheckResult(int requestsRemaining, ThrottlingTrollRule rule, int retryAfterInSeconds, string counterId)
         {
             this.RequestsRemaining = requestsRemaining;
             this.Rule = rule;
@@ -47,7 +47,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Ctor to be used when propagating from egress to ingress
         /// </summary>
-        public LimitExceededResult(string retryAfter)
+        public LimitCheckResult(string retryAfter)
         {
             this.RetryAfterHeaderValue = retryAfter;
             this.RequestsRemaining = -1;

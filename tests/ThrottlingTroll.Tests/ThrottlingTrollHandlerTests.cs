@@ -12,7 +12,7 @@ public class ThrottlingTrollHandlerTests
     class ThrottlingTrollHandler_Accessor : ThrottlingTrollHandler
     {
         public ThrottlingTrollHandler_Accessor(
-            Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
+            Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             ICounterStore counterStore, 
             ThrottlingTrollEgressConfig options
 

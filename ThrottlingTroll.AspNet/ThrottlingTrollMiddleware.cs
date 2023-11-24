@@ -19,7 +19,7 @@ namespace ThrottlingTroll
     {
         private readonly RequestDelegate _next;
 
-        private readonly Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         /// <summary>
         /// Ctor. Shold not be used externally, but needs to be public.
@@ -64,7 +64,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private async Task ConstructResponse(HttpContext context, List<LimitExceededResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
+        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
             var result = checkList
                 .Where(r => r.RequestsRemaining < 0)

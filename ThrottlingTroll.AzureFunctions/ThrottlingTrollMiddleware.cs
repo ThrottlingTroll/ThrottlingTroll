@@ -21,7 +21,7 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollMiddleware : ThrottlingTroll
     {
-        private readonly Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         internal ThrottlingTrollMiddleware
         (
@@ -61,7 +61,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private async Task<HttpResponseData> ConstructResponse(HttpRequestData request, List<LimitExceededResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce, CancellationToken cancellationToken)
+        private async Task<HttpResponseData> ConstructResponse(HttpRequestData request, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce, CancellationToken cancellationToken)
         {
             var result = checkList
                 .Where(r => r.RequestsRemaining < 0)

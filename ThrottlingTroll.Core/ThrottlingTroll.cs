@@ -57,7 +57,7 @@ namespace ThrottlingTroll
         /// Also checks whether there're any <see cref="ThrottlingTrollTooManyRequestsException"/>s from egress.
         /// Returns a list of check results for rules that this request matched.
         /// </summary>
-        protected async Task<List<LimitExceededResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
+        protected async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
         {
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
@@ -75,7 +75,7 @@ namespace ThrottlingTroll
             catch (ThrottlingTrollTooManyRequestsException throttlingEx)
             {
                 // Catching propagated exception from egress
-                checkList.Add(new LimitExceededResult(throttlingEx.RetryAfterHeaderValue));
+                checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
             }
             catch (AggregateException ex)
             {
@@ -89,7 +89,7 @@ namespace ThrottlingTroll
                     throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
                     if (throttlingEx != null)
                     {
-                        checkList.Add(new LimitExceededResult(throttlingEx.RetryAfterHeaderValue));
+                        checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
                         break;
                     }
                 }
@@ -107,9 +107,9 @@ namespace ThrottlingTroll
         /// Checks which limits were exceeded for a given request.
         /// Returns a list of check results for rules that this request matched.
         /// </summary>
-        protected internal async Task<List<LimitExceededResult>> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
+        protected internal async Task<List<LimitCheckResult>> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
         {
-            var result = new List<LimitExceededResult>();
+            var result = new List<LimitCheckResult>();
             bool shouldThrowOnExceptions = false;
             try
             {

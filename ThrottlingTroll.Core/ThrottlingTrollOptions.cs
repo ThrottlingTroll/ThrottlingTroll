@@ -55,6 +55,6 @@ namespace ThrottlingTroll
         /// <see cref="IHttpResponseProxy"/> (which should be customized by your code) and <br/>
         /// <see cref="CancellationToken"/> (which indicates that the request was aborted from outside)
         /// </summary>
-        public Func<List<LimitExceededResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
+        public Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
     }
 }
