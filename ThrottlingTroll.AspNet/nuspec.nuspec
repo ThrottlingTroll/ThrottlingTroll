@@ -9,14 +9,6 @@
     <description>Rate limiting library for .NET/ASP.NET Core</description>
     <tags>Rate Limiting;Throttling;ASP.NET;Redis</tags>
     <repository type="git" url="https://github.com/scale-tone/ThrottlingTroll" />
-    <dependencies>
-      <group targetFramework="net6.0">
-        <dependency id="Microsoft.AspNetCore.Http" version="2.2.2" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Configuration.Binder" version="7.0.2" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Http" version="7.0.0" exclude="Build,Analyzers" />
-        <dependency id="System.Runtime.Caching" version="7.0.0" exclude="Build,Analyzers" />
-      </group>
-    </dependencies>
   </metadata>
 
   <files>

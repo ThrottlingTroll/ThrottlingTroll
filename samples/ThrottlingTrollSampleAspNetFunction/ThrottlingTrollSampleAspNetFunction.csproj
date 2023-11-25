@@ -9,8 +9,8 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.19.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.14.1" />
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.0.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.15.1" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.1.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\ThrottlingTroll.AzureFunctionsAspNet\ThrottlingTroll.AzureFunctionsAspNet.csproj" />
