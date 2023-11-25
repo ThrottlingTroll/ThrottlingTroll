@@ -61,7 +61,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
         public override RetryContext RetryContext => throw new NotImplementedException();
 
-        public override IDictionary<object, object> Items { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override IDictionary<object, object> Items { get; set; } = new Dictionary<object, object>();
 
         public override IInvocationFeatures Features => throw new NotImplementedException();
     }

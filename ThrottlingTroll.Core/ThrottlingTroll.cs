@@ -45,6 +45,11 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
+        /// A key under which a <see cref="List{LimitCheckResult}"/> will be placed to HttpContext.Items or FunctionContext.Items
+        /// </summary>
+        public static readonly string LimitCheckResultsContextKey = "ThrottlingTrollLimitCheckResultsContextKey";
+
+        /// <summary>
         /// Marks this instance as disposed
         /// </summary>
         public void Dispose()
@@ -57,7 +62,7 @@ namespace ThrottlingTroll
         /// Also checks whether there're any <see cref="ThrottlingTrollTooManyRequestsException"/>s from egress.
         /// Returns a list of check results for rules that this request matched.
         /// </summary>
-        protected async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
+        protected async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<List<LimitCheckResult>, Task> nextAction)
         {
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
@@ -70,7 +75,7 @@ namespace ThrottlingTroll
             // Also trying to propagate egress to ingress
             try
             {
-                await nextAction();
+                await nextAction(checkList);
             }
             catch (ThrottlingTrollTooManyRequestsException throttlingEx)
             {

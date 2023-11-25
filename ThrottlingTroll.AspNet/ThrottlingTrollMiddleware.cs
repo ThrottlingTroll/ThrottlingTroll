@@ -46,10 +46,14 @@ namespace ThrottlingTroll
             {
                 // Need to call the rest of the pipeline no more than one time
                 bool nextCalled = false;
-                var callNextOnce = async () => {
+                var callNextOnce = async (List<LimitCheckResult> checkResults) => {
                     if (!nextCalled)
                     {
                         nextCalled = true;
+
+                        // Placing current checkResults into context.Items under a predefined key
+                        context.Items[LimitCheckResultsContextKey] = checkResults;
+
                         await this._next(context);
                     }
                 };
@@ -64,7 +68,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
+        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<List<LimitCheckResult>, Task> callNextOnce)
         {
             var result = checkList
                 .Where(r => r.RequestsRemaining < 0)
@@ -105,7 +109,7 @@ namespace ThrottlingTroll
                 if (responseProxy.ShouldContinueAsNormal)
                 {
                     // Continue with normal request processing
-                    await callNextOnce();
+                    await callNextOnce(checkList);
                 }
             }
         }
