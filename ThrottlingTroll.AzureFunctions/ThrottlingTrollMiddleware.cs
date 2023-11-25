@@ -49,7 +49,14 @@ namespace ThrottlingTroll
                         nextCalled = true;
 
                         // Placing current checkResults into context.Items under a predefined key
-                        request.FunctionContext.Items[LimitCheckResultsContextKey] = checkResults;
+                        if (request.FunctionContext.Items.ContainsKey(LimitCheckResultsContextKey))
+                        {
+                            ((List<LimitCheckResult>)request.FunctionContext.Items[LimitCheckResultsContextKey]).AddRange(checkResults);
+                        }
+                        else
+                        {
+                            request.FunctionContext.Items[LimitCheckResultsContextKey] = checkResults;
+                        }
 
                         await next();
                     }

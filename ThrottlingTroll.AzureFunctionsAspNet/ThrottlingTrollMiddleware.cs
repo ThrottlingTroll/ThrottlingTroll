@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,7 +51,17 @@ namespace ThrottlingTroll
                         nextCalled = true;
 
                         // Placing current checkResults into context.Items under a predefined key
-                        context.Items[LimitCheckResultsContextKey] = checkResults;
+                        if (functionContext.Items.ContainsKey(LimitCheckResultsContextKey))
+                        {
+                            ((List<LimitCheckResult>)functionContext.Items[LimitCheckResultsContextKey]).AddRange(checkResults);
+                        }
+                        else
+                        {
+                            functionContext.Items[LimitCheckResultsContextKey] = checkResults;
+                        }
+
+                        // Also placing it to HttpContext
+                        context.Items[LimitCheckResultsContextKey] = functionContext.Items[LimitCheckResultsContextKey];
 
                         await next();
                     }

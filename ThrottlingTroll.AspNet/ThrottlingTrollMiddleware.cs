@@ -52,7 +52,14 @@ namespace ThrottlingTroll
                         nextCalled = true;
 
                         // Placing current checkResults into context.Items under a predefined key
-                        context.Items[LimitCheckResultsContextKey] = checkResults;
+                        if (context.Items.ContainsKey(LimitCheckResultsContextKey))
+                        {
+                            ((List<LimitCheckResult>)context.Items[LimitCheckResultsContextKey]).AddRange(checkResults);
+                        }
+                        else
+                        {
+                            context.Items[LimitCheckResultsContextKey] = checkResults;
+                        }
 
                         await this._next(context);
                     }

@@ -26,6 +26,17 @@ namespace ThrottlingTrollSampleWeb.Controllers
         [Route("fixed-window-3-requests-per-10-seconds-configured-via-appsettings")]
         public string Test1()
         {
+            // Here is how to set a custom header with the number of remaining requests
+            // Obtaining the current list of limit check results from HttpContext.Items
+            var limitCheckResults = (List<LimitCheckResult>)this.HttpContext.Items[ThrottlingTroll.ThrottlingTroll.LimitCheckResultsContextKey]!;
+            // Now finding the minimal RequestsRemaining number (since there can be multiple rules matched)
+            var minRequestsRemaining = limitCheckResults.OrderByDescending(r => r.RequestsRemaining).FirstOrDefault();
+            if (minRequestsRemaining != null)
+            {
+                // Now setting the custom header
+                this.Response.Headers.Add("X-Requests-Remaining", minRequestsRemaining.RequestsRemaining.ToString());
+            }
+
             return "OK";
         }
 
