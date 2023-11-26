@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
 	</ItemGroup>
 	
     <ItemGroup>
