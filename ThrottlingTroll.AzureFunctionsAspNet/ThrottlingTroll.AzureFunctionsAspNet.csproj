@@ -19,7 +19,7 @@
 
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.1.0" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
-        <PackageReference Include="System.Runtime.Caching" Version="8.0.0" />
+        <PackageReference Include="System.Runtime.Caching" Version="6.0.0" />
 
     </ItemGroup>
 
