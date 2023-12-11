@@ -305,6 +305,35 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
 ```
 
 
+### To let a client know their current balance status
+
+When a limit is not exceeded yet, you might want to let your clients know how they're doing by sending their current counter values back to them (e.g. via a custom response header). The current list of check results is available to your code via `FunctionContext.Items[ThrottlingTroll.ThrottlingTroll.LimitCheckResultsContextKey]`, and you can use it to produce your custom header values like this:
+
+```
+  [Function("my-function")]
+  public HttpResponseData MyFunction([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
+  {
+      var response = req.CreateResponse(HttpStatusCode.OK);
+
+      // Here is how to set a custom header with the number of remaining requests
+      // Obtaining the current list of limit check results from HttpContext.Items
+      var limitCheckResults = (List<LimitCheckResult>)context.Items[ThrottlingTroll.ThrottlingTroll.LimitCheckResultsContextKey]!;
+      // Now finding the minimal RequestsRemaining number (since there can be multiple rules matched)
+      var minRequestsRemaining = limitCheckResults.OrderByDescending(r => r.RequestsRemaining).FirstOrDefault();
+      if (minRequestsRemaining != null)
+      {
+          // Now setting the custom header
+          response.Headers.Add("X-Requests-Remaining", minRequestsRemaining.RequestsRemaining.ToString());
+      }
+
+      // Do the rest of request processing...
+
+      response.WriteString("OK");
+      return response;
+  }
+```
+
+
 
 ### To delay responses instead of returning errors
 
