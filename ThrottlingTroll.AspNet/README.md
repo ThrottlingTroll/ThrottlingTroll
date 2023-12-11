@@ -268,6 +268,31 @@ app.UseThrottlingTroll(options =>
 });
 ```
 
+### To let a client know their current balance status
+
+When a limit is not exceeded yet, you might want to let your clients know how they're doing by sending their current counter values back to them (e.g. via a custom response header). The current list of check results is available to your code via `HttpContext.Items[ThrottlingTroll.ThrottlingTroll.LimitCheckResultsContextKey]`, and you can use it to produce your custom header values like this:
+
+```
+  [HttpGet]
+  public string MyApiControllerMethod()
+  {
+      // Here is how to set a custom header with the number of remaining requests
+      // Obtaining the current list of limit check results from HttpContext.Items
+      var limitCheckResults = (List<LimitCheckResult>)this.HttpContext.Items[ThrottlingTroll.ThrottlingTroll.LimitCheckResultsContextKey]!;
+      // Now finding the minimal RequestsRemaining number (since there can be multiple rules matched)
+      var minRequestsRemaining = limitCheckResults.OrderByDescending(r => r.RequestsRemaining).FirstOrDefault();
+      if (minRequestsRemaining != null)
+      {
+          // Now setting the custom header
+          this.Response.Headers.Add("X-Requests-Remaining", minRequestsRemaining.RequestsRemaining.ToString());
+      }
+
+      // Do the rest of request processing...
+  
+      return "OK";
+  }
+```
+
 ### To delay responses instead of returning errors
 
 To let ThrottlingTroll spin-wait until the counter drops below the limit set **MaxDelayInSeconds** to some positive value:
