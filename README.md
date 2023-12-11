@@ -96,6 +96,9 @@ Install from Nuget:
 
 * **IdentityIdExtractor**s, that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
 
+* **CostExtractor**s, that you can use to assign custom *costs* to different requests. Default cost is **1**, but if some of your requests are heavier than the others, you can assign higher costs to them. Allows for even greater rate limiting flexibility.
+
+
 ## Supported rate limiting algorithms
 
 * **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 8 seconds:
