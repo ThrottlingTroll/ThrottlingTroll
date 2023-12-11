@@ -321,6 +321,27 @@ To let ThrottlingTroll spin-wait until the counter drops below the limit set **M
 In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/scale-tone/ThrottlingTroll/blob/main/samples/ThrottlingTrollSampleAspNetFunction/Program.cs#L212).
 
 
+### To assign custom costs to different requests
+
+If some of your requests consume more resources than the others, you can assign custom (more than the default `1`) costs to them like this:
+
+```
+builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) => {
+
+    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, options =>
+    {
+      options.CostExtractor = request =>
+      {
+          // In this example cost comes as a 'cost' query string parameter
+          string? cost = ((IIncomingHttpRequestProxy)request).Request.Query["cost"];
+      
+          return long.TryParse(cost, out long val) ? val : 1;
+      };
+    });
+});
+```
+
+
 ## How to use for Egress Throttling
 
 ### To configure via host.json
