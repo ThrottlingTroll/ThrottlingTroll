@@ -285,7 +285,7 @@ In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://gi
 
 ### To assign custom costs to different requests
 
-If some of your requests consume more resources than the others, you can assign custom (more than the default **1**) costs to them like this:
+If some of your requests consume more resources than the others, you can assign custom (more than the default `1`) costs to them like this:
 
 ```
 app.UseThrottlingTroll(options =>
