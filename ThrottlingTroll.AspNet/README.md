@@ -234,13 +234,20 @@ Provide a response fabric implementation via **ResponseFabric** option:
 app.UseThrottlingTroll(options =>
 {
     // Custom response fabric, returns 400 BadRequest + some custom content
-    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) => 
+    options.ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) => 
     {
-        responseProxy.StatusCode = StatusCodes.Status400BadRequest;
-
-        responseProxy.SetHttpHeader(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
-
-        await responseProxy.WriteAsync("Too many requests. Try again later.");
+      // Getting the rule that was exceeded and with the biggest RetryAfter value
+      var limitExceededResult = checkResults.OrderByDescending(r => r.RetryAfterInSeconds).FirstOrDefault(r => r.RequestsRemaining < 0);
+      if (limitExceededResult == null)
+      {
+          return;
+      }
+  
+      responseProxy.StatusCode = StatusCodes.Status400BadRequest;
+  
+      responseProxy.SetHttpHeader(HeaderNames.RetryAfter, limitExceededResult.RetryAfterHeaderValue);
+  
+      await responseProxy.WriteAsync("Too many requests. Try again later.");
     };
 });
 ```
@@ -251,7 +258,7 @@ If you want ThrottlingTroll to proceed with the rest of your processing pipeline
 app.UseThrottlingTroll(options =>
 {
     // Custom response fabric, impedes the normal response for 3 seconds
-    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
+    options.ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
     {
         await Task.Delay(TimeSpan.FromSeconds(3));
 
@@ -441,7 +448,7 @@ Provide a response fabric implementation via **ResponseFabric** option and set *
 ```
 builder.Services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
 {
-    options.ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, cancelToken) =>
+    options.ResponseFabric = async (checkResults, requestProxy, responseProxy, cancelToken) =>
     {
         // Doing no more than 10 automatic retries
         var egressResponse = (IEgressHttpResponseProxy)httpResponseProxy;
