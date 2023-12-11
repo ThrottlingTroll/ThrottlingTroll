@@ -35,7 +35,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleAspNet
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AzureFunctionsAspNet", "ThrottlingTroll.AzureFunctionsAspNet\ThrottlingTroll.AzureFunctionsAspNet.csproj", "{3EFB2BA0-FE55-4E1A-BA0E-1234CC1C45FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTroll.AzureFunctionsAspNet.Tests", "tests\ThrottlingTroll.AzureFunctionsAspNet.Tests\ThrottlingTroll.AzureFunctionsAspNet.Tests.csproj", "{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AzureFunctionsAspNet.Tests", "tests\ThrottlingTroll.AzureFunctionsAspNet.Tests\ThrottlingTroll.AzureFunctionsAspNet.Tests.csproj", "{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTrollSampleDotNet6InProcDurableFunction", "samples\ThrottlingTrollSampleDotNet6InProcDurableFunction\ThrottlingTrollSampleDotNet6InProcDurableFunction.csproj", "{E6316171-FB05-43EA-A76F-54AA0C5C5A90}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,10 @@ Global
 		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6316171-FB05-43EA-A76F-54AA0C5C5A90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6316171-FB05-43EA-A76F-54AA0C5C5A90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6316171-FB05-43EA-A76F-54AA0C5C5A90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6316171-FB05-43EA-A76F-54AA0C5C5A90}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -116,6 +122,7 @@ Global
 		{FCF14C9B-EB92-4255-9853-34B87C82F845} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 		{E8FE0FB0-0515-4AED-AD65-9A652745A516} = {F87ADBF3-0FE0-4B4E-9D20-AF76EE155CDE}
 		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
+		{E6316171-FB05-43EA-A76F-54AA0C5C5A90} = {F87ADBF3-0FE0-4B4E-9D20-AF76EE155CDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F213F60D-DF07-4F11-9B94-4143A16E1EE6}
