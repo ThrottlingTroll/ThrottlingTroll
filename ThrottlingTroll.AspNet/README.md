@@ -274,7 +274,7 @@ When a limit is not exceeded yet, you might want to let your clients know how th
 
 ```
   [HttpGet]
-  public string MyApiControllerMethod()
+  public string MyWebApiControllerMethod()
   {
       // Here is how to set a custom header with the number of remaining requests
       // Obtaining the current list of limit check results from HttpContext.Items
