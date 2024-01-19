@@ -141,7 +141,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Configures ThrottlingTroll ingress throttling
         /// </summary>
-        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, Action<IServiceProvider, ThrottlingTrollOptions> options)
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, Action<FunctionContext, ThrottlingTrollOptions> options)
         {
             // Need to create a single instance, yet still allow for multiple copies of ThrottlingTrollMiddleware with different settings
             var lockObject = new object();
@@ -171,7 +171,7 @@ namespace ThrottlingTroll
 
                                 if (options != null)
                                 {
-                                    options(context.InstanceServices, opt);
+                                    options(context, opt);
                                 }
 
                                 middleware = CreateMiddleware(context, opt);
