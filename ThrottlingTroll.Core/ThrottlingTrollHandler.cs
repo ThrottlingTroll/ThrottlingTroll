@@ -361,15 +361,24 @@ namespace ThrottlingTroll
         /// </summary>
         public static IHttpClientBuilder AddThrottlingTrollMessageHandler(this IHttpClientBuilder builder, Action<ThrottlingTrollOptions> options = null)
         {
-            var opt = new ThrottlingTrollOptions();
+            return builder.AddThrottlingTrollMessageHandler(options == null ? null : (provider, opt) => options(opt));
+        }
 
-            if (options != null)
-            {
-                options(opt);
-            }
-
+        /// <summary>
+        /// Appends <see cref="ThrottlingTrollHandler"/> to the given HttpClient.
+        /// Optionally allows to configure options.
+        /// </summary>
+        public static IHttpClientBuilder AddThrottlingTrollMessageHandler(this IHttpClientBuilder builder, Action<IServiceProvider, ThrottlingTrollOptions> options)
+        {
             return builder.AddHttpMessageHandler(serviceProvider =>
             {
+                var opt = new ThrottlingTrollOptions();
+
+                if (options != null)
+                {
+                    options(serviceProvider, opt);
+                }
+
                 if (opt.GetConfigFunc == null)
                 {
                     if (opt.Config == null)
