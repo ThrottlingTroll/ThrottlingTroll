@@ -50,13 +50,13 @@ builder.ConfigureServices(services => {
 
 });
 
-builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
+builder.ConfigureFunctionsWebApplication((builderContext, workerAppBuilder) => {
     // <ThrottlingTroll Ingress Configuration>
 
     workerAppBuilder.UseThrottlingTroll();
 
     // Static programmatic configuration
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {
@@ -81,7 +81,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
     });
 
     // Dynamic programmatic configuration. Allows to adjust rules and limits without restarting the service.
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.GetConfigFunc = async () =>
         {
@@ -142,7 +142,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
     });
 
     // Demonstrates how to delay the response instead of returning 429
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {
@@ -171,7 +171,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
     });
 
     // Demonstrates how to use identity extractors
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {
@@ -198,7 +198,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
 
     // Demonstrates Semaphore (Concurrency) rate limiter
     // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {
@@ -219,7 +219,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
     /// Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
     /// Query string's 'id' parameter is used as identityId.
     // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {
@@ -247,7 +247,7 @@ builder.ConfigureFunctionsWebApplication((workerAppBuilder) => {
     });
 
     // Demonstrates how to make a distributed counter with SemaphoreRateLimitMethod
-    workerAppBuilder.UseThrottlingTroll(options =>
+    workerAppBuilder.UseThrottlingTroll((serviceProvider, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
@@ -134,22 +135,62 @@ namespace ThrottlingTroll
         /// </summary>
         public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, Action<ThrottlingTrollOptions> options = null)
         {
-            var opt = new ThrottlingTrollOptions();
+            return builder.UseThrottlingTroll(options == null ? null : (ctx, opt) => options(opt));
+        }
 
-            if (options != null)
-            {
-                options(opt);
-            }
-
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, Action<IServiceProvider, ThrottlingTrollOptions> options)
+        {
             // Need to create a single instance, yet still allow for multiple copies of ThrottlingTrollMiddleware with different settings
-            ThrottlingTrollMiddleware throttlingTrollMiddleware = null;
+            var lockObject = new object();
+            ThrottlingTrollMiddleware middleware = null;
 
+            return builder.UseWhen
+            (
+                (FunctionContext context) =>
+                {
+                    // This middleware is only for http trigger invocations.
+                    return context
+                        .FunctionDefinition
+                        .InputBindings
+                        .Values
+                        .First(a => a.Type.EndsWith("Trigger"))
+                        .Type == "httpTrigger";
+                },
+                async (FunctionContext context, Func<Task> next) =>
+                {
+                    if (middleware == null)
+                    {
+                        lock (lockObject)
+                        {
+                            if (middleware == null)
+                            {
+                                var opt = new ThrottlingTrollOptions();
+
+                                if (options != null)
+                                {
+                                    options(context.InstanceServices, opt);
+                                }
+
+                                middleware = CreateMiddleware(context, opt);
+                            }
+                        }
+                    }
+                    await middleware.Invoke(context, next);
+                }
+            );
+        }
+
+        private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
+        {
             if (opt.GetConfigFunc == null)
             {
                 if (opt.Config == null)
                 {
                     // Trying to read config from settings.
-                    var config = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+                    var config = context.InstanceServices.GetService<IConfiguration>();
 
                     var section = config?.GetSection(ConfigSectionName);
 
@@ -168,46 +209,18 @@ namespace ThrottlingTroll
                 }
             }
 
-            return builder.UseWhen
-            (
-                (FunctionContext context) =>
-                {
-                    // This middleware is only for http trigger invocations.
-                    return context
-                        .FunctionDefinition
-                        .InputBindings
-                        .Values
-                        .First(a => a.Type.EndsWith("Trigger"))
-                        .Type == "httpTrigger";
-                },
-                async (FunctionContext context, Func<Task> next) =>
-                {
-                    if (throttlingTrollMiddleware == null)
-                    {
-                        // Using opt as lock object.
-                        lock (opt)
-                        {
-                            if (throttlingTrollMiddleware == null)
-                            {
+            if (opt.Log == null)
+            {
+                var logger = context.InstanceServices.GetService<ILogger<ThrottlingTroll>>();
+                opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
+            }
 
-                                if (opt.Log == null)
-                                {
-                                    var logger = context.InstanceServices.GetService<ILogger<ThrottlingTroll>>();
-                                    opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
-                                }
+            if (opt.CounterStore == null)
+            {
+                opt.CounterStore = context.GetOrCreateThrottlingTrollCounterStore();
+            }
 
-                                if (opt.CounterStore == null)
-                                {
-                                    opt.CounterStore = context.GetOrCreateThrottlingTrollCounterStore();
-                                }
-
-                                throttlingTrollMiddleware = new ThrottlingTrollMiddleware(opt);
-                            }
-                        }
-                    }
-                    await throttlingTrollMiddleware.Invoke(context, next);
-                }
-            );
+            return new ThrottlingTrollMiddleware(opt);
         }
 
         private static ICounterStore GetOrCreateThrottlingTrollCounterStore(this FunctionContext context)
