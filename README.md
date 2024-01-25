@@ -107,9 +107,13 @@ Install from Nuget:
     
      <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/ffb0bdc8-736b-4c6f-9eb4-db54ce72e034" height="300px"/>
 
+  The typical drawback of FixedWindow algorithm is that you'd get request rate *bursts* at the end of each window. So specifically to cope that we have
+
 * **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`. Here is an illustration for the case of no more than 2 requests per each 8 seconds with 2 buckets:
     
      <img src="https://github.com/scale-tone/ThrottlingTroll/assets/5447190/e18abb9c-d1dd-4b64-a007-220605ed03e9" height="300px"/>  
+
+  In other words, with SlidingWindow your service gets a *smoother request rate*.
           
 * **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Here is an illustration for the case of no more than 3 concurrent requests:
 
