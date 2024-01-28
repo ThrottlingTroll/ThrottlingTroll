@@ -325,7 +325,7 @@ To let ThrottlingTroll spin-wait until the counter drops below the limit set **M
   }
 ```
 
-In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/samples/ThrottlingTrollSampleAspNetFunction/Program.cs#L212).
+In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.Redis#throttlingtrollcounterstoresredis) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/samples/ThrottlingTrollSampleAspNetFunction/Program.cs#L212).
 
 
 ### To assign custom costs to different requests
