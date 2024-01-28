@@ -25,7 +25,7 @@ Quick example of an ingress config setting:
   }
 ```
 
-ThrottlingTroll's configuration (both for ingress and egress) is represented by [ThrottlingTrollConfig](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollConfig.cs) class.
+ThrottlingTroll's configuration (both for ingress and egress) is represented by [ThrottlingTrollConfig](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollConfig.cs) class.
 It contains a list of rate limiting Rules and some other settings and it can be configured:
 
 * Statically, via appsettings.json.
@@ -312,7 +312,7 @@ To let ThrottlingTroll spin-wait until the counter drops below the limit set **M
   }
 ```
 
-In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/scale-tone/ThrottlingTroll/blob/e780fd5056b377435027f68108b208c97dc71fe7/samples/ThrottlingTrollSampleWeb/Program.cs#L238).
+In combination with **SemaphoreRateLimitMethod**, [RedisCounterStore](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/RedisCounterStore.cs) and some custom **IdentityIdExtractor** (which identifies clients by e.g. some query string parameter) this allows to organize named distributed critical sections. [Here is an example](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/e780fd5056b377435027f68108b208c97dc71fe7/samples/ThrottlingTrollSampleWeb/Program.cs#L238).
 
 
 ### To assign custom costs to different requests
@@ -430,7 +430,7 @@ If your service internally makes HTTP requests and you want to automatically pro
   }
 ```
 
-This will make [ThrottlingTrollHandler](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollHandler.cs) throw a dedicated [ThrottlingTrollTooManyRequestsException](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollTooManyRequestsException.cs), which then will be handled by [ThrottlingTrollMiddleware](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.AspNet/ThrottlingTrollMiddleware.cs). The `Retry-After` header value (if present) will also be propagated.
+This will make [ThrottlingTrollHandler](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollHandler.cs) throw a dedicated [ThrottlingTrollTooManyRequestsException](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/ThrottlingTrollTooManyRequestsException.cs), which then will be handled by [ThrottlingTrollMiddleware](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.AspNet/ThrottlingTrollMiddleware.cs). The `Retry-After` header value (if present) will also be propagated.
 
 
 ### To use with [RestSharp](https://restsharp.dev/)
@@ -486,18 +486,18 @@ HttpClient will then first wait for the amount of time suggested by **Retry-Afte
 
 ## Supported Rate Counter Stores
 
-By default ThrottlingTroll will store rate counters in memory, using [MemoryCacheCounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/MemoryCacheCounterStore.cs) (which internally uses [System.Runtime.Caching.MemoryCache](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache)).
+By default ThrottlingTroll will store rate counters in memory, using [MemoryCacheCounterStore](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/MemoryCacheCounterStore.cs) (which internally uses [System.Runtime.Caching.MemoryCache](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.caching.memorycache)).
 
 Other, distributed counter stores come as separate NuGet packages:
   - [ThrottlingTroll.CounterStores.Redis](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.Redis) - most recommended one, uses Redis.
   - [ThrottlingTroll.CounterStores.AzureTable](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.AzureTable) - uses Azure Tables (or Cosmos DB with Table API), easiest to configure (only takes a storage connection string), yet not recommended for production scenarios due to a potentially high contention.
   - [ThrottlingTroll.CounterStores.DistributedCache](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.DistributedCache) - uses ASP.NET Core's IDistributedCache and therefore not entirely consistent (because IDistributedCache lacks atomic operations).
 
-You can also create your custom Counter Store by implementing the [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) interface.
+You can also create your custom Counter Store by implementing the [ICounterStore](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll/CounterStores/ICounterStore.cs) interface.
 
 ### How to specify a Rate Counter Store to be used
 
-Either put a desired [ICounterStore](https://github.com/scale-tone/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs) implementation into DI container:
+Either put a desired [ICounterStore](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs) implementation into DI container:
 ```
 builder.Services.AddSingleton<ICounterStore>(
     provider => new DistributedCacheCounterStore(provider.GetRequiredService<IDistributedCache>())
@@ -514,5 +514,5 @@ app.UseThrottlingTroll(options =>
 
 ## Samples
 
-[Here is a sample project, that demonstrates all the above concepts](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb).
+[Here is a sample project, that demonstrates all the above concepts](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb).
 

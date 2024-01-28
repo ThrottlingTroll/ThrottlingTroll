@@ -8,7 +8,7 @@
     <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
     <description>CounterStore for ThrottlingTroll. Stores counters in ASP.Net Core's IDistributedCache.</description>
     <tags>Rate Limiting;Throttling;ThrottlingTroll</tags>
-    <repository type="git" url="https://github.com/scale-tone/ThrottlingTroll" />
+    <repository type="git" url="https://github.com/ThrottlingTroll/ThrottlingTroll" />
     <dependencies>
       <group targetFramework="net6.0">
         <dependency id="Microsoft.Extensions.Caching.Abstractions" version="7.0.0" exclude="Build,Analyzers" />

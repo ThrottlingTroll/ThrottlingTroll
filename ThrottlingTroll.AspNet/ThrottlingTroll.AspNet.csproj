@@ -10,7 +10,7 @@
         <PackageTags>Rate Limiting;Throttling;ASP.NET;Redis</PackageTags>
         <Description>Rate limiting library for .NET/ASP.NET Core</Description>
         <Authors>ThrottlingTroll</Authors>
-        <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+        <RepositoryUrl>https://github.com/ThrottlingTroll/ThrottlingTroll</RepositoryUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
     </PropertyGroup>

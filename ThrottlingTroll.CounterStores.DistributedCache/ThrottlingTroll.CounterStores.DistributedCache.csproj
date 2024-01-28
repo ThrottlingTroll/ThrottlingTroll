@@ -10,7 +10,7 @@
         <PackageTags>Rate Limiting;Throttling;ThrottlingTroll</PackageTags>
         <Description>CounterStore for ThrottlingTroll. Stores counters in ASP.Net Core's IDistributedCache.</Description>
         <Authors>ThrottlingTroll</Authors>
-        <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+        <RepositoryUrl>https://github.com/ThrottlingTroll/ThrottlingTroll</RepositoryUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
     </PropertyGroup>

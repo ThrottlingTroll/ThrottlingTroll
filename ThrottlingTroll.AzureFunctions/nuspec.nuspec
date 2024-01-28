@@ -8,7 +8,7 @@
     <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
     <description>Rate limiting library for Azure Functions</description>
     <tags>Rate Limiting;Throttling;Azure Functions;Redis</tags>
-    <repository type="git" url="https://github.com/scale-tone/ThrottlingTroll" />
+    <repository type="git" url="https://github.com/ThrottlingTroll/ThrottlingTroll" />
     <dependencies>
       <group targetFramework="net7.0">
         <dependency id="Microsoft.Azure.Functions.Worker" version="1.19.0" exclude="Build,Analyzers" />

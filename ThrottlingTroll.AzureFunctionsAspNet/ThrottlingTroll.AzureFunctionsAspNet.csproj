@@ -10,7 +10,7 @@
         <PackageTags>Rate Limiting;Throttling;Azure Functions;ASP.NET;Redis</PackageTags>
         <Description>Rate limiting library for Azure Functions with ASP.NET Core integration</Description>
         <Authors>ThrottlingTroll</Authors>
-        <RepositoryUrl>https://github.com/scale-tone/ThrottlingTroll</RepositoryUrl>
+        <RepositoryUrl>https://github.com/ThrottlingTroll/ThrottlingTroll</RepositoryUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
     </PropertyGroup>
