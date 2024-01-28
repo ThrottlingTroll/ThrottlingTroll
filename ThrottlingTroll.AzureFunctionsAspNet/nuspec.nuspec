@@ -2,13 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>ThrottlingTroll.AzureFunctionsAspNet</id>
-    <version>6.1.0-beta2</version>
+    <version>6.1.0</version>
     <authors>ThrottlingTroll</authors>
     <license type="file">LICENSE</license>
     <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
     <description>Rate limiting library for Azure Functions with ASP.NET Core integration</description>
     <tags>Rate Limiting;Throttling;Azure Functions;Redis</tags>
     <repository type="git" url="https://github.com/ThrottlingTroll/ThrottlingTroll" />
+    <readme>README.md</readme>
     <dependencies>
       <group targetFramework="net7.0">
         <dependency id="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" version="1.1.0" exclude="Build,Analyzers" />
@@ -18,9 +19,10 @@
     </dependencies>
   </metadata>
 
-    <files>
-        <file src="..\LICENSE" target="LICENSE" />
-        <file src="bin\Release\net7.0\ThrottlingTroll.*" target="lib/net7.0" />
-    </files>
+  <files>
+    <file src="..\LICENSE" target="LICENSE" />
+    <file src=".\README.md" target="README.md" />
+    <file src="bin\Release\net7.0\ThrottlingTroll.*" target="lib/net7.0" />
+  </files>
 
 </package>

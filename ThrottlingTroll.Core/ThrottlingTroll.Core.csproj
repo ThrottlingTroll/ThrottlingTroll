@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <IncludeSymbols>true</IncludeSymbols>
-        <VersionPrefix>6.0.0</VersionPrefix>
+        <VersionPrefix>6.1.0</VersionPrefix>
     </PropertyGroup>
 
     <ItemGroup>
