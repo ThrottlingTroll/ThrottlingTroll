@@ -36,7 +36,7 @@ builder.ConfigureServices(services => {
     services.AddHttpClient("my-throttled-httpclient").AddThrottlingTrollMessageHandler();
 
     // Configuring a named HttpClient that does automatic retries with respect to Retry-After response header
-    services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler(options =>
+    services.AddHttpClient("my-retrying-httpclient").AddThrottlingTrollMessageHandler((serviceProvider, options) =>
     {
         options.ResponseFabric = async (checkResults, requestProxy, responseProxy, cancelToken) =>
         {
