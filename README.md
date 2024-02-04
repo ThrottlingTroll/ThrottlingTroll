@@ -99,7 +99,7 @@ Install from Nuget:
 * **IdentityIdExtractor**s, that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
 
 * **CostExtractor**s, that you can use to assign custom *costs* to different requests. Default cost is **1**, but if some of your requests are heavier than the others, you can assign higher costs to them.
-  Another typical usecase for this would be to arrange different *pricing tiers* for your service: you set the request limit to something high - and then "charge" clients differently, based on their pricing tier.
+  Another typical usecase for this would be to arrange different *pricing tiers* for your service: you set the rate limit to something high - and then "charge" clients differently, based on their pricing tier.
 
 
 ## Supported rate limiting algorithms
