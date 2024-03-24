@@ -58,6 +58,7 @@ namespace ThrottlingTroll.CounterStores.Redis
             var script = LuaScript.Prepare(
                 $"if redis.call('DECRBY', @key, @cost) < 1 then redis.call('DEL', @key) end"
             );
+            
             await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, cost });
         }
     }
