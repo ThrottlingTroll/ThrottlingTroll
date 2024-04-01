@@ -1,6 +1,6 @@
 # ThrottlingTroll
 
-Rate limiting/throttling middleware for ASP.NET and Azure Functions.
+Rate limiting/throttling middleware for ASP.NET Core and Azure Functions.
 
 [![.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/actions/workflows/dotnet.yml/badge.svg)](https://github.com/ThrottlingTroll/ThrottlingTroll/actions/workflows/dotnet.yml)
 [<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll?label=current%20version">](https://www.nuget.org/packages/ThrottlingTroll)
@@ -12,7 +12,7 @@ Rate limiting/throttling middleware for ASP.NET and Azure Functions.
 
 Install from Nuget:
 
-| ASP.NET                                   | Azure Functions                                          | Azure Functions with ASP.NET Core Integration                 |
+| ASP.NET Core                              | Azure Functions                                          | Azure Functions with ASP.NET Core Integration                 |
 | -                                         | -                                                        | -                                                             |
 | ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |```dotnet add package ThrottlingTroll.AzureFunctionsAspNet```  |
 
@@ -131,7 +131,7 @@ Install from Nuget:
 
 Configuration and usage with ASP.NET and Azure Functions is very similar yet slightly different:
 
-| ASP.NET                                   | Azure Functions                                          |
+| ASP.NET Core                              | Azure Functions                                          |
 | -                                         | -                                                        |
 | [How to use with ASP.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
 |                                                                                                                            | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
@@ -141,8 +141,8 @@ Configuration and usage with ASP.NET and Azure Functions is very similar yet sli
 
 Sample projects that demonstrate all the above concepts:
 
-| ASP.NET | Azure Functions |
-| -       | -               |
+| ASP.NET Core | Azure Functions |
+| -            | -               |
 | [ThrottlingTrollSampleWeb](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb) | [ThrottlingTrollSampleFunction](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction)  |
 |                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  
 |                                                                                                                      | [ThrottlingTrollSampleDotNet6InProcDurableFunction](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleDotNet6InProcDurableFunction)  
