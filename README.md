@@ -18,7 +18,7 @@ Install from Nuget:
 
 ## Features
 
-* **Supports [ASP.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions (.NET Isolated)](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. 
+* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions (.NET Isolated)](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. 
 * **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
@@ -30,7 +30,7 @@ Install from Nuget:
               YourService-->>-Client:✅ 200 OK
           end
    ```
-   Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
+   Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET Core) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
      
 * **Egress throttling**, aka limit the number of calls your code is making against some external endpoint. 
 
@@ -129,11 +129,11 @@ Install from Nuget:
 
 ## How to configure and use
 
-Configuration and usage with ASP.NET and Azure Functions is very similar yet slightly different:
+Configuration and usage with ASP.NET Core and Azure Functions is very similar yet slightly different:
 
 | ASP.NET Core                              | Azure Functions                                          |
 | -                                         | -                                                        |
-| [How to use with ASP.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
+| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
 |                                                                                                                            | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
 
 
