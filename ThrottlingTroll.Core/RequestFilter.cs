@@ -129,7 +129,7 @@ namespace ThrottlingTroll
 
             var identityId = this.IdentityIdExtractor(request);
 
-            return identityId == this.IdentityId;
+            return identityId.Contains(this.IdentityId);
         }
 
         private Regex _uriRegex;
