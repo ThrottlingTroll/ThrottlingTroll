@@ -120,7 +120,7 @@ namespace ThrottlingTroll
             return headerValue == this.HeaderValue;
         }
 
-        private bool IsIdentityMatch(IHttpRequestProxy request)
+        public virtual bool IsIdentityMatch(IHttpRequestProxy request)
         {
             if (this.IdentityIdExtractor == null || string.IsNullOrEmpty(this.IdentityId))
             {
@@ -129,7 +129,7 @@ namespace ThrottlingTroll
 
             var identityId = this.IdentityIdExtractor(request);
 
-            return identityId.Contains(this.IdentityId);
+            return identityId == this.IdentityId;
         }
 
         private Regex _uriRegex;
