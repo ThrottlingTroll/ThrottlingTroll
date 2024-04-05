@@ -120,7 +120,7 @@ namespace ThrottlingTroll
             return headerValue == this.HeaderValue;
         }
 
-        private bool IsIdentityMatch(IHttpRequestProxy request)
+        public virtual bool IsIdentityMatch(IHttpRequestProxy request)
         {
             if (this.IdentityIdExtractor == null || string.IsNullOrEmpty(this.IdentityId))
             {
