@@ -51,13 +51,16 @@ namespace ThrottlingTroll
         /// </summary>
         public Func<IHttpRequestProxy, long> CostExtractor { get; set; }
 
+        protected RateLimitMethod _limitMethod { get; set; }
+        protected string _cacheKey;
+
         /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
         /// If request does not match the rule, returns null.
         /// If limit exceeded, returns number of seconds to retry after and unique counter ID.
         /// Otherwise just returns unique counter ID.
         /// </summary>
-        internal async Task<LimitCheckResult> IsExceededAsync(IHttpRequestProxy request, long cost, ICounterStore store, string configName, Action<LogLevel, string> log)
+        protected internal virtual async Task<LimitCheckResult> IsExceededAsync(IHttpRequestProxy request, long cost, ICounterStore store, string configName, Action<LogLevel, string> log)
         {
             if (!this.IsMatch(request) || this.LimitMethod == null)
             {
@@ -81,7 +84,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Will be executed at the end of request processing. Used for decrementing the counter, if needed.
         /// </summary>
-        internal async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, long cost, Action<LogLevel, string> log)
+        protected internal virtual async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, long cost, Action<LogLevel, string> log)
         {
             try
             {
@@ -93,7 +96,10 @@ namespace ThrottlingTroll
             }
         }
 
-        internal long GetCost(IHttpRequestProxy request)
+        /// <summary>
+        /// Calculates given request's Cost
+        /// </summary>
+        protected internal virtual long GetCost(IHttpRequestProxy request)
         {
             if (this.CostExtractor == null)
             {
@@ -105,19 +111,19 @@ namespace ThrottlingTroll
             return cost > 0 ? cost : 1;
         }
 
-        internal Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey)
+        /// <summary>
+        /// Checks if the limit is still exceeded. Intended for implementing <see cref="SemaphoreRateLimitMethod"/>
+        /// </summary>
+        protected internal virtual Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey)
         {
             return this.LimitMethod.IsStillExceededAsync(uniqueCacheKey, store);
         }
-
-        private RateLimitMethod _limitMethod { get; set; }
-        private string _cacheKey;
 
         /// <summary>
         /// Constructs a cache key for the limit counter, based on this filter's values.
         /// If <see cref="RequestFilter.IdentityIdExtractor"/> is set, applies it as well.
         /// </summary>
-        private string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
+        protected virtual string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
         {
             if (this.IdentityIdExtractor == null)
             {
@@ -144,7 +150,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private string GetHash(string str)
+        protected virtual string GetHash(string str)
         {
             // HashAlgorithm instances should NOT be reused
             using (var sha256 = SHA256.Create())

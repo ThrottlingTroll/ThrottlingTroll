@@ -6,7 +6,7 @@
         <IncludeSymbols>true</IncludeSymbols>
 
         <PackageId>ThrottlingTroll.CounterStores.DistributedCache</PackageId>
-        <VersionPrefix>6.1.0</VersionPrefix>
+        <VersionPrefix>6.1.2</VersionPrefix>
         <PackageTags>Rate Limiting;Throttling;ThrottlingTroll</PackageTags>
         <Description>CounterStore for ThrottlingTroll. Stores counters in ASP.Net Core's IDistributedCache.</Description>
         <Authors>ThrottlingTroll</Authors>

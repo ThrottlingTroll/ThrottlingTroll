@@ -6,7 +6,7 @@
         <IncludeSymbols>true</IncludeSymbols>
 
         <PackageId>ThrottlingTroll.AzureFunctions</PackageId>
-        <VersionPrefix>6.1.0</VersionPrefix>
+        <VersionPrefix>6.1.2</VersionPrefix>
         <PackageTags>Rate Limiting;Throttling;Azure Functions;Redis</PackageTags>
         <Description>Rate limiting library for Azure Functions</Description>
         <Authors>ThrottlingTroll</Authors>

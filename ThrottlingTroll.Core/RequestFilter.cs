@@ -42,10 +42,12 @@ namespace ThrottlingTroll
         /// </summary>
         public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
 
+        protected Regex _uriRegex;
+
         /// <summary>
         /// Checks whether given request matches this filter
         /// </summary>
-        internal bool IsMatch(IHttpRequestProxy request)
+        protected internal virtual bool IsMatch(IHttpRequestProxy request)
         {
             return this.IsUrlMatch(request) &&
                 this.IsMethodMatch(request) &&
@@ -74,7 +76,10 @@ namespace ThrottlingTroll
             }
         }
 
-        private bool IsUrlMatch(IHttpRequestProxy request)
+        /// <summary>
+        /// Checks whether given request matches <see cref="UrlRegex"/>
+        /// </summary>
+        protected virtual bool IsUrlMatch(IHttpRequestProxy request)
         {
             if (this.UrlRegex == null)
             {
@@ -84,7 +89,10 @@ namespace ThrottlingTroll
             return this.UrlRegex.IsMatch(request.Uri);
         }
 
-        private bool IsMethodMatch(IHttpRequestProxy request)
+        /// <summary>
+        /// Checks whether given request matches <see cref="Method"/>
+        /// </summary>
+        protected virtual bool IsMethodMatch(IHttpRequestProxy request)
         {
             if (string.IsNullOrEmpty(this.Method))
             {
@@ -98,7 +106,10 @@ namespace ThrottlingTroll
                 .Contains(request.Method.ToLower());
         }
 
-        private bool IsHeaderMatch(IHttpRequestProxy request)
+        /// <summary>
+        /// Checks whether given request matches <see cref="HeaderName"/>
+        /// </summary>
+        protected virtual bool IsHeaderMatch(IHttpRequestProxy request)
         {
             if (string.IsNullOrEmpty(this.HeaderName))
             {
@@ -120,7 +131,10 @@ namespace ThrottlingTroll
             return headerValue == this.HeaderValue;
         }
 
-        public virtual bool IsIdentityMatch(IHttpRequestProxy request)
+        /// <summary>
+        /// Checks whether given request matches <see cref="IdentityId"/>
+        /// </summary>
+        protected virtual bool IsIdentityMatch(IHttpRequestProxy request)
         {
             if (this.IdentityIdExtractor == null || string.IsNullOrEmpty(this.IdentityId))
             {
@@ -131,7 +145,5 @@ namespace ThrottlingTroll
 
             return identityId == this.IdentityId;
         }
-
-        private Regex _uriRegex;
     }
 }
