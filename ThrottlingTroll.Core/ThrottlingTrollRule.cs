@@ -41,7 +41,7 @@ namespace ThrottlingTroll
 
         /// <summary>
         /// Setting this to something more than 0 makes ThrottlingTroll wait until the counter drops below the limit,
-        /// but no more than MaxDelayInSeconds. Use this setting to implement delayed responses or critical sections.
+        /// but no longer than MaxDelayInSeconds. Use this setting to implement delayed responses or critical sections.
         /// </summary>
         public int MaxDelayInSeconds { get; set; } = 0;
 
