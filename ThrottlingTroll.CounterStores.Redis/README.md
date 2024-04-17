@@ -5,6 +5,9 @@ implementation that uses [Redis](https://redis.io).
 
 Fast, consistent and reliable.
 
+[<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.CounterStores.Redis?label=ThrottlingTroll.CounterStores.Redis%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.Redis)
+
+
 ## How to use
 
 1. Install package from NuGet:
