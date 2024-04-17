@@ -7,6 +7,9 @@ Fast, but not entirely consistent (because IDistributedCache does not provide at
 In other words, your computing instances might go slightly on their own. 
 For true consistency consider using [ThrottlingTroll.CounterStores.Redis](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.Redis) instead.
 
+[<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.CounterStores.DistributedCache?label=ThrottlingTroll.CounterStores.DistributedCache%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.DistributedCache)
+
+
 ## How to use
 
 1. Install package from NuGet:
