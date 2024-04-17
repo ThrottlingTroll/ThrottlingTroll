@@ -7,6 +7,9 @@ Easiest to configure (only takes a Storage connection string), but not recommend
 because contention around the table might get very high (remember that Azure Storage Tables only support 
 optimistic concurrency and no atomic operations).
 
+[<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.CounterStores.AzureTable?label=ThrottlingTroll.CounterStores.AzureTable%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.AzureTable)
+
+
 ## How to use
 
 1. Install package from NuGet:
