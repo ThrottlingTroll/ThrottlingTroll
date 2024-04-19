@@ -138,7 +138,7 @@ namespace ThrottlingTroll
                 foreach (var limit in config.Rules)
                 {
                     // The limit method defines whether we should throw on our internal failures
-                    shouldThrowOnExceptions = limit.LimitMethod.ShouldThrowOnFailures;
+                    shouldThrowOnExceptions = limit.ShouldThrowOnFailures;
 
                     long requestCost = limit.GetCost(request);
 

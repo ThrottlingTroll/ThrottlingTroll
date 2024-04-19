@@ -55,6 +55,14 @@ namespace ThrottlingTroll
         protected string _cacheKey;
 
         /// <summary>
+        /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
+        /// </summary>
+        protected internal bool ShouldThrowOnFailures 
+        { 
+            get { return this._limitMethod?.ShouldThrowOnFailures ?? false; }
+        }
+
+        /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
         /// If request does not match the rule, returns null.
         /// If limit exceeded, returns number of seconds to retry after and unique counter ID.
