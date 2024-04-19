@@ -126,16 +126,15 @@ Install from Nuget:
      If you set Semaphore's **PermitLimit** to  **1** and use  **RedisCounterStore**, then ThrottlingTroll will act as a distributed lock. If you add an **IdentityIdExtractor** (identifying requests by e.g. a query string parameter), then it will turn into *named* distributed locks. 
 
 
-## Documentation
+## [Documentation](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki)
 
 [You can find it in our Wiki](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki).
 
 Most concepts and features are the same for all supported platforms. Things that are specific to each platform are highlighted in the relevant READMEs:
 
-| ASP.NET Core                              | Azure Functions                                          |
-| -                                         | -                                                        |
-| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
-|                                                                                                                            | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
+| ASP.NET Core                              | Azure Functions                                          | Azure Functions with ASP.NET Core Integration |
+| -                                         | -                                                        | -                                             |
+| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
 
 
 ## Samples
