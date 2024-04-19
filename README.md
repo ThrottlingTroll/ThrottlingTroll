@@ -19,7 +19,7 @@ Install from Nuget:
 ## Features
 
 * **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions (.NET Isolated)](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. 
-* **Ingress throttling**, aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
+* [**Ingress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure), aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
       sequenceDiagram
@@ -32,7 +32,7 @@ Install from Nuget:
    ```
    Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET Core) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
      
-* **Egress throttling**, aka limit the number of calls your code is making against some external endpoint. 
+* [Egress throttling](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#egress-how-to-initialize-and-configure), aka limit the number of calls your code is making against some external endpoint. 
 
    ```mermaid
       sequenceDiagram
@@ -47,7 +47,7 @@ Install from Nuget:
    ```
    Implemented as an [HttpClient DelegatingHandler](https://learn.microsoft.com/en-us/aspnet/web-api/overview/advanced/httpclient-message-handlers#custom-message-handlers), which produces `429 TooManyRequests` response (without making the actual call) when a limit is exceeded.
    
-* **Propagating `429 TooManyRequests` from egress to ingress**, aka when your service internally makes an HTTP request which results in `429 TooManyRequests`, your service can automatically respond with same `429 TooManyRequests` to its calling client.
+* [**Propagating `429 TooManyRequests` from egress to ingress**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/240.-%5BEgress%5D-How-to-use-egress%E2%80%90to%E2%80%90ingress-propagation), aka when your service internally makes an HTTP request which results in `429 TooManyRequests`, your service can automatically respond with same `429 TooManyRequests` to its calling client.
 
    ```mermaid
       sequenceDiagram
@@ -57,7 +57,7 @@ Install from Nuget:
           YourService-->>-Client:❌ 429 TooManyRequests
    ```
 
-* **Custom response fabrics**. For ingress it gives full control on what to return when a request is being throttled, and also allows to implement delayed responses (instead of just returning `429 TooManyRequests`): 
+* **Custom response fabrics**. [For ingress it gives full control on what to return when a request is being throttled, and also allows to implement delayed responses (instead of just returning `429 TooManyRequests`)](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/140.-%5BIngress%5D-Delays,-spin%E2%80%90waits-and-custom-responses): 
 
    ```mermaid
       sequenceDiagram
@@ -70,7 +70,7 @@ Install from Nuget:
           end
    ```
 
-   For egress it also allows ThrottlingTroll to do automatic retries for you:
+   [For egress it also allows ThrottlingTroll to do automatic retries for you](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/250.-%5BEgress%5D-Delays,-spin%E2%80%90waits-and-custom-responses):
 
    ```mermaid
       sequenceDiagram
@@ -87,49 +87,50 @@ Install from Nuget:
           HttpClient-->>-YourService:✅ 200 OK
    ```
 
-* **Storing rate counters in a distributed cache**, making your rate limiting policy consistent across all your computing instances. Supported distributed counter stores are:
-  * [ThrottlingTroll.CounterStores.Redis](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.Redis)
-  * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.AzureTable)
-  * [ThrottlingTroll.CounterStores.DistributedCache](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.CounterStores.DistributedCache)
+* [**Storing rate counters in a distributed cache**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores), making your rate limiting policy consistent across all your computing instances. Supported distributed counter stores are:
+  * [ThrottlingTroll.CounterStores.Redis](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresredis)
+  * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresazuretable)
+  * [ThrottlingTroll.CounterStores.DistributedCache](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresdistributedcache)
 
   And [you can implement your own](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs).
 
-* **Three ways of configuring**:
-  * [Statically, aka via `appsettings.json/host.json`](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#to-configure-via-appsettingsjson). Simplest.
-  * [Programmatically, at startup](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#to-configure-programmatically). In case you want to parametrize something.
-  * [Reactively](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#to-configure-dynamically). You provide a routine, that fetches limits from wherever, and an **IntervalToReloadConfigInSeconds** for that routine to be called periodically. Allows to reconfigure rules and limits on-the-fly, *without restarting your service*.
+* [**Three ways of configuring**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure):
+  * [Statically, aka via `appsettings.json/host.json`](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/110.-%5BIngress%5D-How-to-configure-statically-(via-config-files)). Simplest.
+  * [Programmatically, at startup](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/120.-%5BIngress%5D-How-to-configure-programmatically). In case you want to parametrize something.
+  * [Reactively](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/130.-%5BIngress%5D-How-to-configure-reactively). You provide a routine, that fetches limits from wherever, and an **IntervalToReloadConfigInSeconds** for that routine to be called periodically. Allows to reconfigure rules and limits on-the-fly, *without restarting your service*.
 
-* **IdentityIdExtractor**s, that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
+* [**IdentityIdExtractor**s](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting), that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
 
-* **CostExtractor**s, that you can use to assign custom *costs* to different requests. Default cost is **1**, but if some of your requests are heavier than the others, you can assign higher costs to them.
+* [**CostExtractor**s](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting#using-costextractors), that you can use to assign custom *costs* to different requests. Default cost is **1**, but if some of your requests are heavier than the others, you can assign higher costs to them.
   Another typical usecase for this would be to arrange different *pricing tiers* for your service: you set the rate limit to something high - and then "charge" clients differently, based on their pricing tier.
 
 
 ## Supported rate limiting algorithms
 
-* **FixedWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 8 seconds:
+* [**FixedWindow**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-fixedwindow). No more than **PermitLimit** requests are allowed in **IntervalInSeconds**. Here is an illustration for the case of no more than 2 requests per each 8 seconds:
     
      <img src="https://github.com/ThrottlingTroll/ThrottlingTroll/assets/5447190/ffb0bdc8-736b-4c6f-9eb4-db54ce72e034" height="300px"/>
 
   The typical drawback of FixedWindow algorithm is that you'd get request rate *bursts* at the end of each window. So specifically to cope that we have
 
-* **SlidingWindow**. No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`. Here is an illustration for the case of no more than 2 requests per each 8 seconds with 2 buckets:
+* [**SlidingWindow**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-slidingwindow). No more than **PermitLimit** requests are allowed in **IntervalInSeconds**, but that interval is split into **NumOfBuckets**. The main benefit of this algorithm over **FixedWindow** is that if a client constantly exceedes **PermitLimit**, it will never get any valid response and will always get `429 TooManyRequests`. Here is an illustration for the case of no more than 2 requests per each 8 seconds with 2 buckets:
     
      <img src="https://github.com/ThrottlingTroll/ThrottlingTroll/assets/5447190/e18abb9c-d1dd-4b64-a007-220605ed03e9" height="300px"/>  
 
   In other words, with SlidingWindow your service gets a *smoother request rate*.
           
-* **Semaphore** aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Here is an illustration for the case of no more than 3 concurrent requests:
+* [**Semaphore**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-semaphore) aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Here is an illustration for the case of no more than 3 concurrent requests:
 
      <img src="https://github.com/ThrottlingTroll/ThrottlingTroll/assets/5447190/0beeac73-5d35-482a-a790-a3fe9ea6e38b" height="300px"/>  
    
      If you set Semaphore's **PermitLimit** to  **1** and use  **RedisCounterStore**, then ThrottlingTroll will act as a distributed lock. If you add an **IdentityIdExtractor** (identifying requests by e.g. a query string parameter), then it will turn into *named* distributed locks. 
 
 
+## Documentation
 
-## How to configure and use
+[You can find it in our Wiki](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki).
 
-Configuration and usage with ASP.NET Core and Azure Functions is very similar yet slightly different:
+Most concepts and features are the same for all supported platforms. Things that are specific to each platform are highlighted in the relevant READMEs:
 
 | ASP.NET Core                              | Azure Functions                                          |
 | -                                         | -                                                        |
