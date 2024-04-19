@@ -32,7 +32,7 @@ Install from Nuget:
    ```
    Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET Core) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
      
-* [Egress throttling](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#egress-how-to-initialize-and-configure), aka limit the number of calls your code is making against some external endpoint. 
+* [**Egress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#egress-how-to-initialize-and-configure), aka limit the number of calls your code is making against some external endpoint. 
 
    ```mermaid
       sequenceDiagram
