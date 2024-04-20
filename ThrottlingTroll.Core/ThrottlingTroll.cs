@@ -58,6 +58,54 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
+        /// Returns the current <see cref="ThrottlingTrollConfig"/> snapshot
+        /// </summary>
+        protected async Task<ThrottlingTrollConfig> GetCurrentConfig()
+        {
+            // Always getting the current value from the task. Once completed, tasks cache and return the same resulting object anyway.
+            var config = await this._getConfigTask;
+
+            // If it is the same object, just returning it
+            if (config == this._currentConfig)
+            {
+                return config;
+            }
+
+            // The object has changed (probably, because the task was re-executed), so we need to re-apply global settings to it
+
+            if (config.Rules != null)
+            {
+                foreach (var rule in config.Rules)
+                {
+                    if (rule.IdentityIdExtractor == null)
+                    {
+                        rule.IdentityIdExtractor = this._identityIdExtractor;
+                    }
+
+                    if (rule.CostExtractor == null)
+                    {
+                        rule.CostExtractor = this._costExtractor;
+                    }
+                }
+            }
+
+            if (config.WhiteList != null)
+            {
+                foreach (var rule in config.WhiteList)
+                {
+                    if (rule.IdentityIdExtractor == null)
+                    {
+                        rule.IdentityIdExtractor = this._identityIdExtractor;
+                    }
+                }
+            }
+
+            // This must be done at the very end of this method
+            this._currentConfig = config;
+            return config;
+        }
+
+        /// <summary>
         /// Checks if ingress limit is exceeded for a given request.
         /// Also checks whether there're any <see cref="ThrottlingTrollTooManyRequestsException"/>s from egress.
         /// Returns a list of check results for rules that this request matched.
@@ -118,7 +166,7 @@ namespace ThrottlingTroll
             bool shouldThrowOnExceptions = false;
             try
             {
-                var config = this.ApplyGlobalExtractors(await this._getConfigTask);
+                var config = await this.GetCurrentConfig();
 
                 if (config.Rules == null)
                 {
@@ -221,36 +269,9 @@ namespace ThrottlingTroll
             this._getConfigTask = task;
         }
 
-        private ThrottlingTrollConfig ApplyGlobalExtractors(ThrottlingTrollConfig config)
-        {
-            if (config.Rules != null)
-            {
-                foreach (var rule in config.Rules)
-                {
-                    if (rule.IdentityIdExtractor == null)
-                    {
-                        rule.IdentityIdExtractor = this._identityIdExtractor;
-                    }
-
-                    if (rule.CostExtractor == null)
-                    {
-                        rule.CostExtractor = this._costExtractor;
-                    }
-                }
-            }
-
-            if (config.WhiteList != null)
-            {
-                foreach (var rule in config.WhiteList)
-                {
-                    if (rule.IdentityIdExtractor == null)
-                    {
-                        rule.IdentityIdExtractor = this._identityIdExtractor;
-                    }
-                }
-            }
-
-            return config;
-        }
+        /// <summary>
+        /// Caching the current config value, so that we don't need to re-apply global settings every time
+        /// </summary>
+        private ThrottlingTrollConfig _currentConfig;
     }
 }
