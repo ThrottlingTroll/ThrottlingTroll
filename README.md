@@ -139,6 +139,38 @@ Most concepts and features are the same for all supported platforms. Things that
 
 ## Samples
 
+Full minimalistic sample using ASP.NET Core Minimal API:
+
+```
+using ThrottlingTroll;
+
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/", () => "Hello ThrottlingTroll!");
+
+// Limiting to 1 request per 2 seconds
+app.UseThrottlingTroll(options =>
+{
+    options.Config = new ThrottlingTrollConfig 
+    {
+        Rules =
+        [
+            new ThrottlingTrollRule
+            {
+                LimitMethod = new FixedWindowRateLimitMethod
+                {
+                    PermitLimit = 1,
+                    IntervalInSeconds = 2
+                }
+            }
+        ]
+    };
+});
+
+app.Run();
+```
+
 Sample projects that demonstrate all the above concepts:
 
 | ASP.NET Core | Azure Functions |
