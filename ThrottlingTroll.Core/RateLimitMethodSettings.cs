@@ -26,6 +26,8 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
         public int NumOfBuckets { get; set; }
         public int TimeoutInSeconds { get; set; } = 100;
+        public bool? ShouldThrowOnFailures { get; set; }
+
 
         public RateLimitMethod ToRateLimitMethod()
         {
@@ -35,20 +37,24 @@ namespace ThrottlingTroll
                     return new FixedWindowRateLimitMethod
                     {
                         PermitLimit = this.PermitLimit,
-                        IntervalInSeconds = this.IntervalInSeconds
+                        IntervalInSeconds = this.IntervalInSeconds,
+                        ShouldThrowOnFailures = this.ShouldThrowOnFailures ?? false
                     };
                 case RateLimitAlgorithm.SlidingWindow:
                     return new SlidingWindowRateLimitMethod
                     {
                         PermitLimit = this.PermitLimit,
                         IntervalInSeconds = this.IntervalInSeconds,
-                        NumOfBuckets = this.NumOfBuckets
+                        NumOfBuckets = this.NumOfBuckets,
+                        ShouldThrowOnFailures = this.ShouldThrowOnFailures ?? false
                     };
                 case RateLimitAlgorithm.Semaphore:
                     return new SemaphoreRateLimitMethod
                     {
                         PermitLimit = this.PermitLimit,
-                        TimeoutInSeconds = this.TimeoutInSeconds
+                        TimeoutInSeconds = this.TimeoutInSeconds,
+                        // Intentionally setting this to true by default for SemaphoreRateLimitMethod
+                        ShouldThrowOnFailures = this.ShouldThrowOnFailures ?? true
                     };
             }
 
