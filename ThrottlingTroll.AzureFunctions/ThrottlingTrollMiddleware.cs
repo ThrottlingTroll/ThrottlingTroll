@@ -42,25 +42,13 @@ namespace ThrottlingTroll
             try
             {
                 // Need to call the rest of the pipeline no more than one time
-                bool nextCalled = false;
-                var callNextOnce = async (List<LimitCheckResult> checkResults) => {
-                    if (!nextCalled)
-                    {
-                        nextCalled = true;
+                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(async (List<LimitCheckResult> checkResults) => {
 
-                        // Placing current checkResults into context.Items under a predefined key
-                        if (request.FunctionContext.Items.ContainsKey(LimitCheckResultsContextKey))
-                        {
-                            ((List<LimitCheckResult>)request.FunctionContext.Items[LimitCheckResultsContextKey]).AddRange(checkResults);
-                        }
-                        else
-                        {
-                            request.FunctionContext.Items[LimitCheckResultsContextKey] = checkResults;
-                        }
+                    // Placing current checkResults into context.Items under a predefined key
+                    request.FunctionContext.Items.AddItemsToKey(LimitCheckResultsContextKey, checkResults);
 
-                        await next();
-                    }
-                };
+                    await next();
+                });
 
                 var checkList = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
