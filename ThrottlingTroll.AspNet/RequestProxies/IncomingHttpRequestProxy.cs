@@ -60,5 +60,11 @@ namespace ThrottlingTroll
                 return this.Request.Headers;
             }
         }
+
+        /// <inheritdoc />
+        public void AppendToContextItem<T>(string key, List<T> list)
+        {
+            this.Request.HttpContext.Items.AddItemsToKey(key, list);
+        }
     }
 }

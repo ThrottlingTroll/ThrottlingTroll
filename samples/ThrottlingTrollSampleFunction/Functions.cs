@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using StackExchange.Redis;
@@ -379,6 +380,24 @@ namespace ThrottlingTrollSampleFunction
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString("OK");
+            return response;
+        }
+
+        /// <summary>
+        /// Dumps all the current effective ThrottlingTroll configuration for debugging purposes.
+        /// Never do this in a real service.
+        /// </summary>
+        [Function("throttling-troll-config-debug-dump")]
+        public async Task<HttpResponseData> ThrottlingTrollConfigDebugDump([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            // ThrottlingTroll places a list of ThrottlingTrollConfigs into request's context under the "ThrottlingTrollConfigsContextKey" key
+            // The value is a list, because there might be multiple instances of ThrottlingTrollMiddleware configured
+            var configList = (List<ThrottlingTrollConfig>)req.FunctionContext.Items[ThrottlingTroll.ThrottlingTroll.ThrottlingTrollConfigsContextKey]!;
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json");
+            await response.WriteStringAsync(JsonSerializer.Serialize(configList));
+
             return response;
         }
     }

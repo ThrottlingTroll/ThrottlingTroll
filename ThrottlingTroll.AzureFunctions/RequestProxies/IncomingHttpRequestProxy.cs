@@ -1,6 +1,5 @@
 ﻿using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Primitives;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -65,6 +64,12 @@ namespace ThrottlingTroll
 
                 return this._headers;
             }
+        }
+
+        /// <inheritdoc />
+        public void AppendToContextItem<T>(string key, List<T> list)
+        {
+            this.Request.FunctionContext.Items.AddItemsToKey(key, list);
         }
 
         private IDictionary<string, StringValues> _headers;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -49,6 +50,7 @@ namespace ThrottlingTroll
         /// Request's cost extraction routine. The default cost (weight) of a request is 1, but this routine allows to override that.
         /// Overrides <see cref="ThrottlingTrollOptions.CostExtractor"/>.
         /// </summary>
+        [JsonConverter(typeof(ToStringJsonConverter<Func<IHttpRequestProxy, long>>))]
         public Func<IHttpRequestProxy, long> CostExtractor { get; set; }
 
         protected RateLimitMethod _limitMethod { get; set; }
@@ -158,6 +160,9 @@ namespace ThrottlingTroll
             }
         }
 
+        /// <summary>
+        /// Hashing utility, that is used for hashing counter keys. This default implementation uses <see cref="SHA256"/>.
+        /// </summary>
         protected virtual string GetHash(string str)
         {
             // HashAlgorithm instances should NOT be reused

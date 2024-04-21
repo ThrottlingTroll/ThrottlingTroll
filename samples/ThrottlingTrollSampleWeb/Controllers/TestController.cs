@@ -425,5 +425,20 @@ namespace ThrottlingTrollSampleWeb.Controllers
 
             return "OK";
         }
+
+        /// <summary>
+        /// Dumps all the current effective ThrottlingTroll configuration for debugging purposes.
+        /// Never do this in a real service.
+        /// </summary>
+        [HttpGet]
+        [Route("throttling-troll-config-debug-dump")]
+        public List<ThrottlingTrollConfig> ThrottlingTrollConfigDebugDump()
+        {
+            // ThrottlingTroll places a list of ThrottlingTrollConfigs into request's context under the "ThrottlingTrollConfigsContextKey" key
+            // The value is a list, because there might be multiple instances of ThrottlingTrollMiddleware configured
+            var configList = (List<ThrottlingTrollConfig>)this.HttpContext.Items[ThrottlingTroll.ThrottlingTroll.ThrottlingTrollConfigsContextKey]!;
+
+            return configList;
+        }
     }
 }

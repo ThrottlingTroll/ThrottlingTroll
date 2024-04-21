@@ -343,6 +343,20 @@ namespace ThrottlingTrollSampleAspNetFunction
             return new OkObjectResult("OK");
         }
 
+        /// <summary>
+        /// Dumps all the current effective ThrottlingTroll configuration for debugging purposes.
+        /// Never do this in a real service.
+        /// </summary>
+        [Function("throttling-troll-config-debug-dump")]
+        public IActionResult ThrottlingTrollConfigDebugDump([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+        {
+            // ThrottlingTroll places a list of ThrottlingTrollConfigs into request's context under the "ThrottlingTrollConfigsContextKey" key
+            // The value is a list, because there might be multiple instances of ThrottlingTrollMiddleware configured
+            var configList = (List<ThrottlingTrollConfig>)req.HttpContext.Items[ThrottlingTroll.ThrottlingTroll.ThrottlingTrollConfigsContextKey]!;
+
+            return new OkObjectResult(configList);
+        }
+
         private string GetHostAndPort(HttpRequest req)
         {
             // Use the X-Forwarded-Host header if present, otherwise use the Host header.

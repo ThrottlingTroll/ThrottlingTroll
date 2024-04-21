@@ -34,21 +34,12 @@ namespace ThrottlingTroll
         public async Task Invoke(FunctionContext functionContext, Func<Task> next)
         {
             var context = functionContext.GetHttpContext();
-            var requestProxy = new IncomingHttpRequestProxy(context.Request);
+            var requestProxy = new IncomingHttpRequestProxy(functionContext);
             var cleanupRoutines = new List<Func<Task>>();
             try
             {
                 // Need to call the rest of the pipeline no more than one time
-                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(async (List<LimitCheckResult> checkResults) => {
-
-                    // Placing current checkResults into context.Items under a predefined key
-                    functionContext.Items.AddItemsToKey(LimitCheckResultsContextKey, checkResults);
-
-                    // Also placing it to HttpContext
-                    context.Items[LimitCheckResultsContextKey] = functionContext.Items[LimitCheckResultsContextKey];
-
-                    await next();
-                });
+                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(() => next());
 
                 var checkList = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
@@ -60,7 +51,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<List<LimitCheckResult>, Task> callNextOnce)
+        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
             var result = checkList
                 .Where(r => r.RequestsRemaining < 0)
@@ -101,7 +92,7 @@ namespace ThrottlingTroll
                 if (responseProxy.ShouldContinueAsNormal)
                 {
                     // Continue with normal request processing
-                    await callNextOnce(checkList);
+                    await callNextOnce();
                 }
             }
         }

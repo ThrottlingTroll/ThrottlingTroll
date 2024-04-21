@@ -1,6 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace ThrottlingTroll
 {
@@ -40,6 +42,7 @@ namespace ThrottlingTroll
         /// Identity ID extraction routine to be used for extracting Identity IDs from requests.
         /// Overrides <see cref="ThrottlingTrollOptions.IdentityIdExtractor"/>.
         /// </summary>
+        [JsonConverter(typeof(ToStringJsonConverter<Func<IHttpRequestProxy, string>>))]
         public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
 
         protected Regex _uriRegex;
@@ -144,6 +147,24 @@ namespace ThrottlingTroll
             var identityId = this.IdentityIdExtractor(request);
 
             return identityId == this.IdentityId;
+        }
+
+        /// <summary>
+        /// Used to serialize delegate fields
+        /// </summary>
+        protected class ToStringJsonConverter<T> : JsonConverter<T>
+        {
+            /// <inheritdoc />
+            public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <inheritdoc />
+            public override void Write(Utf8JsonWriter writer, T val, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(val.ToString());
+            }
         }
     }
 }

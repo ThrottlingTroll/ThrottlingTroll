@@ -25,37 +25,19 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
-        /// Makes sure a lambda is executed just once
-        /// </summary>
-        public static Action<T> RunOnce<T>(this Action<T> func)
-        {
-            bool wasCalled = false;
-
-            return (T param) =>
-            {
-                if (!wasCalled)
-                {
-                    wasCalled = true;
-
-                    func(param);
-                }
-            };
-        }
-
-        /// <summary>
         /// Makes sure an asynchronous lambda is executed just once
         /// </summary>
-        public static Func<T, Task> RunOnce<T>(this Func<T, Task> func)
+        public static Func<Task> RunOnce(this Func<Task> func)
         {
             bool wasCalled = false;
 
-            return async (T param) =>
+            return async () =>
             {
                 if (!wasCalled)
                 {
                     wasCalled = true;
 
-                    await func(param);
+                    await func();
                 }
             };
         }

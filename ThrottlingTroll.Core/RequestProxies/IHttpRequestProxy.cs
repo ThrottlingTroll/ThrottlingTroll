@@ -27,5 +27,12 @@ namespace ThrottlingTroll
         /// Request HTTP Headers
         /// </summary>
         public IDictionary<string, StringValues> Headers { get; }
+
+        /// <summary>
+        /// Appends a list of values to a named entry in the request's context.Items.
+        /// If an entry does not exist yet, it is created out of the provided list.
+        /// Otherwise the values are appended to the existing list.
+        /// </summary>
+        public void AppendToContextItem<T>(string key, List<T> list);
     }
 }

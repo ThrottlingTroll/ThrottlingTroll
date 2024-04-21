@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
 
@@ -9,9 +10,10 @@ namespace ThrottlingTroll
     /// </summary>
     public class IncomingHttpRequestProxy : IIncomingHttpRequestProxy
     {
-        internal IncomingHttpRequestProxy(HttpRequest request)
+        internal IncomingHttpRequestProxy(FunctionContext functionContext)
         {
-            this.Request = request;
+            this._functionContext = functionContext;
+            this.Request = functionContext.GetHttpContext().Request;
         }
 
         /// <inheritdoc />
@@ -60,5 +62,15 @@ namespace ThrottlingTroll
                 return this.Request.Headers;
             }
         }
+
+        /// <inheritdoc />
+        public void AppendToContextItem<T>(string key, List<T> list)
+        {
+            // Adding both to FunctionContext and HttpContext
+            this._functionContext.Items.AddItemsToKey(key, list);
+            this.Request.HttpContext.Items[key] = this._functionContext.Items[key];
+        }
+
+        private readonly FunctionContext _functionContext;
     }
 }

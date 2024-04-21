@@ -66,6 +66,12 @@ namespace ThrottlingTroll
             }
         }
 
+        /// <inheritdoc />
+        public void AppendToContextItem<T>(string key, List<T> list)
+        {
+            throw new System.NotImplementedException();
+        }
+
         private IDictionary<string, StringValues> _headers;
     }
 }

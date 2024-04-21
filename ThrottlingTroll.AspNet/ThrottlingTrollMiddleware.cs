@@ -41,13 +41,7 @@ namespace ThrottlingTroll
             try
             {
                 // Need to call the rest of the pipeline no more than one time
-                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(async (List<LimitCheckResult> checkResults) => {
-
-                    // Placing current checkResults into context.Items under a predefined key
-                    context.Items.AddItemsToKey(LimitCheckResultsContextKey, checkResults);
-
-                    await this._next(context);
-                });
+                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(() => this._next(context));
 
                 var checkList = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
@@ -59,7 +53,7 @@ namespace ThrottlingTroll
             }
         }
 
-        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<List<LimitCheckResult>, Task> callNextOnce)
+        private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
             var result = checkList
                 .Where(r => r.RequestsRemaining < 0)
@@ -100,7 +94,7 @@ namespace ThrottlingTroll
                 if (responseProxy.ShouldContinueAsNormal)
                 {
                     // Continue with normal request processing
-                    await callNextOnce(checkList);
+                    await callNextOnce();
                 }
             }
         }
