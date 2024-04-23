@@ -23,6 +23,32 @@ namespace ThrottlingTroll
         /// Requests to be whitelisted (exempt from Rules)
         /// </summary>
         public IList<RequestFilter> WhiteList { get; set; }
+
+        /// <summary>
+        /// Default ctor
+        /// </summary>
+        public ThrottlingTrollConfig()
+        {
+        }
+
+        /// <summary>
+        /// Merging ctor
+        /// </summary>
+        public ThrottlingTrollConfig(ThrottlingTrollConfig that)
+        {
+            if (that == null) 
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(that.UniqueName)) 
+            {
+                this.UniqueName = that.UniqueName;
+            }
+
+            this.Rules = ThrottlingTrollCoreExtensions.UnionOf(this.Rules, that.Rules);
+            this.WhiteList = ThrottlingTrollCoreExtensions.UnionOf(this.WhiteList, that.WhiteList);
+        }
     }
 
     /// <summary>

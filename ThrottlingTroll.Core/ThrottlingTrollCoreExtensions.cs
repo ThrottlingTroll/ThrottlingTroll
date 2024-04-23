@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -10,18 +11,32 @@ namespace ThrottlingTroll
     public static class ThrottlingTrollCoreExtensions
     {
         /// <summary>
+        /// Concatenates two nullable lists
+        /// </summary>
+        public static IList<T> UnionOf<T>(IList<T> first, IList<T> second) 
+        {
+            if (first == null)
+            {
+                return second;
+            }
+
+            if (second == null) 
+            {
+                return first;
+            }
+
+            return first.Concat(second).ToList();
+        } 
+
+        /// <summary>
         /// Adds or appends a list of items to a dictionary key
         /// </summary>
-        public static void AddItemsToKey<T>(this IDictionary<object, object> map, string key, List<T> items)
+        public static void AddItemsToKey<T>(this IDictionary<object, object> map, string key, IEnumerable<T> items)
         {
-            if (map.TryGetValue(key, out var existingObject))
-            {
-                ((List<T>)existingObject).AddRange(items);
-            }
-            else
-            {
-                map[key] = items;
-            }
+            // Should always put a _new_ List<T> object here. Otherwise multiple middleware instances might start interfering with each other.
+            map.TryAdd(key, new List<T>());
+
+            ((List<T>)map[key]).AddRange(items);
         }
 
         /// <summary>
