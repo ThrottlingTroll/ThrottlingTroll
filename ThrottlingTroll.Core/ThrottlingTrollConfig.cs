@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
 
 namespace ThrottlingTroll
 {
@@ -25,16 +28,9 @@ namespace ThrottlingTroll
         public IList<RequestFilter> WhiteList { get; set; }
 
         /// <summary>
-        /// Default ctor
+        /// Merges two ThrottlingTrollConfig objects (by concatenating <see cref="Rules"/> and <see cref="WhiteList"/> fields)
         /// </summary>
-        public ThrottlingTrollConfig()
-        {
-        }
-
-        /// <summary>
-        /// Merging ctor
-        /// </summary>
-        public ThrottlingTrollConfig(ThrottlingTrollConfig that)
+        public void MergeWith(ThrottlingTrollConfig that)
         {
             if (that == null) 
             {
@@ -49,6 +45,27 @@ namespace ThrottlingTroll
             this.Rules = ThrottlingTrollCoreExtensions.UnionOf(this.Rules, that.Rules);
             this.WhiteList = ThrottlingTrollCoreExtensions.UnionOf(this.WhiteList, that.WhiteList);
         }
+
+        /// <summary>
+        /// Creates an instance of <see cref="ThrottlingTrollConfig"/> out of config settings.
+        /// </summary>
+        public static ThrottlingTrollConfig FromConfigSection(IServiceProvider provider)
+        {
+            var config = provider.GetService<IConfiguration>();
+
+            var section = config?.GetSection(IngressConfigSectionName);
+
+            var result = section?.Get<ThrottlingTrollConfig>();
+
+            if (result == null)
+            {
+                throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{IngressConfigSectionName}' not found or cannot be deserialized.");
+            }
+
+            return result;
+        }
+
+        private const string IngressConfigSectionName = "ThrottlingTrollIngress";
     }
 
     /// <summary>

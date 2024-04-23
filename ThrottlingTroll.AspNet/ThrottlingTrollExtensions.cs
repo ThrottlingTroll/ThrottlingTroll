@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -28,18 +27,10 @@ namespace ThrottlingTroll
                 if (opt.Config == null)
                 {
                     // Trying to read config from settings
-                    var config = builder.ApplicationServices.GetService<IConfiguration>();
 
-                    var section = config?.GetSection(ConfigSectionName);
+                    var configSection = ThrottlingTrollConfig.FromConfigSection(builder.ApplicationServices);
 
-                    var throttlingTrollConfig = section?.Get<ThrottlingTrollConfig>();
-
-                    if (throttlingTrollConfig == null)
-                    {
-                        throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{ConfigSectionName}' not found or cannot be deserialized.");
-                    }
-
-                    opt.GetConfigFunc = async () => throttlingTrollConfig;
+                    opt.GetConfigFunc = async () => configSection;
                 }
                 else
                 {

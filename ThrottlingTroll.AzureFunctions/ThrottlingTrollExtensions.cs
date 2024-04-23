@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -112,18 +111,9 @@ namespace ThrottlingTroll
                 if (opt.Config == null)
                 {
                     // Trying to read config from settings.
-                    var config = context.InstanceServices.GetService<IConfiguration>();
+                    var configSection = ThrottlingTrollConfig.FromConfigSection(context.InstanceServices);
 
-                    var section = config?.GetSection(ConfigSectionName);
-
-                    var throttlingTrollConfig = section?.Get<ThrottlingTrollConfig>();
-
-                    if (throttlingTrollConfig == null)
-                    {
-                        throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{ConfigSectionName}' not found or cannot be deserialized.");
-                    }
-
-                    opt.GetConfigFunc = async () => throttlingTrollConfig;
+                    opt.GetConfigFunc = async () => configSection;
                 }
                 else
                 {
