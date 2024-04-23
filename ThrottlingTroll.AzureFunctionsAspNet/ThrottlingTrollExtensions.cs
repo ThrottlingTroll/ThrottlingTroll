@@ -47,6 +47,10 @@ namespace ThrottlingTroll
                 },
                 async (FunctionContext context, Func<Task> next) =>
                 {
+                    // To initialize ThrottlingTrollMiddleware we need access to context.InstanceServices (the DI container),
+                    // and it is only here when we get one.
+                    // So that's why all the complexity with double-checked locking etc.
+
                     if (middleware == null)
                     {
                         lock (lockObject)
@@ -73,17 +77,10 @@ namespace ThrottlingTroll
         {
             if (opt.GetConfigFunc == null)
             {
-                if (opt.Config == null)
-                {
-                    // Trying to read config from settings.
-                    var configSection = ThrottlingTrollConfig.FromConfigSection(context.InstanceServices);
+                // Trying to read config from settings
+                opt.Config ??= ThrottlingTrollConfig.FromConfigSection(context.InstanceServices);
 
-                    opt.GetConfigFunc = async () => configSection;
-                }
-                else
-                {
-                    opt.GetConfigFunc = async () => opt.Config;
-                }
+                opt.GetConfigFunc = () => Task.FromResult(opt.Config);
             }
 
             if (opt.Log == null)
@@ -92,26 +89,9 @@ namespace ThrottlingTroll
                 opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
             }
 
-            if (opt.CounterStore == null)
-            {
-                opt.CounterStore = context.GetOrCreateThrottlingTrollCounterStore();
-            }
+            opt.CounterStore ??= context.InstanceServices.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
 
             return new ThrottlingTrollMiddleware(opt);
         }
-
-        private static ICounterStore GetOrCreateThrottlingTrollCounterStore(this FunctionContext context)
-        {
-            var counterStore = context.InstanceServices.GetService<ICounterStore>();
-
-            if (counterStore == null)
-            {
-                counterStore = new MemoryCacheCounterStore();
-            }
-
-            return counterStore;
-        }
-
-        private const string ConfigSectionName = "ThrottlingTrollIngress";
     }
 }
