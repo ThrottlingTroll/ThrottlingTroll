@@ -30,11 +30,11 @@ namespace ThrottlingTroll
         /// <summary>
         /// Merges two ThrottlingTrollConfig objects (by concatenating <see cref="Rules"/> and <see cref="WhiteList"/> fields)
         /// </summary>
-        public void MergeWith(ThrottlingTrollConfig that)
+        public ThrottlingTrollConfig MergeWith(ThrottlingTrollConfig that)
         {
             if (that == null) 
             {
-                return;
+                return this;
             }
 
             if (!string.IsNullOrEmpty(that.UniqueName)) 
@@ -44,6 +44,8 @@ namespace ThrottlingTroll
 
             this.Rules = ThrottlingTrollCoreExtensions.UnionOf(this.Rules, that.Rules);
             this.WhiteList = ThrottlingTrollCoreExtensions.UnionOf(this.WhiteList, that.WhiteList);
+
+            return this;
         }
 
         /// <summary>
@@ -56,11 +58,6 @@ namespace ThrottlingTroll
             var section = config?.GetSection(IngressConfigSectionName);
 
             var result = section?.Get<ThrottlingTrollConfig>();
-
-            if (result == null)
-            {
-                throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{IngressConfigSectionName}' not found or cannot be deserialized.");
-            }
 
             return result;
         }

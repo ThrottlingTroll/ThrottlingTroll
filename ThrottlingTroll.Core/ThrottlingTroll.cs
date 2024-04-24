@@ -115,16 +115,10 @@ namespace ThrottlingTroll
         /// Also checks whether there're any <see cref="ThrottlingTrollTooManyRequestsException"/>s from egress.
         /// Returns a list of check results for rules that this request matched.
         /// </summary>
-        protected async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
+        protected internal async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
         {
-            // Adding the current ThrottlingTrollConfig, for client's reference. Doing this _before_ any extractors are called.
-            request.AppendToContextItem(ThrottlingTrollConfigsContextKey, new List<ThrottlingTrollConfig> { await this.GetCurrentConfig() });
-
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
-
-            // Adding check results as an item to the HttpContext, so that client's code can use it
-            request.AppendToContextItem(LimitCheckResultsContextKey, checkList);
 
             if (checkList.Any(r => r.RequestsRemaining < 0))
             {
@@ -179,6 +173,9 @@ namespace ThrottlingTroll
             try
             {
                 var config = await this.GetCurrentConfig();
+
+                // Adding the current ThrottlingTrollConfig, for client's reference. Doing this _before_ any extractors are called.
+                request.AppendToContextItem(ThrottlingTrollConfigsContextKey, new List<ThrottlingTrollConfig> { config });
 
                 if (config.Rules == null)
                 {
@@ -248,6 +245,9 @@ namespace ThrottlingTroll
                     throw;
                 }
             }
+
+            // Adding check results as an item to the HttpContext, so that client's code can use it
+            request.AppendToContextItem(LimitCheckResultsContextKey, result);
 
             return result;
         }

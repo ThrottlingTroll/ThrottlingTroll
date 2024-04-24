@@ -69,7 +69,7 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         public void AppendToContextItem<T>(string key, List<T> list)
         {
-            throw new System.NotImplementedException();
+            // Doing nothing so far
         }
 
         private IDictionary<string, StringValues> _headers;
