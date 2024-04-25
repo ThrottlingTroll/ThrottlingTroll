@@ -16,8 +16,6 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollMiddleware : ThrottlingTroll
     {
-        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
-
         internal ThrottlingTrollMiddleware
         (
             ThrottlingTrollOptions options
@@ -49,6 +47,8 @@ namespace ThrottlingTroll
             }
         }
 
+        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+
         private async Task<HttpResponseData> ConstructResponse(HttpRequestData request, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce, CancellationToken cancellationToken)
         {
             var result = checkList
@@ -62,9 +62,13 @@ namespace ThrottlingTroll
                 return null;
             }
 
+            // Exceeded rule's ResponseFabric takes precedence.
+            // But 1) it can be null and 2) result.Rule can also be null (when 429 is propagated from egress)
+            var responseFabric = result.Rule?.ResponseFabric ?? this._responseFabric;
+
             var response = request.CreateResponse(HttpStatusCode.OK);
 
-            if (this._responseFabric == null)
+            if (responseFabric == null)
             {
                 response.StatusCode = HttpStatusCode.TooManyRequests;
 
@@ -89,7 +93,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new IngressHttpResponseProxy(response);
 
-                await this._responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
+                await responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
 
                 if (responseProxy.ShouldContinueAsNormal)
                 {

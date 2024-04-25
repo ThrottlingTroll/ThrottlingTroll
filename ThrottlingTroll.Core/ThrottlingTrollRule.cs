@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -52,6 +54,17 @@ namespace ThrottlingTroll
         /// </summary>
         [JsonConverter(typeof(ToStringJsonConverter<Func<IHttpRequestProxy, long>>))]
         public Func<IHttpRequestProxy, long> CostExtractor { get; set; }
+
+        /// <summary>
+        /// Custom response creation routine. Overrides <see cref="ThrottlingTrollOptions.ResponseFabric"/><br/>
+        /// Takes <see cref="List{LimitExceededResult}"/> (represents the list of rules the request matched and the corresponding check results),<br/>
+        /// <see cref="IHttpRequestProxy"/> (provides info about the ongoing request), <br/> 
+        /// <see cref="IHttpResponseProxy"/> (which should be customized by your code) and <br/>
+        /// <see cref="CancellationToken"/> (which indicates that the request was aborted from outside)
+        /// </summary>
+        [JsonConverter(typeof(ToStringJsonConverter<Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task>>))]
+        public Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
+
 
         protected RateLimitMethod _limitMethod { get; set; }
         protected string _cacheKey;

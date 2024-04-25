@@ -17,8 +17,6 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollMiddleware : ThrottlingTroll
     {
-        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
-
         internal ThrottlingTrollMiddleware
         (
             ThrottlingTrollOptions options
@@ -51,6 +49,8 @@ namespace ThrottlingTroll
             }
         }
 
+        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
+
         private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
             var result = checkList
@@ -64,7 +64,11 @@ namespace ThrottlingTroll
                 return;
             }
 
-            if (this._responseFabric == null)
+            // Exceeded rule's ResponseFabric takes precedence.
+            // But 1) it can be null and 2) result.Rule can also be null (when 429 is propagated from egress)
+            var responseFabric = result.Rule?.ResponseFabric ?? this._responseFabric;
+
+            if (responseFabric == null)
             {
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -87,7 +91,7 @@ namespace ThrottlingTroll
 
                 var responseProxy = new IngressHttpResponseProxy(context.Response);
 
-                await this._responseFabric(checkList, requestProxy, responseProxy, context.RequestAborted);
+                await responseFabric(checkList, requestProxy, responseProxy, context.RequestAborted);
 
                 if (responseProxy.ShouldContinueAsNormal)
                 {

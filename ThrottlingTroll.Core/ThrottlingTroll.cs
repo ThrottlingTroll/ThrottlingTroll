@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -62,6 +63,7 @@ namespace ThrottlingTroll
             this._disposed = true;
         }
 
+
         /// <summary>
         /// Returns the current <see cref="ThrottlingTrollConfig"/> snapshot
         /// </summary>
@@ -82,15 +84,9 @@ namespace ThrottlingTroll
             {
                 foreach (var rule in config.Rules)
                 {
-                    if (rule.IdentityIdExtractor == null)
-                    {
-                        rule.IdentityIdExtractor = this._identityIdExtractor;
-                    }
+                    rule.IdentityIdExtractor ??= this._identityIdExtractor;
 
-                    if (rule.CostExtractor == null)
-                    {
-                        rule.CostExtractor = this._costExtractor;
-                    }
+                    rule.CostExtractor ??= this._costExtractor;
                 }
             }
 

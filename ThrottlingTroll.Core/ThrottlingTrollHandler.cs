@@ -17,13 +17,6 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollHandler : DelegatingHandler
     {
-        private const int DefaultDelayInSeconds = 5;
-
-        private readonly ThrottlingTroll _troll;
-        private bool _propagateToIngress;
-
-        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
-
         /// <summary>
         /// Use this ctor when manually creating <see cref="HttpClient"/> instances. 
         /// </summary>
@@ -132,8 +125,6 @@ namespace ThrottlingTroll
         /// </summary>
         internal ThrottlingTrollHandler(ThrottlingTrollOptions options)
         {
-            this._responseFabric = options.ResponseFabric;
-
             this._troll = new ThrottlingTroll(options.Log, options.CounterStore, async () =>
             {
                 var config = await options.GetConfigFunc();
@@ -148,6 +139,8 @@ namespace ThrottlingTroll
                 return config;
 
             }, options.IdentityIdExtractor, options.CostExtractor, options.IntervalToReloadConfigInSeconds);
+
+            this._responseFabric = options.ResponseFabric;
         }
 
         /// <summary>
@@ -170,15 +163,17 @@ namespace ThrottlingTroll
                 })
                 .Result;
 
-                var exceededRules = checkList
+                var exceededRule = checkList
                     .Where(r => r.RequestsRemaining < 0)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                     .OrderByDescending(r => r.RetryAfterInSeconds)
-                    .ToArray();
+                    .FirstOrDefault();
+
+                var responseFabric = exceededRule?.Rule?.ResponseFabric != null ? exceededRule.Rule.ResponseFabric : this._responseFabric;
 
                 try
                 {
-                    if (exceededRules.Length <= 0)
+                    if (exceededRule == null)
                     {
                         // Just making the call as normal
                         response = base.Send(request, cancellationToken);
@@ -186,7 +181,7 @@ namespace ThrottlingTroll
                     else
                     {
                         // Creating the TooManyRequests response
-                        response = this.CreateRetryAfterResponse(request, exceededRules.First());
+                        response = this.CreateRetryAfterResponse(request, exceededRule);
                     }
                 }
                 finally
@@ -195,7 +190,7 @@ namespace ThrottlingTroll
                     Task.WaitAll(cleanupRoutines.Select(f => f()).ToArray());
                 }
 
-                if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)
+                if (response.StatusCode == HttpStatusCode.TooManyRequests && responseFabric != null)
                 {
                     // Using custom response fabric
                     var responseProxy = new EgressHttpResponseProxy(response, retryCount++);
@@ -203,7 +198,7 @@ namespace ThrottlingTroll
                     // Decoupling from SynchronizationContext just in case
                     Task.Run(() =>
                     {
-                        return this._responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
+                        return responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
                     })
                     .Wait();
 
@@ -245,15 +240,17 @@ namespace ThrottlingTroll
 
                 var checkList = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
 
-                var exceededRules = checkList
+                var exceededRule = checkList
                     .Where(r => r.RequestsRemaining < 0)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                     .OrderByDescending(r => r.RetryAfterInSeconds)
-                    .ToArray();
+                    .FirstOrDefault();
+
+                var responseFabric = exceededRule?.Rule?.ResponseFabric != null ? exceededRule.Rule.ResponseFabric : this._responseFabric;
 
                 try
                 {
-                    if (exceededRules.Length <= 0)
+                    if (exceededRule == null)
                     {
                         // Just making the call as normal
                         response = await base.SendAsync(request, cancellationToken);
@@ -261,7 +258,7 @@ namespace ThrottlingTroll
                     else
                     {
                         // Creating the TooManyRequests response
-                        response = this.CreateRetryAfterResponse(request, exceededRules.First());
+                        response = this.CreateRetryAfterResponse(request, exceededRule);
                     }
                 }
                 finally
@@ -270,12 +267,12 @@ namespace ThrottlingTroll
                     await Task.WhenAll(cleanupRoutines.Select(f => f()));
                 }
 
-                if (response.StatusCode == HttpStatusCode.TooManyRequests && this._responseFabric != null)
+                if (response.StatusCode == HttpStatusCode.TooManyRequests && responseFabric != null)
                 {
                     // Using custom response fabric
                     var responseProxy = new EgressHttpResponseProxy(response, retryCount++);
 
-                    await this._responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
+                    await responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
 
                     if (responseProxy.ShouldRetry)
                     {
@@ -295,6 +292,13 @@ namespace ThrottlingTroll
 
             return response;
         }
+
+        private const int DefaultDelayInSeconds = 5;
+
+        private readonly ThrottlingTroll _troll;
+        private bool _propagateToIngress;
+
+        private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
 
         private void PropagateToIngressIfNeeded(HttpResponseMessage response)
         {
