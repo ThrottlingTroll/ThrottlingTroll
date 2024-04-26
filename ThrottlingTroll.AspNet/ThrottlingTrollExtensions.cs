@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Threading.Tasks;
 
 namespace ThrottlingTroll
 {
@@ -23,13 +22,7 @@ namespace ThrottlingTroll
                 options(opt);
             }
 
-            if (opt.GetConfigFunc == null)
-            {
-                // Trying to read config from settings
-                opt.Config ??= ThrottlingTrollConfig.FromConfigSection(builder.ApplicationServices);
-
-                opt.GetConfigFunc = () => Task.FromResult(opt.Config);
-            }
+            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, opt.GetConfigFunc, builder.ApplicationServices);
 
             if (opt.Log == null)
             {

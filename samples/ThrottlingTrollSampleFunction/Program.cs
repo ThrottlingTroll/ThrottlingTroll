@@ -54,15 +54,21 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
 
     // <ThrottlingTroll Ingress Configuration>
 
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext);
-
-    // Static programmatic configuration
+    // This method will read static configuration from appsettings.json and merge it with all the programmatically configured rules below
     workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
     {
         options.Config = new ThrottlingTrollConfig
         {
+            // Specifying UniqueName is needed when multiple services store their
+            // rate limit counters in the same cache instance, to prevent those services
+            // from corrupting each other's counters. Otherwise you can skip it.
+            UniqueName = "MyThrottledService1",
+
+
             Rules = new[]
             {
+
+                // Static programmatic configuration
                 new ThrottlingTrollRule
                 {
                     UriPattern = "/fixed-window-1-request-per-2-seconds-configured-programmatically",
@@ -71,19 +77,134 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
                         PermitLimit = 1,
                         IntervalInSeconds = 2
                     }
+                },
+
+
+                // Demonstrates how to use custom response fabrics
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/fixed-window-1-request-per-2-seconds-response-fabric",
+                    LimitMethod = new FixedWindowRateLimitMethod
+                    {
+                        PermitLimit = 1,
+                        IntervalInSeconds = 2
+                    },
+
+                    // Custom response fabric, returns 400 BadRequest + some custom content
+                    ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
+                    {
+                        // Getting the rule that was exceeded and with the biggest RetryAfter value
+                        var limitExceededResult = checkResults.OrderByDescending(r => r.RetryAfterInSeconds).FirstOrDefault(r => r.RequestsRemaining < 0);
+                        if (limitExceededResult == null)
+                        {
+                            return;
+                        }
+
+                        responseProxy.StatusCode = (int)HttpStatusCode.BadRequest;
+
+                        responseProxy.SetHttpHeader("Retry-After", limitExceededResult.RetryAfterHeaderValue);
+
+                        await responseProxy.WriteAsync("Too many requests. Try again later.");
+                    }
+                },
+
+
+                // Demonstrates how to delay the response instead of returning 429
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/fixed-window-1-request-per-2-seconds-delayed-response",
+                    LimitMethod = new FixedWindowRateLimitMethod
+                    {
+                        PermitLimit = 1,
+                        IntervalInSeconds = 2
+                    },
+
+                    // Custom response fabric, impedes the normal response for 3 seconds
+                    ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(3));
+
+                        var ingressResponse = (IIngressHttpResponseProxy)responseProxy;
+                        ingressResponse.ShouldContinueAsNormal = true;
+                    }
+                },
+
+
+                // Demonstrates how to use identity extractors
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/fixed-window-3-requests-per-15-seconds-per-each-api-key",
+                    LimitMethod = new FixedWindowRateLimitMethod
+                    {
+                        PermitLimit = 3,
+                        IntervalInSeconds = 15
+                    },
+
+                    IdentityIdExtractor = request =>
+                    {
+                        // Identifying clients by their api-key
+                        return ((IIncomingHttpRequestProxy)request).Request.Query["api-key"];
+                    }
+                },
+
+
+                // Demonstrates Semaphore (Concurrency) rate limiter
+                // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/semaphore-2-concurrent-requests",
+                    LimitMethod = new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = 2
+                    }
+                },
+
+
+                /// Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
+                /// Query string's 'id' parameter is used as identityId.
+                // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/named-critical-section",
+                    LimitMethod = new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = 1
+                    },
+
+                    // This must be set to something > 0 for responses to be automatically delayed
+                    MaxDelayInSeconds = 120,
+
+                    IdentityIdExtractor = request =>
+                    {
+                        // Identifying clients by their id
+                        return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                    }
+                },
+
+
+                // Demonstrates how to make a distributed counter with SemaphoreRateLimitMethod
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/distributed-counter",
+                    LimitMethod = new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = 1
+                    },
+
+                    // This must be set to something > 0 for responses to be automatically delayed
+                    MaxDelayInSeconds = 120,
+
+                    IdentityIdExtractor = request =>
+                    {
+                        // Identifying counters by their id
+                        return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                    }
                 }
-            },
-
-            // Specifying UniqueName is needed when multiple services store their
-            // rate limit counters in the same cache instance, to prevent those services
-            // from corrupting each other's counters. Otherwise you can skip it.
-            UniqueName = "MyThrottledService1"
+            }
         };
-    });
 
-    // Dynamic programmatic configuration. Allows to adjust rules and limits without restarting the service.
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
+
+        // Reactive programmatic configuration. Allows to adjust rules and limits without restarting the service.
         options.GetConfigFunc = async () =>
         {
             // Loading settings from a custom file. You can instead load them from a database
@@ -104,177 +225,6 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
         // The above function will be periodically called every 5 seconds
         options.IntervalToReloadConfigInSeconds = 5;
     });
-
-    // Demonstrates how to use custom response fabrics
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
-        options.Config = new ThrottlingTrollConfig
-        {
-            Rules = new[]
-            {
-                new ThrottlingTrollRule
-                {
-                    UriPattern = "/fixed-window-1-request-per-2-seconds-response-fabric",
-                    LimitMethod = new FixedWindowRateLimitMethod
-                    {
-                        PermitLimit = 1,
-                        IntervalInSeconds = 2
-                    }
-                }
-            }
-        };
-
-        // Custom response fabric, returns 400 BadRequest + some custom content
-        options.ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
-        {
-            // Getting the rule that was exceeded and with the biggest RetryAfter value
-            var limitExceededResult = checkResults.OrderByDescending(r => r.RetryAfterInSeconds).FirstOrDefault(r => r.RequestsRemaining < 0);
-            if (limitExceededResult == null)
-            {
-                return;
-            }
-
-            responseProxy.StatusCode = (int)HttpStatusCode.BadRequest;
-
-            responseProxy.SetHttpHeader("Retry-After", limitExceededResult.RetryAfterHeaderValue);
-
-            await responseProxy.WriteAsync("Too many requests. Try again later.");
-        };
-    });
-
-    // Demonstrates how to delay the response instead of returning 429
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
-        options.Config = new ThrottlingTrollConfig
-        {
-            Rules = new[]
-            {
-                new ThrottlingTrollRule
-                {
-                    UriPattern = "/fixed-window-1-request-per-2-seconds-delayed-response",
-                    LimitMethod = new FixedWindowRateLimitMethod
-                    {
-                        PermitLimit = 1,
-                        IntervalInSeconds = 2
-                    }
-                }
-            }
-        };
-
-        // Custom response fabric, impedes the normal response for 3 seconds
-        options.ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
-        {
-            await Task.Delay(TimeSpan.FromSeconds(3));
-
-            var ingressResponse = (IIngressHttpResponseProxy)responseProxy;
-            ingressResponse.ShouldContinueAsNormal = true;
-        };
-    });
-
-    // Demonstrates how to use identity extractors
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
-        options.Config = new ThrottlingTrollConfig
-        {
-            Rules = new[]
-            {
-                new ThrottlingTrollRule
-                {
-                    UriPattern = "/fixed-window-3-requests-per-15-seconds-per-each-api-key",
-                    LimitMethod = new FixedWindowRateLimitMethod
-                    {
-                        PermitLimit = 3,
-                        IntervalInSeconds = 15
-                    },
-
-                    IdentityIdExtractor = request =>
-                    {
-                        // Identifying clients by their api-key
-                        return ((IIncomingHttpRequestProxy)request).Request.Query["api-key"];
-                    }
-                }
-            }
-        };
-    });
-
-    // Demonstrates Semaphore (Concurrency) rate limiter
-    // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
-        options.Config = new ThrottlingTrollConfig
-        {
-            Rules = new[]
-            {
-                new ThrottlingTrollRule
-                {
-                    UriPattern = "/semaphore-2-concurrent-requests",
-                    LimitMethod = new SemaphoreRateLimitMethod
-                    {
-                        PermitLimit = 2
-                    }
-                },
-            }
-        };
-    });
-
-    /// Demonstrates how to make a named distributed critical section with Semaphore (Concurrency) rate limiter and Identity Extractor.
-    /// Query string's 'id' parameter is used as identityId.
-    // DON'T TEST IT IN BROWSER, because browsers themselves limit the number of concurrent requests to the same URL.
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
-        options.Config = new ThrottlingTrollConfig
-        {
-            Rules = new[]
-            {
-                new ThrottlingTrollRule
-                {
-                    UriPattern = "/named-critical-section",
-                    LimitMethod = new SemaphoreRateLimitMethod
-                    {
-                        PermitLimit = 1
-                    },
-
-                    // This must be set to something > 0 for responses to be automatically delayed
-                    MaxDelayInSeconds = 120,
-
-                    IdentityIdExtractor = request =>
-                    {
-                        // Identifying clients by their id
-                        return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
-                    }
-                },
-            }
-        };
-    });
-
-    // Demonstrates how to make a distributed counter with SemaphoreRateLimitMethod
-    workerAppBuilder.UseThrottlingTroll(hostBuilderContext, (functionContext, options) =>
-    {
-        options.Config = new ThrottlingTrollConfig
-        {
-            Rules = new[]
-            {
-                new ThrottlingTrollRule
-                {
-                    UriPattern = "/distributed-counter",
-                    LimitMethod = new SemaphoreRateLimitMethod
-                    {
-                        PermitLimit = 1
-                    },
-
-                    // This must be set to something > 0 for responses to be automatically delayed
-                    MaxDelayInSeconds = 120,
-
-                    IdentityIdExtractor = request =>
-                    {
-                        // Identifying counters by their id
-                        return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
-                    }
-                },
-            }
-        };
-    });
-
 
     // </ThrottlingTroll Ingress Configuration>
 

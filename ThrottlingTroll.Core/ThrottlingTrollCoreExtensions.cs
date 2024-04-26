@@ -56,5 +56,24 @@ namespace ThrottlingTroll
                 }
             };
         }
+
+        /// <summary>
+        /// Collects and merges all config sources. Returns them in form of a new GetConfigFunc.
+        /// </summary>
+        public static Func<Task<ThrottlingTrollConfig>> MergeAllConfigSources(ThrottlingTrollConfig config, Func<Task<ThrottlingTrollConfig>> initialConfigFunc, IServiceProvider serviceProvider)
+        {
+            config ??= new ThrottlingTrollConfig();
+
+            config.MergeWith(ThrottlingTrollConfig.FromConfigSection(serviceProvider));
+
+            if (initialConfigFunc == null)
+            {
+                return () => Task.FromResult(config);
+            }
+            else
+            {
+                return () => initialConfigFunc().ContinueWith(t => t.Result.MergeWith(config));
+            }
+        }
     }
 }
