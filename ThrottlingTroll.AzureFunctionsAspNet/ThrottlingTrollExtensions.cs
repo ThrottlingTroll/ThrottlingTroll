@@ -3,8 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("ThrottlingTroll.AzureFunctionsAspNet.Tests")]
@@ -29,6 +32,12 @@ namespace ThrottlingTroll
         /// </summary>
         public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(this IFunctionsWorkerApplicationBuilder builder, Action<FunctionContext, ThrottlingTrollOptions> options)
         {
+            // Need to create this instance here, so that Assemblies are correctly initialized.
+            var opt = new ThrottlingTrollOptions
+            {
+                Assemblies = new List<Assembly> { Assembly.GetCallingAssembly() }
+            };
+
             // Need to create a single instance, yet still allow for multiple copies of ThrottlingTrollMiddleware with different settings
             var lockObject = new object();
             ThrottlingTrollMiddleware middleware = null;
@@ -57,8 +66,6 @@ namespace ThrottlingTroll
                         {
                             if (middleware == null)
                             {
-                                var opt = new ThrottlingTrollOptions();
-
                                 if (options != null)
                                 {
                                     options(context, opt);
@@ -68,6 +75,7 @@ namespace ThrottlingTroll
                             }
                         }
                     }
+
                     await middleware.Invoke(context, next);
                 }
             );
@@ -75,7 +83,7 @@ namespace ThrottlingTroll
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
         {
-            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, opt.GetConfigFunc, context.InstanceServices);
+            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, CollectDeclarativeConfig(opt.Assemblies), opt.GetConfigFunc, context.InstanceServices);
 
             if (opt.Log == null)
             {
@@ -86,6 +94,78 @@ namespace ThrottlingTroll
             opt.CounterStore ??= context.InstanceServices.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
 
             return new ThrottlingTrollMiddleware(opt);
+        }
+
+        private static ThrottlingTrollConfig CollectDeclarativeConfig(List<Assembly> assemblies)
+        {
+            var rules = new List<ThrottlingTrollRule>();
+
+            var allMethods = assemblies
+                .SelectMany(a => a.DefinedTypes)
+                .Where(t => t.IsClass)
+                .SelectMany(c => c.GetMethods());
+
+            foreach (var methodInfo in allMethods)
+            {
+                var funcAttribute = methodInfo.GetCustomAttributes<FunctionAttribute>().FirstOrDefault();
+                if (funcAttribute == null)
+                {
+                    continue;
+                }
+
+                var httpTriggerAttribute = methodInfo
+                    .GetParameters()
+                    .SelectMany(p => p.GetCustomAttributes<HttpTriggerAttribute>())
+                    .FirstOrDefault();
+                if (httpTriggerAttribute == null)
+                {
+                    continue;
+                }
+
+                var trollAttributes = methodInfo.GetCustomAttributes<ThrottlingTrollAttribute>().ToArray();
+                if (trollAttributes.Length <= 0)
+                {
+                    continue;
+                }
+
+                foreach (var trollAttribute in trollAttributes)
+                {
+                    rules.Add(
+                        new ThrottlingTrollRule
+                        {
+                            LimitMethod = trollAttribute.ToRateLimitMethod(),
+
+                            UriPattern = GetUriPattern(funcAttribute, httpTriggerAttribute),
+
+                            Method = trollAttribute.Method,
+                            HeaderName = trollAttribute.HeaderName,
+                            HeaderValue = trollAttribute.HeaderValue,
+                            IdentityId = trollAttribute.IdentityId,
+                            IdentityIdExtractor = trollAttribute.IdentityIdExtractor,
+                            MaxDelayInSeconds = trollAttribute.MaxDelayInSeconds,
+                            CostExtractor = trollAttribute.CostExtractor,
+                            ResponseFabric = trollAttribute.ResponseFabric
+                        }
+                    );
+                }
+            }
+
+            return rules.Count > 0 ? new ThrottlingTrollConfig { Rules = rules } : null;
+        }
+
+        private static Regex RouteParamsRegex = new Regex("{.*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static string GetUriPattern(FunctionAttribute funcAttribute, HttpTriggerAttribute triggerAttribute)
+        {
+            if (string.IsNullOrEmpty(triggerAttribute.Route))
+            {
+                return funcAttribute.Name;
+            }
+
+            return RouteParamsRegex
+                // replacing HTTP route parameters with wildcards
+                .Replace(triggerAttribute.Route, ".*")
+            ;
         }
     }
 }

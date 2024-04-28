@@ -22,7 +22,7 @@ namespace ThrottlingTroll
                 options(opt);
             }
 
-            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, opt.GetConfigFunc, builder.ApplicationServices);
+            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, null, opt.GetConfigFunc, builder.ApplicationServices);
 
             if (opt.Log == null)
             {

@@ -4,61 +4,28 @@ using System.Text.Json.Serialization;
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Supported rate limiting algorithms
-    /// </summary>
-    public enum RateLimitAlgorithm
-    {
-        FixedWindow = 0,
-        SlidingWindow,
-        Semaphore
-    }
-
-    /// <summary>
     /// Universal config setting for all rate limiting methods.
     /// Used for polymorphic deserialization.
     /// </summary>
-    public class RateLimitMethodSettings
+    public class RateLimitMethodSettings : IRateLimitMethodSettings
     {
+        /// <inheritdoc />
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public RateLimitAlgorithm Algorithm { get; set; }
 
+        /// <inheritdoc />
         public int PermitLimit { get; set; }
+
+        /// <inheritdoc />
         public int IntervalInSeconds { get; set; }
+
+        /// <inheritdoc />
         public int NumOfBuckets { get; set; }
+
+        /// <inheritdoc />
         public int TimeoutInSeconds { get; set; } = 100;
+
+        /// <inheritdoc />
         public bool? ShouldThrowOnFailures { get; set; }
-
-
-        public RateLimitMethod ToRateLimitMethod()
-        {
-            switch (this.Algorithm)
-            {
-                case RateLimitAlgorithm.FixedWindow:
-                    return new FixedWindowRateLimitMethod
-                    {
-                        PermitLimit = this.PermitLimit,
-                        IntervalInSeconds = this.IntervalInSeconds,
-                        ShouldThrowOnFailures = this.ShouldThrowOnFailures ?? false
-                    };
-                case RateLimitAlgorithm.SlidingWindow:
-                    return new SlidingWindowRateLimitMethod
-                    {
-                        PermitLimit = this.PermitLimit,
-                        IntervalInSeconds = this.IntervalInSeconds,
-                        NumOfBuckets = this.NumOfBuckets,
-                        ShouldThrowOnFailures = this.ShouldThrowOnFailures ?? false
-                    };
-                case RateLimitAlgorithm.Semaphore:
-                    return new SemaphoreRateLimitMethod
-                    {
-                        PermitLimit = this.PermitLimit,
-                        TimeoutInSeconds = this.TimeoutInSeconds,
-                        // Intentionally setting this to true by default for SemaphoreRateLimitMethod
-                        ShouldThrowOnFailures = this.ShouldThrowOnFailures ?? true
-                    };
-            }
-
-            throw new InvalidOperationException("Failed to initialize ThrottlingTroll from settings. Rate limit algorithm not recognized.");
-        }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -56,5 +57,11 @@ namespace ThrottlingTroll
         /// <see cref="CancellationToken"/> (which indicates that the request was aborted from outside)
         /// </summary>
         public Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
+
+        /// <summary>
+        /// Assemblies where to search <see cref="ThrottlingTrollAttribute"/>s for.
+        /// By default contains your service's assembly. Add more, if you have controllers/functions defined in separate class libraries.
+        /// </summary>
+        public List<Assembly> Assemblies { get; set; }
     }
 }

@@ -60,11 +60,18 @@ namespace ThrottlingTroll
         /// <summary>
         /// Collects and merges all config sources. Returns them in form of a new GetConfigFunc.
         /// </summary>
-        public static Func<Task<ThrottlingTrollConfig>> MergeAllConfigSources(ThrottlingTrollConfig config, Func<Task<ThrottlingTrollConfig>> initialConfigFunc, IServiceProvider serviceProvider)
+        public static Func<Task<ThrottlingTrollConfig>> MergeAllConfigSources(
+            ThrottlingTrollConfig config,
+            ThrottlingTrollConfig declarativeConfig,
+            Func<Task<ThrottlingTrollConfig>> initialConfigFunc, 
+            IServiceProvider serviceProvider
+        )
         {
             config ??= new ThrottlingTrollConfig();
 
             config.MergeWith(ThrottlingTrollConfig.FromConfigSection(serviceProvider));
+
+            config.MergeWith(declarativeConfig);
 
             if (initialConfigFunc == null)
             {
@@ -75,5 +82,41 @@ namespace ThrottlingTroll
                 return () => initialConfigFunc().ContinueWith(t => t.Result.MergeWith(config));
             }
         }
+
+        /// <summary>
+        /// Converts <see cref="IRateLimitMethodSettings"/> to <see cref="RateLimitMethod"/>
+        /// </summary>
+        public static RateLimitMethod ToRateLimitMethod(this IRateLimitMethodSettings settings)
+        {
+            switch (settings.Algorithm)
+            {
+                case RateLimitAlgorithm.FixedWindow:
+                    return new FixedWindowRateLimitMethod
+                    {
+                        PermitLimit = settings.PermitLimit,
+                        IntervalInSeconds = settings.IntervalInSeconds,
+                        ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? false
+                    };
+                case RateLimitAlgorithm.SlidingWindow:
+                    return new SlidingWindowRateLimitMethod
+                    {
+                        PermitLimit = settings.PermitLimit,
+                        IntervalInSeconds = settings.IntervalInSeconds,
+                        NumOfBuckets = settings.NumOfBuckets,
+                        ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? false
+                    };
+                case RateLimitAlgorithm.Semaphore:
+                    return new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = settings.PermitLimit,
+                        TimeoutInSeconds = settings.TimeoutInSeconds,
+                        // Intentionally setting this to true by default for SemaphoreRateLimitMethod
+                        ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? true
+                    };
+            }
+
+            throw new InvalidOperationException("Failed to initialize ThrottlingTroll. Rate limit algorithm not recognized.");
+        }
+
     }
 }
