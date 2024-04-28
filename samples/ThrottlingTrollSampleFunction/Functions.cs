@@ -201,6 +201,20 @@ namespace ThrottlingTrollSampleFunction
         }
 
         /// <summary>
+        /// Rate limited to 2 requests per a fixed window of 4 seconds. Configured with <see cref="ThrottlingTrollAttribute"/>
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="429">TooManyRequests</response>
+        [Function("fixed-window-2-requests-per-4-seconds-configured-declaratively")]
+        [ThrottlingTroll(Algorithm = RateLimitAlgorithm.FixedWindow, PermitLimit = 2, IntervalInSeconds = 4)]
+        public HttpResponseData Test11([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
