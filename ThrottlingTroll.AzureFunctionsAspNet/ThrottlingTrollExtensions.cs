@@ -153,7 +153,7 @@ namespace ThrottlingTroll
             return rules.Count > 0 ? new ThrottlingTrollConfig { Rules = rules } : null;
         }
 
-        private static Regex RouteParamsRegex = new Regex("{.*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex RouteParamsRegex = new Regex("{[\\w:\\?]*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static string GetUriPattern(FunctionAttribute funcAttribute, HttpTriggerAttribute triggerAttribute)
         {
