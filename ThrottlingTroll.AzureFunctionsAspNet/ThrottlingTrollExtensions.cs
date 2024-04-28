@@ -130,23 +130,7 @@ namespace ThrottlingTroll
 
                 foreach (var trollAttribute in trollAttributes)
                 {
-                    rules.Add(
-                        new ThrottlingTrollRule
-                        {
-                            LimitMethod = trollAttribute.ToRateLimitMethod(),
-
-                            UriPattern = GetUriPattern(funcAttribute, httpTriggerAttribute),
-
-                            Method = trollAttribute.Method,
-                            HeaderName = trollAttribute.HeaderName,
-                            HeaderValue = trollAttribute.HeaderValue,
-                            IdentityId = trollAttribute.IdentityId,
-                            IdentityIdExtractor = trollAttribute.IdentityIdExtractor,
-                            MaxDelayInSeconds = trollAttribute.MaxDelayInSeconds,
-                            CostExtractor = trollAttribute.CostExtractor,
-                            ResponseFabric = trollAttribute.ResponseFabric
-                        }
-                    );
+                    rules.Add(trollAttribute.ToThrottlingTrollRule(GetUriPattern(funcAttribute, httpTriggerAttribute)));
                 }
             }
 

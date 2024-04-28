@@ -78,5 +78,25 @@ namespace ThrottlingTroll
         /// <see cref="CancellationToken"/> (which indicates that the request was aborted from outside)
         /// </summary>
         public Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
+
+        /// <summary>
+        /// Creates a <see cref="ThrottlingTrollRule"/> out of this attribute
+        /// </summary>
+        public ThrottlingTrollRule ToThrottlingTrollRule(string uriPattern)
+        {
+            return new ThrottlingTrollRule
+            {
+                LimitMethod = this.ToRateLimitMethod(),
+                UriPattern = uriPattern,
+                Method = this.Method,
+                HeaderName = this.HeaderName,
+                HeaderValue = this.HeaderValue,
+                IdentityId = this.IdentityId,
+                IdentityIdExtractor = this.IdentityIdExtractor,
+                MaxDelayInSeconds = this.MaxDelayInSeconds,
+                CostExtractor = this.CostExtractor,
+                ResponseFabric = this.ResponseFabric
+            };
+        }
     }
 }
