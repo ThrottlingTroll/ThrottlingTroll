@@ -122,13 +122,7 @@ namespace ThrottlingTroll
                     continue;
                 }
 
-                var trollAttributes = methodInfo.GetCustomAttributes<ThrottlingTrollAttribute>().ToArray();
-                if (trollAttributes.Length <= 0)
-                {
-                    continue;
-                }
-
-                foreach (var trollAttribute in trollAttributes)
+                foreach (var trollAttribute in methodInfo.GetCustomAttributes<ThrottlingTrollAttribute>())
                 {
                     rules.Add(trollAttribute.ToThrottlingTrollRule(GetUriPattern(funcAttribute, httpTriggerAttribute)));
                 }
