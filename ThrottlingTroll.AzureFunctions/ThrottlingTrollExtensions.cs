@@ -182,7 +182,8 @@ namespace ThrottlingTroll
                 ;
             }
 
-            return $"/{result}";
+            // escaping all other regex special characters
+            return $"/{Regex.Escape(result)}";
         }
     }
 }

@@ -56,7 +56,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
-        /// Action-level limit - 5 requests per 5 seconds
+        /// Action-level limit - 5 requests per 5 seconds.
         /// Demonstrates how to explicitly specify <see cref="ThrottlingTrollAttribute.UriPattern"/>, if ThrottlingTroll fails to infer it correctly.
         /// </summary>
         [ThrottlingTroll(UriPattern = "test-endpoint5", PermitLimit = 5, IntervalInSeconds = 5, ResponseBody = "my-test-endpoint5 limit exceeded. Retry in 5 seconds.")]
@@ -65,5 +65,17 @@ namespace ThrottlingTrollSampleWeb.Controllers
         {
             return "OK";
         }
+
+        /// <summary>
+        /// Action-level limit - 6 requests per 6 seconds.
+        /// Route contains special characters.
+        /// </summary>
+        [ThrottlingTroll(PermitLimit = 6, IntervalInSeconds = 6, ResponseBody = "(m-y)-test$endpoint+6 limit exceeded. Retry in 6 seconds.")]
+        [HttpGet("(m-y)-test$endpoint+6")]
+        public string Test6()
+        {
+            return "OK";
+        }
+
     }
 }
