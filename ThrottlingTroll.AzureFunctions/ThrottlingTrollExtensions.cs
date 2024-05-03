@@ -166,15 +166,23 @@ namespace ThrottlingTroll
 
         private static string GetUriPattern(FunctionAttribute funcAttribute, HttpTriggerAttribute triggerAttribute)
         {
+            string result;
+
             if (string.IsNullOrEmpty(triggerAttribute.Route))
             {
-                return funcAttribute.Name;
+                result = funcAttribute.Name;
+            }
+            else
+            {
+                result = triggerAttribute.Route.TrimStart('/');
+
+                result = RouteParamsRegex
+                    // replacing HTTP route parameters with wildcards
+                    .Replace(result, ".*")
+                ;
             }
 
-            return RouteParamsRegex
-                // replacing HTTP route parameters with wildcards
-                .Replace(triggerAttribute.Route, ".*")
-            ;
+            return $"/{result}";
         }
     }
 }
