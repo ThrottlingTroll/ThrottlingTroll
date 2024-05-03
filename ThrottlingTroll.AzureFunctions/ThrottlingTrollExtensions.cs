@@ -113,6 +113,7 @@ namespace ThrottlingTroll
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
         {
+            // TODO: move declarative config collection to service startup (for optimization purposes)
             opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, CollectDeclarativeConfig(opt.Assemblies), opt.GetConfigFunc, context.InstanceServices);
 
             if (opt.Log == null)

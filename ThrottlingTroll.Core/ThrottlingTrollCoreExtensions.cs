@@ -118,5 +118,17 @@ namespace ThrottlingTroll
             throw new InvalidOperationException("Failed to initialize ThrottlingTroll. Rate limit algorithm not recognized.");
         }
 
+        /// <summary>
+        /// Trims a string from the end of another string, if that another string ends with it.
+        /// </summary>
+        public static string TrimSuffix(this string str, string suffix)
+        {
+            if (str.EndsWith(suffix, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return str.Substring(0, str.Length - suffix.Length);
+            }
+
+            return str;
+        }
     }
 }
