@@ -78,18 +78,25 @@ namespace ThrottlingTroll
 
         private static string GetUriPatternForController(TypeInfo classInfo, string action = ".*")
         {
-            string result;
+            string result = null;
             string controllerName = classInfo.Name.TrimSuffix("Controller");
 
-            var routeAttribute = classInfo.GetCustomAttributes<RouteAttribute>().FirstOrDefault();
-            if (routeAttribute?.Template == null) 
+            var routeAttributes = classInfo.GetCustomAttributes<RouteAttribute>().Where(at => at.Template != null).ToArray();
+
+            if (routeAttributes.Length <= 0)
             {
                 // Just returning the controller name
                 result = controllerName;
             }
             else
             {
-                result = EscapeRoute(routeAttribute.Template.TrimStart('/'), controllerName, action);
+                foreach (var routeAttribute in routeAttributes)
+                {
+                    string template = EscapeRoute(routeAttribute.Template.TrimStart('/'), controllerName, action);
+
+                    // We need (potentially) multiple routes to become the same rule (not separate rules), so using regex OR operator
+                    result = result == null ? template : $"{result}|{template}";
+                }
             }
 
             return $"/{result}";
@@ -100,15 +107,15 @@ namespace ThrottlingTroll
             string controllerName = classInfo.Name.TrimSuffix("Controller");
             string actionName = methodInfo.Name;
 
-            var routeAttribute = methodInfo
+            var routeAttributes = methodInfo
                 .GetCustomAttributes<HttpMethodAttribute>()
                 .Cast<IRouteTemplateProvider>()
                 .Concat(methodInfo.GetCustomAttributes<RouteAttribute>())
-                // There can be multiple HttpMethodAttributes defined, and we're only interested in the one with a Route
+                // There can be multiple HttpMethodAttributes defined, and we're only interested in the ones with a Route
                 .Where(at => !string.IsNullOrEmpty(at.Template))
-                .FirstOrDefault();
+                .ToArray();
 
-            if (routeAttribute == null)
+            if (routeAttributes.Length <= 0)
             {
                 // If a method is marked with ThrottlingTrollAttribute, and that method does not have a route, and its controller has,
                 // this combination would apply method's limit to the entire controller. We do not want that to happen.
@@ -121,16 +128,26 @@ namespace ThrottlingTroll
                 return GetUriPatternForController(classInfo, actionName);
             }
 
-            string route = routeAttribute.Template.TrimStart('/');
+            string result = null;
 
-            // Prepending controller's route, if any
-            var controllerRouteAttribute = classInfo.GetCustomAttributes<RouteAttribute>().FirstOrDefault();
-            if (controllerRouteAttribute != null) 
+            foreach (var routeAttribute in routeAttributes)
             {
-                route = $"{controllerRouteAttribute.Template.Trim('/')}/{route}";
+                string template = routeAttribute.Template.TrimStart('/');
+
+                // Prepending controller's route, if any
+                var controllerRouteAttribute = classInfo.GetCustomAttributes<RouteAttribute>().FirstOrDefault();
+                if (controllerRouteAttribute != null)
+                {
+                    template = $"{controllerRouteAttribute.Template.Trim('/')}/{template}";
+                }
+
+                template = EscapeRoute(template, controllerName, actionName);
+
+                // We need (potentially) multiple routes to become the same rule (not separate rules), so using regex OR operator
+                result = result == null ? template : $"{result}|{template}";
             }
 
-            return $"/{EscapeRoute(route, controllerName, actionName)}";
+            return $"/{result}";
         }
 
         // Note that '{' is a special character in regex (that's why it is escaped here), while '}' is _not_.

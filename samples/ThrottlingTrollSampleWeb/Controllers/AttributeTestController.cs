@@ -21,7 +21,8 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
-        /// Action-level limit - 2 requests per 2 seconds
+        /// Action-level limit - 2 requests per 2 seconds.
+        /// Endpoint has multiple routes.
         /// </summary>
         [ThrottlingTroll(PermitLimit = 2, IntervalInSeconds = 2, ResponseBody = "my-test-endpoint2 limit exceeded. Retry in 2 seconds.")]
         [HttpGet("my-test-endpoint2")]
