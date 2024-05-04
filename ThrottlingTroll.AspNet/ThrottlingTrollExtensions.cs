@@ -76,11 +76,12 @@ namespace ThrottlingTroll
             return rules.Count > 0 ? new ThrottlingTrollConfig { Rules = rules } : null;
         }
 
-        private static Regex RouteParamsRegex = new Regex("{[\\w:\\?]*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        // Note that '{' is a special character in regex (that's why it is escaped here), while '}' is _not_.
+        private static readonly Regex RouteParamsRegex = new Regex("\\\\{[\\w:\\?]*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static string GetUriPatternForController(TypeInfo classInfo, string action = ".*")
         {
-            string result;
+            string result = null;
             string controllerName = classInfo.Name.TrimSuffix("Controller");
 
             var routeAttribute = classInfo.GetCustomAttributes<RouteAttribute>().FirstOrDefault();
@@ -91,17 +92,18 @@ namespace ThrottlingTroll
             }
             else
             {
-                result = routeAttribute.Template.TrimStart('/');
+                // escaping all other regex special characters
+                result = Regex.Escape(routeAttribute.Template.TrimStart('/'));
 
                 result = RouteParamsRegex
-                    // replacing HTTP route parameters with wildcards
+                // Replacing HTTP route parameters with wildcards. At this point curly brackets will already be escaped, so that's why they're escaped in RouteParamsRegex.
                     .Replace(result, ".*")
-                    // replacing [area] token with a wildcard
-                    .Replace("[area]", ".*")
-                    // replacing [controller] token
-                    .Replace("[controller]", controllerName)
-                    // replacing [action] token
-                    .Replace("[action]", action)
+                    // Replacing [area] token with a wildcard. Note that '[' is a special character in regex (that's why it is escaped here), while ']' is _not_.
+                    .Replace("\\[area]", ".*")
+                    // Replacing [controller] token. Note that '[' is a special character in regex (that's why it is escaped here), while ']' is _not_.
+                    .Replace("\\[controller]", controllerName)
+                    // Replacing [action] token. Note that '[' is a special character in regex (that's why it is escaped here), while ']' is _not_.
+                    .Replace("\\[action]", action)
                 ;
             }
 
@@ -123,6 +125,8 @@ namespace ThrottlingTroll
 
             if (routeAttribute == null)
             {
+                // If a method is marked with ThrottlingTrollAttribute, and that method does not have a route, and its controller has,
+                // this combination would apply method's limit to the entire controller. We do not want that to happen.
                 if (classInfo.GetCustomAttributes<RouteAttribute>().Any())
                 {
                     throw new InvalidOperationException($"ThrottlingTroll rule defined on {controllerName}.{actionName} action would override the rule defined on the controller level. This combination is not supported. Either define a route for this action, or remove ThrottlingTrollAttribute from it.");
@@ -141,19 +145,21 @@ namespace ThrottlingTroll
                 result = $"{controllerRouteAttribute.Template.Trim('/')}/{result.TrimStart('/')}";
             }
 
+            // escaping all other regex special characters
+            result = Regex.Escape(result);
+
             result = RouteParamsRegex
-                // replacing HTTP route parameters with wildcards
+                // Replacing HTTP route parameters with wildcards. At this point curly brackets will already be escaped, so that's why they're escaped in RouteParamsRegex.
                 .Replace(result, ".*")
-                // replacing [area] token with a wildcard
-                .Replace("[area]", ".*")
-                // replacing [controller] token
-                .Replace("[controller]", controllerName)
-                // replacing [action] token
-                .Replace("[action]", actionName)
+                // Replacing [area] token with a wildcard. Note that '[' is a special character in regex (that's why it is escaped here), while ']' is _not_.
+                .Replace("\\[area]", ".*")
+                // Replacing [controller] token. Note that '[' is a special character in regex (that's why it is escaped here), while ']' is _not_.
+                .Replace("\\[controller]", controllerName)
+                // Replacing [action] token. Note that '[' is a special character in regex (that's why it is escaped here), while ']' is _not_.
+                .Replace("\\[action]", actionName)
             ;
 
-            // escaping all other regex special characters
-            return $"/{Regex.Escape(result)}";
+            return $"/{result}";
         }
     }
 }

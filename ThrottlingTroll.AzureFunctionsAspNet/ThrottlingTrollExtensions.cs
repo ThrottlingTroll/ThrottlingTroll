@@ -131,7 +131,8 @@ namespace ThrottlingTroll
             return rules.Count > 0 ? new ThrottlingTrollConfig { Rules = rules } : null;
         }
 
-        private static Regex RouteParamsRegex = new Regex("{[\\w:\\?]*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        // Note that '{' is a special character in regex (that's why it is escaped here), while '}' is _not_.
+        private static readonly Regex RouteParamsRegex = new Regex("\\\\{[\\w:\\?]*?}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static string GetUriPattern(FunctionAttribute funcAttribute, HttpTriggerAttribute triggerAttribute)
         {
@@ -143,16 +144,16 @@ namespace ThrottlingTroll
             }
             else
             {
-                result = triggerAttribute.Route.TrimStart('/');
+                // escaping all other regex special characters
+                result = Regex.Escape(triggerAttribute.Route.TrimStart('/'));
 
                 result = RouteParamsRegex
-                    // replacing HTTP route parameters with wildcards
+                    // Replacing HTTP route parameters with wildcards. At this point curly brackets will already be escaped, so that's why they're escaped in RouteParamsRegex.
                     .Replace(result, ".*")
                 ;
             }
 
-            // escaping all other regex special characters
-            return $"/{Regex.Escape(result)}";
+            return $"/{result}";
         }
     }
 }

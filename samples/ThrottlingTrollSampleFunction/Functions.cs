@@ -206,8 +206,25 @@ namespace ThrottlingTrollSampleFunction
         /// <response code="200">OK</response>
         /// <response code="429">TooManyRequests</response>
         [Function("fixed-window-2-requests-per-4-seconds-configured-declaratively")]
-        [ThrottlingTroll(Algorithm = RateLimitAlgorithm.FixedWindow, PermitLimit = 2, IntervalInSeconds = 4)]
+        [ThrottlingTroll(Algorithm = RateLimitAlgorithm.FixedWindow, PermitLimit = 2, IntervalInSeconds = 4, ResponseBody = "Retry in 4 seconds")]
         public HttpResponseData Test11([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
+        }
+
+        /// <summary>
+        /// Function with parameters. Rate limited to 3 requests per a fixed window of 5 seconds. Configured with <see cref="ThrottlingTrollAttribute"/>
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="429">TooManyRequests</response>
+        [Function(nameof(Test12))]
+        [ThrottlingTroll(Algorithm = RateLimitAlgorithm.FixedWindow, PermitLimit = 3, IntervalInSeconds = 5, ResponseBody = "Retry in 5 seconds")]
+        public HttpResponseData Test12(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "fixed-window-3-requests-per-5-seconds-configured-declaratively({num})")] HttpRequestData req,
+            int num
+        )
         {
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString("OK");

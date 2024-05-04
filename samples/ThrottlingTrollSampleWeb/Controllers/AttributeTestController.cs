@@ -25,6 +25,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         [ThrottlingTroll(PermitLimit = 2, IntervalInSeconds = 2, ResponseBody = "my-test-endpoint2 limit exceeded. Retry in 2 seconds.")]
         [HttpGet("my-test-endpoint2")]
+        [HttpGet("test-endpoint-of-mine2")]
         public string Test2()
         {
             return "OK";
