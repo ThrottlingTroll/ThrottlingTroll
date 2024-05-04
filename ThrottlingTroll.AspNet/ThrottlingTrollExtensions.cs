@@ -78,7 +78,6 @@ namespace ThrottlingTroll
 
         private static string GetUriPatternForController(TypeInfo classInfo, string action = ".*")
         {
-            string result = null;
             string controllerName = classInfo.Name.TrimSuffix("Controller");
 
             var routeAttributes = classInfo.GetCustomAttributes<RouteAttribute>().Where(at => at.Template != null).ToArray();
@@ -86,20 +85,22 @@ namespace ThrottlingTroll
             if (routeAttributes.Length <= 0)
             {
                 // Just returning the controller name
-                result = controllerName;
+                return $"/{controllerName}";
             }
-            else
+
+            string result = null;
+            foreach (var routeAttribute in routeAttributes)
             {
-                foreach (var routeAttribute in routeAttributes)
-                {
-                    string template = EscapeRoute(routeAttribute.Template.TrimStart('/'), controllerName, action);
+                // Trimming both "/" and "~/" from the start
+                string template = routeAttribute.Template.TrimStart('~', '/');
 
-                    // We need (potentially) multiple routes to become the same rule (not separate rules), so using regex OR operator
-                    result = result == null ? template : $"{result}|{template}";
-                }
+                template = EscapeRoute(template, controllerName, action);
+
+                // We need (potentially) multiple routes to become the same rule (not separate rules), so using regex OR operator
+                result = result == null ? $"/{template}" : $"{result}|/{template}";
             }
 
-            return $"/{result}";
+            return result;
         }
 
         private static string GetUriPatternForControllerMethod(TypeInfo classInfo, MethodInfo methodInfo)
@@ -132,22 +133,31 @@ namespace ThrottlingTroll
 
             foreach (var routeAttribute in routeAttributes)
             {
-                string template = routeAttribute.Template.TrimStart('/');
+                string template = routeAttribute.Template;
 
-                // Prepending controller's route, if any
-                var controllerRouteAttribute = classInfo.GetCustomAttributes<RouteAttribute>().FirstOrDefault();
-                if (controllerRouteAttribute != null)
+                // Slash or tilde+slash means root, so in that case need to skip the controller part
+                if (template.StartsWith("/") || template.StartsWith("~/"))
                 {
-                    template = $"{controllerRouteAttribute.Template.Trim('/')}/{template}";
+                    // Trimming both "/" and "~/" from the start
+                    template = template.TrimStart('~', '/');
+                }
+                else
+                {
+                    // Prepending controller's route, if any
+                    var controllerRouteAttribute = classInfo.GetCustomAttributes<RouteAttribute>().FirstOrDefault();
+                    if (controllerRouteAttribute != null)
+                    {
+                        template = $"{controllerRouteAttribute.Template.Trim('/')}/{template}";
+                    }
                 }
 
                 template = EscapeRoute(template, controllerName, actionName);
 
                 // We need (potentially) multiple routes to become the same rule (not separate rules), so using regex OR operator
-                result = result == null ? template : $"{result}|{template}";
+                result = result == null ? $"/{template}" : $"{result}|/{template}";
             }
 
-            return $"/{result}";
+            return result;
         }
 
         // Note that '{' is a special character in regex (that's why it is escaped here), while '}' is _not_.

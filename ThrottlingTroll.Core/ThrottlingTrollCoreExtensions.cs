@@ -119,6 +119,19 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
+        /// Trims a string from the beginning of another string, if that another string starts with it.
+        /// </summary>
+        public static string TrimPrefix(this string str, string prefix)
+        {
+            if (str.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return str.Substring(prefix.Length);
+            }
+
+            return str;
+        }
+
+        /// <summary>
         /// Trims a string from the end of another string, if that another string ends with it.
         /// </summary>
         public static string TrimSuffix(this string str, string suffix)

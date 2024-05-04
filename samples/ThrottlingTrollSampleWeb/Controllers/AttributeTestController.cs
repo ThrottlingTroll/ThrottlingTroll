@@ -26,7 +26,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// </summary>
         [ThrottlingTroll(PermitLimit = 2, IntervalInSeconds = 2, ResponseBody = "my-test-endpoint2 limit exceeded. Retry in 2 seconds.")]
         [HttpGet("my-test-endpoint2")]
-        [HttpGet("test-endpoint-of-mine2")]
+        [HttpGet("/test-endpoint-of-mine2")]
         public string Test2()
         {
             return "OK";
@@ -75,12 +75,22 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// Action-level limit - 6 requests per 6 seconds.
         /// Route contains special characters.
         /// </summary>
-        [ThrottlingTroll(PermitLimit = 6, IntervalInSeconds = 6, ResponseBody = "(m-y)-test$endpoint+6 limit exceeded. Retry in 6 seconds.")]
-        [HttpGet("(m-y)-test$endpoint+6")]
+        [ThrottlingTroll(PermitLimit = 6, IntervalInSeconds = 6, ResponseBody = "~/(m-y)/test$endpoint+6 limit exceeded. Retry in 6 seconds.")]
+        [HttpGet("~/(m-y)/test$endpoint+6")]
         public string Test6()
         {
             return "OK";
         }
 
+        /// <summary>
+        /// Action-level limit - 7 requests per 7 seconds.
+        /// Route starts with tilde
+        /// </summary>
+        [ThrottlingTroll(PermitLimit = 7, IntervalInSeconds = 7, ResponseBody = "~/my/test/endpoint/7 limit exceeded. Retry in 7 seconds.")]
+        [HttpGet("~/my/test/endpoint/7")]
+        public string Test7()
+        {
+            return "OK";
+        }
     }
 }
