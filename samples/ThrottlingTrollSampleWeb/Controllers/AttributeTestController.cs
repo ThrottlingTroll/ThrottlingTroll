@@ -43,14 +43,17 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
-        /// Action-level limit - 4 requests per 4 seconds, only applied to POST and PUT requests.
+        /// Action-level limit - 4 requests per 4 seconds applied to POST and PUT requests, 2 requests per 4 seconds applied to PATCH requests.
         /// Controller-level limit still applies to all requests.
+        /// Demonstrates how to apply multiple limits to the same endpoint. 
         /// </summary>
-        [ThrottlingTroll(PermitLimit = 4, IntervalInSeconds = 4, Method = "POST,PUT", ResponseBody = "my-test-endpoint4 limit exceeded. Retry in 4 seconds.")]
+        [ThrottlingTroll(PermitLimit = 4, IntervalInSeconds = 4, Method = "POST,PUT", ResponseBody = "Limit for POST and PUT requests exceeded. Retry in 4 seconds.")]
+        [ThrottlingTroll(PermitLimit = 2, IntervalInSeconds = 4, Method = "PATCH", ResponseBody = "Limit for PATCH requests exceeded. Retry in 4 seconds.")]
         [Route("my-test-endpoint4")]
         [HttpGet]
         [HttpPost]
         [HttpPut]
+        [HttpPatch]
         public string Test4()
         {
             return "OK";

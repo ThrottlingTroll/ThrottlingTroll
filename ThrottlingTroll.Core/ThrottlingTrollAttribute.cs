@@ -5,7 +5,7 @@ namespace ThrottlingTroll
     /// <summary>
     /// Rate limit to be applied to this particular controller or method
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class ThrottlingTrollAttribute : Attribute, IRateLimitMethodSettings
     {
         /// <inheritdoc />
