@@ -61,6 +61,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Assemblies where to search <see cref="ThrottlingTrollAttribute"/>s for.
         /// By default contains your service's assembly. Add more, if you have controllers/functions defined in separate class libraries.
+        /// To disable declarative configuration, put an emply list here.
         /// </summary>
         public List<Assembly> Assemblies { get; set; }
     }
