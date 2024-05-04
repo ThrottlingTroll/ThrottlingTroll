@@ -6,10 +6,9 @@ namespace ThrottlingTrollSampleWeb.Controllers
     /// <summary>
     /// Demonstrates how to apply <see cref="ThrottlingTrollAttribute"/>s to an API controller
     /// </summary>
-    [ApiController]
     [Route("/my-[controller]-api")]
     [ThrottlingTroll(PermitLimit = 20, IntervalInSeconds = 20, ResponseBody = "Controller-level limit exceeded. Retry in 20 seconds.")]
-    public class AttributeTestController : Controller
+    public class AttributeTestController : ControllerBase
     {
         /// <summary>
         /// Matches controller's route and therefore controller's limit.

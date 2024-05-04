@@ -118,15 +118,14 @@ namespace ThrottlingTroll
 
             if (routeAttributes.Length <= 0)
             {
-                // If a method is marked with ThrottlingTrollAttribute, and that method does not have a route, and its controller has,
-                // this combination would apply method's limit to the entire controller. We do not want that to happen.
                 if (classInfo.GetCustomAttributes<RouteAttribute>().Any())
                 {
-                    throw new InvalidOperationException($"ThrottlingTroll rule defined on {controllerName}.{actionName} action would override the rule defined on the controller level. This combination is not supported. Either define a route for this action, or remove ThrottlingTrollAttribute from it.");
+                    // This seems to be a route-less method of an API controller
+                    return GetUriPatternForController(classInfo, actionName);
                 }
 
-                // Route-less methods in controllers match the controller's route
-                return GetUriPatternForController(classInfo, actionName);
+                // This seems to be an action in an MVC controller
+                return $"/{controllerName}/{actionName}";
             }
 
             string result = null;
