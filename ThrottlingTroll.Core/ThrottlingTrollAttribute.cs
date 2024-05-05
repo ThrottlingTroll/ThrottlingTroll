@@ -75,13 +75,13 @@ namespace ThrottlingTroll
         /// <summary>
         /// Creates a <see cref="ThrottlingTrollRule"/> out of this attribute
         /// </summary>
-        public ThrottlingTrollRule ToThrottlingTrollRule(string uriPattern)
+        public ThrottlingTrollRule ToThrottlingTrollRule(string uriPattern, string httpMethods = null)
         {
             var rule = new ThrottlingTrollRule
             {
                 LimitMethod = this.ToRateLimitMethod(),
                 UriPattern = string.IsNullOrEmpty(this.UriPattern) ?  uriPattern : this.UriPattern,
-                Method = this.Method,
+                Method = string.IsNullOrEmpty(this.Method) ? httpMethods : this.Method,
                 HeaderName = this.HeaderName,
                 HeaderValue = this.HeaderValue,
                 IdentityId = this.IdentityId,

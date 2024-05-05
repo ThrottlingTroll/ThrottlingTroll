@@ -4,7 +4,8 @@ using ThrottlingTroll;
 namespace ThrottlingTrollSampleWeb.Controllers
 {
     /// <summary>
-    /// Demonstrates how to apply <see cref="ThrottlingTrollAttribute"/>s to an API controller
+    /// Demonstrates how to apply <see cref="ThrottlingTrollAttribute"/>s to an API controller.
+    /// All methods have a shared limit of 20 requests per 20 seconds.
     /// </summary>
     [Route("/my-[controller]-api")]
     [ThrottlingTroll(PermitLimit = 20, IntervalInSeconds = 20, ResponseBody = "Controller-level limit exceeded. Retry in 20 seconds.")]

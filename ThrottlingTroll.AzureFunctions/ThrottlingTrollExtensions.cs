@@ -155,7 +155,12 @@ namespace ThrottlingTroll
 
                 foreach (var trollAttribute in methodInfo.GetCustomAttributes<ThrottlingTrollAttribute>())
                 {
-                    rules.Add(trollAttribute.ToThrottlingTrollRule(GetUriPattern(funcAttribute, httpTriggerAttribute)));
+                    rules.Add(
+                        trollAttribute.ToThrottlingTrollRule(
+                            GetUriPattern(funcAttribute, httpTriggerAttribute),
+                            httpTriggerAttribute.Methods?.Length > 0 ? string.Join(',', httpTriggerAttribute.Methods) : null
+                        )
+                    );
                 }
             }
 

@@ -68,7 +68,12 @@ namespace ThrottlingTroll
                 {
                     foreach (var trollAttribute in methodInfo.GetCustomAttributes<ThrottlingTrollAttribute>())
                     {
-                        rules.Add(trollAttribute.ToThrottlingTrollRule(GetUriPatternForControllerMethod(classInfo, methodInfo)));
+                        rules.Add(
+                            trollAttribute.ToThrottlingTrollRule(
+                                GetUriPatternForControllerMethod(classInfo, methodInfo),
+                                GetHttpVerbsForControllerMethod(methodInfo)
+                            )
+                        );
                     }
                 }
             }
@@ -157,6 +162,17 @@ namespace ThrottlingTroll
             }
 
             return result;
+        }
+
+        private static string GetHttpVerbsForControllerMethod(MethodInfo methodInfo)
+        {
+            var verbs = methodInfo
+                .GetCustomAttributes<HttpMethodAttribute>()
+                .SelectMany(at => at.HttpMethods)
+                .Distinct(StringComparer.InvariantCultureIgnoreCase)
+                .ToArray();
+
+            return verbs.Length > 0 ? string.Join(',', verbs) : null;
         }
 
         // Note that '{' is a special character in regex (that's why it is escaped here), while '}' is _not_.

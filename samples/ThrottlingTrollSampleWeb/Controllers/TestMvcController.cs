@@ -4,7 +4,8 @@ using ThrottlingTroll;
 namespace ThrottlingTrollSampleWeb.Controllers
 {
     /// <summary>
-    /// Demonstrates how to apply <see cref="ThrottlingTrollAttribute"/>s to an MVC controller
+    /// Demonstrates how to apply <see cref="ThrottlingTrollAttribute"/>s to an MVC controller.
+    /// All methods have a shared limit of 15 requests per 15 seconds.
     /// </summary>
     [ThrottlingTroll(PermitLimit = 15, IntervalInSeconds = 15, ResponseBody = "Controller-level limit exceeded. Retry in 15 seconds.")]
     public class TestMvcController : Controller
