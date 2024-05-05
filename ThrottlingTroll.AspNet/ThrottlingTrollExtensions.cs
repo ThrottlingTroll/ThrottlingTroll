@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -57,10 +58,14 @@ namespace ThrottlingTroll
 
             foreach (var classInfo in allClasses)
             {
+                bool isRazorPage = classInfo.IsSubclassOf(typeof(PageModel));
+
                 // Controller-level rules
                 foreach (var trollAttribute in classInfo.GetCustomAttributes<ThrottlingTrollAttribute>())
                 {
-                    rules.Add(trollAttribute.ToThrottlingTrollRule(GetUriPatternForController(classInfo)));
+                    var rule = trollAttribute.ToThrottlingTrollRule(isRazorPage ? GetUriPatternForRazorPage(classInfo) : GetUriPatternForController(classInfo));
+
+                    rules.Add(rule);
                 }
 
                 // Method-level rules
@@ -68,12 +73,12 @@ namespace ThrottlingTroll
                 {
                     foreach (var trollAttribute in methodInfo.GetCustomAttributes<ThrottlingTrollAttribute>())
                     {
-                        rules.Add(
-                            trollAttribute.ToThrottlingTrollRule(
-                                GetUriPatternForControllerMethod(classInfo, methodInfo),
-                                GetHttpVerbsForControllerMethod(methodInfo)
-                            )
-                        );
+                        var rule = isRazorPage ?
+                            trollAttribute.ToThrottlingTrollRule(GetUriPatternForRazorPageHandler(classInfo, methodInfo), GetHttpVerbsForRazorPageHandler(methodInfo)) :
+                            trollAttribute.ToThrottlingTrollRule(GetUriPatternForControllerMethod(classInfo, methodInfo), GetHttpVerbsForControllerMethod(methodInfo))
+                        ;
+
+                        rules.Add(rule);
                     }
                 }
             }
@@ -106,6 +111,13 @@ namespace ThrottlingTroll
             }
 
             return result;
+        }
+
+        private static string GetUriPatternForRazorPage(TypeInfo classInfo)
+        {
+            string pageName = classInfo.Name.TrimSuffix("Model");
+
+            return $"/{pageName}";
         }
 
         private static string GetUriPatternForControllerMethod(TypeInfo classInfo, MethodInfo methodInfo)
@@ -173,6 +185,25 @@ namespace ThrottlingTroll
                 .ToArray();
 
             return verbs.Length > 0 ? string.Join(',', verbs) : null;
+        }
+
+        private static readonly Regex RazorPageHandlerMethodRegex = new Regex("^On(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)(\\w*?)(?:Async)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static string GetUriPatternForRazorPageHandler(TypeInfo classInfo, MethodInfo methodInfo)
+        {
+            string pageName = classInfo.Name.TrimSuffix("Model");
+
+            var match = RazorPageHandlerMethodRegex.Match(methodInfo.Name);
+            string customHandlerName = match.Success ? match.Groups[2].Value : null;
+
+            return string.IsNullOrEmpty(customHandlerName) ? $"/{pageName}" : $"/{pageName}\\?handler={customHandlerName}";
+        }
+
+        private static string GetHttpVerbsForRazorPageHandler(MethodInfo methodInfo)
+        {
+            var match = RazorPageHandlerMethodRegex.Match(methodInfo.Name);
+
+            return match.Success ? match.Groups[1].Value : null;
         }
 
         // Note that '{' is a special character in regex (that's why it is escaped here), while '}' is _not_.
