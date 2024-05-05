@@ -24,7 +24,7 @@ namespace ThrottlingTroll.CounterStores.Redis
         public Action<LogLevel, string> Log { private get; set; }
 
         /// <inheritdoc />
-        public async Task<long> GetAsync(string key)
+        public async Task<long> GetAsync(string key, IHttpRequestProxy request)
         {
             var db = this._redis.GetDatabase();
 
@@ -34,7 +34,7 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             var db = this._redis.GetDatabase();
 
@@ -50,7 +50,7 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key, long cost)
+        public async Task DecrementAsync(string key, long cost, IHttpRequestProxy request)
         {
             var db = this._redis.GetDatabase();
 

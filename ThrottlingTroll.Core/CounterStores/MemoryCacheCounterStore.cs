@@ -32,7 +32,7 @@ namespace ThrottlingTroll
         public Action<LogLevel, string> Log { get; set; }
 
         /// <inheritdoc />
-        public async Task<long> GetAsync(string key)
+        public async Task<long> GetAsync(string key, IHttpRequestProxy request)
         {
             var entry = this._cache.Get(key) as CacheEntry;
 
@@ -40,7 +40,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             await this._asyncLock.WaitAsync();
 
@@ -76,7 +76,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key, long cost)
+        public async Task DecrementAsync(string key, long cost, IHttpRequestProxy request)
         {
             await this._asyncLock.WaitAsync();
 

@@ -13,7 +13,8 @@ namespace ThrottlingTroll
         /// Gets counter by its key
         /// </summary>
         /// <param name="key">Counter's key</param>
-        Task<long> GetAsync(string key);
+        /// <param name="request">Incoming request, for reference</param>
+        Task<long> GetAsync(string key, IHttpRequestProxy request);
 
         /// <summary>
         /// Increments and gets counter by its key.
@@ -23,15 +24,17 @@ namespace ThrottlingTroll
         /// <param name="cost">Value to increment by</param>
         /// <param name="ttl">TTL for this counter</param>
         /// <param name="maxCounterValueToSetTtl">TTL will only be set, if the counter value is less or equal to this number</param>
+        /// <param name="request">Incoming request, for reference</param>
         /// <returns>New counter value</returns>
-        Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl = 1);
+        Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request);
 
         /// <summary>
         /// Decrements counter by its key.
         /// </summary>
         /// <param name="key">Counter's key</param>
         /// <param name="cost">Value to decrement by</param>
-        Task DecrementAsync(string key, long cost);
+        /// <param name="request">Incoming request, for reference</param>
+        Task DecrementAsync(string key, long cost, IHttpRequestProxy request);
 
         /// <summary>
         /// Logging utility to use. Will be set by ThrottlingTroll, so don't override it yourself.

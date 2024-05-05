@@ -219,17 +219,17 @@ namespace ThrottlingTroll.AspNet.Tests
         {
             public override int RetryAfterInSeconds => DateTimeOffset.UtcNow.Second;
 
-            public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
+            public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
             {
                 return Task.CompletedTask;
             }
 
-            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
+            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
             {
                 return -1;
             }
 
-            public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+            public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
             {
                 throw new NotImplementedException();
             }
@@ -453,19 +453,19 @@ namespace ThrottlingTroll.AspNet.Tests
 
             public readonly int Cost = DateTimeOffset.UtcNow.Second;
 
-            public override Task DecrementAsync(string limitKey, long count, ICounterStore store)
+            public override Task DecrementAsync(string limitKey, long count, ICounterStore store, IHttpRequestProxy request)
             {
                 return Task.CompletedTask;
             }
 
-            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
+            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
             {
                 Assert.AreEqual(cost, this.Cost);
 
                 return int.MaxValue;
             }
 
-            public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+            public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
             {
                 throw new NotImplementedException();
             }

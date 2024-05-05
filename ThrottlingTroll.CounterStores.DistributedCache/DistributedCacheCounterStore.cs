@@ -53,7 +53,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         public Action<LogLevel, string> Log { get; set; }
 
         /// <inheritdoc />
-        public async Task<long> GetAsync(string key)
+        public async Task<long> GetAsync(string key, IHttpRequestProxy request)
         {
             var bytes = await this._cache.GetAsync(key);
 
@@ -66,7 +66,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
@@ -104,7 +104,7 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key, long cost)
+        public async Task DecrementAsync(string key, long cost, IHttpRequestProxy request)
         {
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();

@@ -92,7 +92,7 @@ namespace ThrottlingTroll
             
             string uniqueCacheKey = this.GetUniqueCacheKey(request, configName);
 
-            var requestsRemaining = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store);
+            var requestsRemaining = await this.LimitMethod.IsExceededAsync(uniqueCacheKey, cost, store, request);
 
             if (requestsRemaining >= 0)
             {
@@ -107,11 +107,11 @@ namespace ThrottlingTroll
         /// <summary>
         /// Will be executed at the end of request processing. Used for decrementing the counter, if needed.
         /// </summary>
-        protected internal virtual async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, long cost, Action<LogLevel, string> log)
+        protected internal virtual async Task OnRequestProcessingFinished(ICounterStore store, string uniqueCacheKey, long cost, Action<LogLevel, string> log, IHttpRequestProxy request)
         {
             try
             {
-                await this.LimitMethod.DecrementAsync(uniqueCacheKey, cost, store);
+                await this.LimitMethod.DecrementAsync(uniqueCacheKey, cost, store, request);
             }
             catch (Exception ex)
             {
@@ -137,9 +137,9 @@ namespace ThrottlingTroll
         /// <summary>
         /// Checks if the limit is still exceeded. Intended for implementing <see cref="SemaphoreRateLimitMethod"/>
         /// </summary>
-        protected internal virtual Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey)
+        protected internal virtual Task<bool> IsStillExceededAsync(ICounterStore store, string uniqueCacheKey, IHttpRequestProxy request)
         {
-            return this.LimitMethod.IsStillExceededAsync(uniqueCacheKey, store);
+            return this.LimitMethod.IsStillExceededAsync(uniqueCacheKey, store, request);
         }
 
         /// <summary>

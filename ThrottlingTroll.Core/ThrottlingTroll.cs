@@ -208,7 +208,7 @@ namespace ThrottlingTroll
                         // Doing the delay logic
                         while ((DateTimeOffset.UtcNow - dtStart).TotalSeconds <= limit.MaxDelayInSeconds)
                         {
-                            if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId))
+                            if (!await limit.IsStillExceededAsync(this._counterStore, limitCheckResult.CounterId, request))
                             {
                                 // Doing double-check
                                 limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
@@ -226,7 +226,7 @@ namespace ThrottlingTroll
                     if (limitCheckResult.RequestsRemaining >= 0)
                     {
                         // Decrementing this counter at the end of request processing
-                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log));
+                        cleanupRoutines.Add(() => limit.OnRequestProcessingFinished(this._counterStore, limitCheckResult.CounterId, requestCost, this._log, request));
                     }
 
                     result.Add(limitCheckResult);

@@ -27,7 +27,7 @@ namespace ThrottlingTroll
         public override int RetryAfterInSeconds => this.NumOfBuckets == 0 ? 0 : this.IntervalInSeconds / this.NumOfBuckets;
 
         /// <inheritdoc />
-        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
             if (this.IntervalInSeconds <= 0 || this.NumOfBuckets <= 0)
             {
@@ -52,7 +52,7 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds * this.NumOfBuckets);
 
             // Incrementing and getting the current bucket
-            tasks.Add(store.IncrementAndGetAsync(curBucketKey, cost, ttl));
+            tasks.Add(store.IncrementAndGetAsync(curBucketKey, cost, ttl, 1, request));
 
             // Now checking our local memory cache for the "counter exceeded" flag.
             // Need to do that _after_ the current bucket gets incremented, since for a sliding window the correct count in each bucket matters.
@@ -68,7 +68,7 @@ namespace ThrottlingTroll
             var otherBucketIds = Enumerable.Range(0, this.NumOfBuckets).Where(id => id != curBucketId);
             foreach (var bucketId in otherBucketIds)
             {
-                tasks.Add(store.GetAsync($"{limitKey}-{bucketId}"));
+                tasks.Add(store.GetAsync($"{limitKey}-{bucketId}", request));
             }
 
             // Aggregating all buckets
@@ -89,7 +89,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
         {
             if (this.IntervalInSeconds <= 0 || this.NumOfBuckets <= 0)
             {
@@ -97,7 +97,7 @@ namespace ThrottlingTroll
             }
 
             // Will load contents of all buckets in parallel
-            var tasks = Enumerable.Range(0, this.NumOfBuckets).Select(bucketId => store.GetAsync($"{limitKey}-{bucketId}"));
+            var tasks = Enumerable.Range(0, this.NumOfBuckets).Select(bucketId => store.GetAsync($"{limitKey}-{bucketId}", request));
 
             // Aggregating all buckets
             long count = (await Task.WhenAll(tasks)).Sum();
@@ -106,7 +106,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
             // Doing nothing
             return Task.CompletedTask;

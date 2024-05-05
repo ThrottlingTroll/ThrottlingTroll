@@ -57,7 +57,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         public Action<LogLevel, string> Log { private get; set; }
 
         /// <inheritdoc />
-        public async Task<long> GetAsync(string key)
+        public async Task<long> GetAsync(string key, IHttpRequestProxy request)
         {
             key = this.ConvertKey(key);
 
@@ -72,7 +72,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             this.RunCleanupIfNeeded();
 
@@ -136,7 +136,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         }
 
         /// <inheritdoc />
-        public async Task DecrementAsync(string key, long cost)
+        public async Task DecrementAsync(string key, long cost, IHttpRequestProxy request)
         {
             this.RunCleanupIfNeeded();
 

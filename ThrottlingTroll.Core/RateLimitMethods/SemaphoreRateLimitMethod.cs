@@ -25,17 +25,17 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
             var now = DateTime.UtcNow;
 
             var ttl = now + TimeSpan.FromSeconds(this.TimeoutInSeconds);
 
-            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl, this.PermitLimit);
+            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl, this.PermitLimit, request);
 
             if (count > this.PermitLimit)
             {
-                await store.DecrementAsync(limitKey, cost);
+                await store.DecrementAsync(limitKey, cost, request);
 
                 return -1;
             }
@@ -46,17 +46,17 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
         {
-            long count = await store.GetAsync(limitKey);
+            long count = await store.GetAsync(limitKey, request);
 
             return count >= this.PermitLimit;
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
-            return store.DecrementAsync(limitKey, cost);
+            return store.DecrementAsync(limitKey, cost, request);
         }
 
         /// <inheritdoc/>

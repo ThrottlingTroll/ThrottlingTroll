@@ -20,7 +20,7 @@ namespace ThrottlingTroll
         public override int RetryAfterInSeconds => this.IntervalInSeconds;
 
         /// <inheritdoc />
-        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store)
+        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
             if (this.IntervalInSeconds <= 0)
             {
@@ -40,7 +40,7 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
 
             // Now checking the actual count
-            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl);
+            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl, 1, request);
 
             if (count > this.PermitLimit)
             {
@@ -56,20 +56,20 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store)
+        public override async Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
         {
             if (this.IntervalInSeconds <= 0)
             {
                 return false;
             }
 
-            long count = await store.GetAsync(limitKey);
+            long count = await store.GetAsync(limitKey, request);
 
             return count >= this.PermitLimit;
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store)
+        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
             // Doing nothing
             return Task.CompletedTask;
