@@ -56,6 +56,14 @@ namespace ThrottlingTroll
             return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
         }
 
+        /// <summary>
+        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
+        /// </summary>
+        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
+        {
+            return (List<LimitCheckResult>)context.Items[ThrottlingTroll.LimitCheckResultsContextKey];
+        }
+
         private static ThrottlingTrollConfig CollectDeclarativeConfig(List<Assembly> assemblies)
         {
             var rules = new List<ThrottlingTrollRule>();

@@ -98,6 +98,22 @@ namespace ThrottlingTroll
             return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
         }
 
+        /// <summary>
+        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
+        /// </summary>
+        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
+        {
+            return (List<LimitCheckResult>)context.Items[ThrottlingTroll.LimitCheckResultsContextKey];
+        }
+
+        /// <summary>
+        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
+        /// </summary>
+        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this FunctionContext context)
+        {
+            return (List<LimitCheckResult>)context.Items[ThrottlingTroll.LimitCheckResultsContextKey];
+        }
+
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
         {
             opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, CollectDeclarativeConfig(opt.Assemblies), opt.GetConfigFunc, context.InstanceServices);
