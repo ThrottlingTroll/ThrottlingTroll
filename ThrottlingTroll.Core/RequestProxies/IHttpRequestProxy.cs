@@ -34,5 +34,11 @@ namespace ThrottlingTroll
         /// Otherwise the values are appended to the existing list.
         /// </summary>
         public void AppendToContextItem<T>(string key, List<T> list);
+
+        /// <summary>
+        /// Request context key-value storage
+        /// </summary>
+        public IDictionary<object, object> RequestContextItems { get; }
+
     }
 }

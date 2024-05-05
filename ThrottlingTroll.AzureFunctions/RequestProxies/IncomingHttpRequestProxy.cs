@@ -72,6 +72,15 @@ namespace ThrottlingTroll
             this.Request.FunctionContext.Items.AddItemsToKey(key, list);
         }
 
+        /// <inheritdoc />
+        public IDictionary<object, object> RequestContextItems
+        {
+            get
+            {
+                return this.Request.FunctionContext.Items;
+            }
+        }
+
         private IDictionary<string, StringValues> _headers;
     }
 }

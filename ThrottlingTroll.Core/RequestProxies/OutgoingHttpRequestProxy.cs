@@ -72,6 +72,16 @@ namespace ThrottlingTroll
             // Doing nothing so far
         }
 
+        /// <inheritdoc />
+        public IDictionary<object, object> RequestContextItems
+        {
+            get
+            {
+                return this._contextItems;
+            }
+        }
+
         private IDictionary<string, StringValues> _headers;
+        private IDictionary<object, object> _contextItems = new Dictionary<object, object>();
     }
 }

@@ -71,6 +71,15 @@ namespace ThrottlingTroll
             this.Request.HttpContext.Items[key] = this._functionContext.Items[key];
         }
 
+        /// <inheritdoc />
+        public IDictionary<object, object> RequestContextItems
+        {
+            get
+            {
+                return this.Request.HttpContext.Items;
+            }
+        }
+
         private readonly FunctionContext _functionContext;
     }
 }
