@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 
 namespace ThrottlingTroll
 {
@@ -45,6 +46,14 @@ namespace ThrottlingTroll
             opt.CounterStore ??= builder.ApplicationServices.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
 
             return builder.UseMiddleware<ThrottlingTrollMiddleware>(opt);
+        }
+
+        /// <summary>
+        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
+        /// </summary>
+        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this HttpContext context)
+        {
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
         }
 
         private static ThrottlingTrollConfig CollectDeclarativeConfig(List<Assembly> assemblies)

@@ -436,9 +436,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
         {
             // ThrottlingTroll places a list of ThrottlingTrollConfigs into request's context under the "ThrottlingTrollConfigsContextKey" key
             // The value is a list, because there might be multiple instances of ThrottlingTrollMiddleware configured
-            var configList = (List<ThrottlingTrollConfig>)this.HttpContext.Items[ThrottlingTroll.ThrottlingTroll.ThrottlingTrollConfigsContextKey]!;
-
-            return configList;
+            return this.HttpContext.GetThrottlingTrollConfig();
         }
     }
 }

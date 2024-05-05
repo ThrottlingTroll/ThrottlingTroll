@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -109,6 +110,14 @@ namespace ThrottlingTroll
             {
                 builder.UseThrottlingTroll(builderContext, options);
             });
+        }
+
+        /// <summary>
+        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
+        /// </summary>
+        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this FunctionContext context)
+        {
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
         }
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)

@@ -379,7 +379,7 @@ namespace ThrottlingTrollSampleAspNetFunction
         {
             // ThrottlingTroll places a list of ThrottlingTrollConfigs into request's context under the "ThrottlingTrollConfigsContextKey" key
             // The value is a list, because there might be multiple instances of ThrottlingTrollMiddleware configured
-            var configList = (List<ThrottlingTrollConfig>)req.HttpContext.Items[ThrottlingTroll.ThrottlingTroll.ThrottlingTrollConfigsContextKey]!;
+            var configList = req.HttpContext.GetThrottlingTrollConfig();
 
             return new OkObjectResult(configList);
         }

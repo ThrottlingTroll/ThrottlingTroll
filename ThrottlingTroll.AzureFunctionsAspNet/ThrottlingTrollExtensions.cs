@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -79,6 +80,22 @@ namespace ThrottlingTroll
                     await middleware.Invoke(context, next);
                 }
             );
+        }
+
+        /// <summary>
+        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
+        /// </summary>
+        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this HttpContext context)
+        {
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
+        }
+
+        /// <summary>
+        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
+        /// </summary>
+        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this FunctionContext context)
+        {
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
         }
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
