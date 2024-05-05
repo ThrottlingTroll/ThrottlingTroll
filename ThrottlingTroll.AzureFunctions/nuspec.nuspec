@@ -11,7 +11,7 @@
     <repository type="git" url="https://github.com/ThrottlingTroll/ThrottlingTroll" />
     <readme>README.md</readme>
     <dependencies>
-      <group targetFramework="net7.0">
+      <group targetFramework="net6.0">
         <dependency id="Microsoft.Azure.Functions.Worker" version="1.19.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Azure.Functions.Worker.Extensions.Http" version="3.1.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Extensions.Configuration.Binder" version="6.0.0" exclude="Build,Analyzers" />
@@ -24,7 +24,7 @@
   <files>
     <file src="..\LICENSE" target="LICENSE" />
     <file src=".\README.md" target="README.md" />
-    <file src="bin\Release\net7.0\ThrottlingTroll.*" target="lib/net7.0" />
+    <file src="bin\Release\net6.0\ThrottlingTroll.*" target="lib/net6.0" />
   </files>
 
 </package>
