@@ -91,6 +91,10 @@ namespace ThrottlingTroll
             switch (settings.Algorithm)
             {
                 case RateLimitAlgorithm.FixedWindow:
+
+                    CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
+                    CheckLimitValue(settings.Algorithm, settings.IntervalInSeconds > 0, "IntervalInSeconds should be more than 0.");
+
                     return new FixedWindowRateLimitMethod
                     {
                         PermitLimit = settings.PermitLimit,
@@ -98,6 +102,11 @@ namespace ThrottlingTroll
                         ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? false
                     };
                 case RateLimitAlgorithm.SlidingWindow:
+
+                    CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
+                    CheckLimitValue(settings.Algorithm, settings.IntervalInSeconds > 0, "IntervalInSeconds should be more than 0.");
+                    CheckLimitValue(settings.Algorithm, settings.NumOfBuckets > 1, "NumOfBuckets should be more than 1.");
+
                     return new SlidingWindowRateLimitMethod
                     {
                         PermitLimit = settings.PermitLimit,
@@ -106,6 +115,9 @@ namespace ThrottlingTroll
                         ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? false
                     };
                 case RateLimitAlgorithm.Semaphore:
+
+                    CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
+
                     return new SemaphoreRateLimitMethod
                     {
                         PermitLimit = settings.PermitLimit,
@@ -142,6 +154,14 @@ namespace ThrottlingTroll
             }
 
             return str;
+        }
+
+        private static void CheckLimitValue(RateLimitAlgorithm algorithm, bool isOk, string message)
+        {
+            if (!isOk)
+            {
+                throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. {algorithm} settings are incorrect. {message}");
+            }
         }
     }
 }
