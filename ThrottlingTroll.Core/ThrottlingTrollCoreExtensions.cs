@@ -63,7 +63,7 @@ namespace ThrottlingTroll
         public static Func<Task<ThrottlingTrollConfig>> MergeAllConfigSources(
             ThrottlingTrollConfig config,
             ThrottlingTrollConfig declarativeConfig,
-            Func<Task<ThrottlingTrollConfig>> initialConfigFunc, 
+            Func<Task<ThrottlingTrollConfig>> configFunc, 
             IServiceProvider serviceProvider
         )
         {
@@ -73,13 +73,13 @@ namespace ThrottlingTroll
 
             config.MergeWith(declarativeConfig);
 
-            if (initialConfigFunc == null)
+            if (configFunc == null)
             {
                 return () => Task.FromResult(config);
             }
             else
             {
-                return () => initialConfigFunc().ContinueWith(t => t.Result.MergeWith(config));
+                return () => configFunc().ContinueWith(t => t.Result.MergeWith(config));
             }
         }
 
