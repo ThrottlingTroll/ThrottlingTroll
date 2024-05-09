@@ -51,18 +51,16 @@ namespace ThrottlingTroll
         /// <summary>
         /// Creates an instance of <see cref="ThrottlingTrollConfig"/> out of config settings.
         /// </summary>
-        public static ThrottlingTrollConfig FromConfigSection(IServiceProvider provider)
+        public static ThrottlingTrollConfig FromConfigSection(IServiceProvider provider, string sectionName)
         {
             var config = provider.GetService<IConfiguration>();
 
-            var section = config?.GetSection(IngressConfigSectionName);
+            var section = config?.GetSection(sectionName);
 
             var result = section?.Get<ThrottlingTrollConfig>();
 
             return result;
         }
-
-        private const string IngressConfigSectionName = "ThrottlingTrollIngress";
     }
 
     /// <summary>

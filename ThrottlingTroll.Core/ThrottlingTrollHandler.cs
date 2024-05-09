@@ -383,58 +383,20 @@ namespace ThrottlingTroll
                     options(serviceProvider, opt);
                 }
 
-                if (opt.GetConfigFunc == null)
-                {
-                    if (opt.Config == null)
-                    {
-                        // Trying to read config from settings
-                        var config = serviceProvider.GetService<IConfiguration>();
-
-                        var section = config?.GetSection(ConfigSectionName);
-
-                        var throttlingTrollConfig = section?.Get<ThrottlingTrollEgressConfig>();
-
-                        if (throttlingTrollConfig == null)
-                        {
-                            throw new InvalidOperationException($"Failed to initialize ThrottlingTroll. Settings section '{ConfigSectionName}' not found or cannot be deserialized.");
-                        }
-
-                        opt.GetConfigFunc = async () => throttlingTrollConfig;
-                    }
-                    else
-                    {
-                        opt.GetConfigFunc = async () => opt.Config;
-                    }
-                }
+                opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, null, opt.GetConfigFunc, serviceProvider, EgressConfigSectionName);
 
                 if (opt.Log == null)
                 {
                     var logger = serviceProvider.GetService<ILogger<ThrottlingTroll>>();
-
                     opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
                 }
 
-                if (opt.CounterStore == null)
-                {
-                    opt.CounterStore = serviceProvider.GetOrCreateThrottlingTrollCounterStore();
-                }
+                opt.CounterStore ??= serviceProvider.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
 
                 return new ThrottlingTrollHandler(opt);
             });
         }
 
-        private static ICounterStore GetOrCreateThrottlingTrollCounterStore(this IServiceProvider serviceProvider)
-        {
-            var counterStore = serviceProvider.GetService<ICounterStore>();
-
-            if (counterStore == null)
-            {
-                counterStore = new MemoryCacheCounterStore();
-            }
-
-            return counterStore;
-        }
-
-        private const string ConfigSectionName = "ThrottlingTrollEgress";
+        private const string EgressConfigSectionName = "ThrottlingTrollEgress";
     }
 }

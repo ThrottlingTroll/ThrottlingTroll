@@ -64,12 +64,13 @@ namespace ThrottlingTroll
             ThrottlingTrollConfig config,
             ThrottlingTrollConfig declarativeConfig,
             Func<Task<ThrottlingTrollConfig>> configFunc, 
-            IServiceProvider serviceProvider
+            IServiceProvider serviceProvider,
+            string configSectionName = IngressConfigSectionName
         )
         {
             config ??= new ThrottlingTrollConfig();
 
-            config.MergeWith(ThrottlingTrollConfig.FromConfigSection(serviceProvider));
+            config.MergeWith(ThrottlingTrollConfig.FromConfigSection(serviceProvider, configSectionName));
 
             config.MergeWith(declarativeConfig);
 
@@ -155,6 +156,8 @@ namespace ThrottlingTroll
 
             return str;
         }
+
+        private const string IngressConfigSectionName = "ThrottlingTrollIngress";
 
         private static void CheckLimitValue(RateLimitAlgorithm algorithm, bool isOk, string message)
         {
