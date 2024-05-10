@@ -231,6 +231,17 @@ namespace ThrottlingTroll
 
                     result.Add(limitCheckResult);
                 }
+
+                try
+                {
+                    // Adding check results as an item to the HttpContext, so that client's code can use it
+                    request.AppendToContextItem(LimitCheckResultsContextKey, result);
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    // At this point HttpContext might be already disposed, and in that case this happens.
+                    this._log(LogLevel.Warning, $"ThrottlingTroll failed to populate request context with LimitCheckResults. {ex}");
+                }
             }
             catch (Exception ex)
             {
@@ -241,9 +252,6 @@ namespace ThrottlingTroll
                     throw;
                 }
             }
-
-            // Adding check results as an item to the HttpContext, so that client's code can use it
-            request.AppendToContextItem(LimitCheckResultsContextKey, result);
 
             return result;
         }
