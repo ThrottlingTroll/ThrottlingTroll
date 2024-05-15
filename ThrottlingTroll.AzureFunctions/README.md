@@ -25,6 +25,9 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
 });
 ```
 
+[All different ways of configuring, all other features and more code snippets are documented in our Wiki](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki).
+
+
 ## Samples
 
 [Here is a sample project, that demonstrates how to use ThrottlingTroll in an Azure Functions (.NET Isolated) project](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction).
