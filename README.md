@@ -94,10 +94,13 @@ Install from Nuget:
 
   And [you can implement your own](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs).
 
-* [**Three ways of configuring**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure):
+* [**Four ways of configuring**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure):
+  * [Declaratively, aka using ThrottlingTrollAttribute](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/105.-%5BIngress%5D-How-to-configure-declaratively-(with-attributes)). Aims for best readability.
   * [Statically, aka via `appsettings.json/host.json`](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/110.-%5BIngress%5D-How-to-configure-statically-(via-config-files)). Simplest.
   * [Programmatically, at startup](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/120.-%5BIngress%5D-How-to-configure-programmatically). In case you want to parametrize something.
   * [Reactively](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/130.-%5BIngress%5D-How-to-configure-reactively). You provide a routine, that fetches limits from wherever, and an **IntervalToReloadConfigInSeconds** for that routine to be called periodically. Allows to reconfigure rules and limits on-the-fly, *without restarting your service*.
+ 
+    And you can combine all four approaches in the same solution.
 
 * [**IdentityIdExtractor**s](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting), that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
 
