@@ -100,7 +100,7 @@ Install from Nuget:
   * [Programmatically, at startup](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/120.-%5BIngress%5D-How-to-configure-programmatically). In case you want to parametrize something.
   * [Reactively](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/130.-%5BIngress%5D-How-to-configure-reactively). You provide a routine, that fetches limits from wherever, and an **IntervalToReloadConfigInSeconds** for that routine to be called periodically. Allows to reconfigure rules and limits on-the-fly, *without restarting your service*.
  
-    And you can combine all four approaches in the same solution.
+  And you can combine all four approaches in the same solution.
 
 * [**IdentityIdExtractor**s](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting), that allow you to limit clients individually, based on their IP-addresses, api-keys, tokens, headers, query strings, claims etc. etc.
 
