@@ -198,6 +198,24 @@ namespace IntegrationTests
             }
         };
 
+        static ThrottlingTrollRule DeduplicatingSemaphoreRule = new ThrottlingTrollRule
+        {
+            UriPattern = "deduplicating-semaphore",
+
+            LimitMethod = new SemaphoreRateLimitMethod
+            {
+                PermitLimit = 1,
+                ReleaseAfterSeconds = 3
+            },
+
+            IdentityIdExtractor = request =>
+            {
+                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+            }
+        };
+
+        static ConcurrentDictionary<string, string> DedupTestValues = new ConcurrentDictionary<string, string>();
+
         [ClassInitialize]
         public static void Init(TestContext context)
         {
@@ -218,7 +236,8 @@ namespace IntegrationTests
                         SlidingWindowRule,
                         ThrowingSemaphoreRule,
                         ThrowingFixedWindowRule,
-                        DistributedCounterRule
+                        DistributedCounterRule,
+                        DeduplicatingSemaphoreRule
                     }
                 };
             });
@@ -289,6 +308,11 @@ namespace IntegrationTests
                 counters[counterId] = counter;
 
                 return counter;
+            });
+
+            WebApp.MapGet(DeduplicatingSemaphoreRule.UriPattern, ([FromQuery] string id, [FromQuery] string val) =>
+            {
+                DedupTestValues[id] = val;
             });
 
             WebApp.Start();
@@ -393,6 +417,15 @@ namespace IntegrationTests
             await Task.WhenAll(
                 Enumerable.Range(0, 16)
                     .Select(_ => this.TestThrowingFixedWindow())
+            );
+        }
+
+        [TestMethod]
+        public async Task TestDeduplications()
+        {
+            await Task.WhenAll(
+                Enumerable.Range(0, 16)
+                    .Select(_ => this.TestDeduplication())
             );
         }
 
@@ -654,6 +687,45 @@ namespace IntegrationTests
             long diff = bag.Max() - bag.Min();
 
             Assert.AreEqual(attempts - 1, diff, id.ToString());
+        }
+
+        private async Task TestDeduplication()
+        {
+            string requestId = Guid.NewGuid().ToString();
+            string winningRequestValue = "";
+            int throttledRequests = 0;
+            int totalRequests = 0;
+
+            int attempts = 64;
+
+            await Task.WhenAll(
+                Enumerable.Range(0, attempts)
+                    .Select(async _ =>
+                    {
+                        await Task.Delay(Random.Shared.Next(0, 500));
+
+                        string requestValue = Guid.NewGuid().ToString();
+
+                        var response = await Client.GetAsync($"{DeduplicatingSemaphoreRule.UriPattern}?id={requestId}&val={requestValue}");
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            winningRequestValue = requestValue;
+                        }
+                        else
+                        {
+                            Interlocked.Increment(ref throttledRequests);
+                        }
+
+                        Interlocked.Increment(ref totalRequests);
+                    })
+            );
+
+            Assert.AreEqual(attempts, totalRequests);
+
+            Assert.AreEqual(attempts - 1, throttledRequests);
+
+            Assert.AreEqual(DedupTestValues[requestId], winningRequestValue);
         }
     }
 }

@@ -39,6 +39,6 @@ namespace ThrottlingTroll
         /// <summary>
         /// Logging utility to use. Will be set by ThrottlingTroll, so don't override it yourself.
         /// </summary>
-        public Action<LogLevel, string> Log { set; }
+        public Action<LogLevel, string> Log { get; set; }
     }
 }

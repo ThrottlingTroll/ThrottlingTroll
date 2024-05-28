@@ -21,7 +21,7 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public Action<LogLevel, string> Log { private get; set; }
+        public Action<LogLevel, string> Log { get; set; }
 
         /// <inheritdoc />
         public async Task<long> GetAsync(string key, IHttpRequestProxy request)

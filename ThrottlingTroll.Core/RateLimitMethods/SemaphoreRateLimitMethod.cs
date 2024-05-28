@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -15,6 +16,13 @@ namespace ThrottlingTroll
 
         /// <inheritdoc />
         public override int RetryAfterInSeconds => this.TimeoutInSeconds;
+
+        /// <summary>
+        /// When set to something > 0, the semaphore will be released not immediately 
+        /// upon request completion, but after this number of seconds.
+        /// This allows to implement request deduplication.
+        /// </summary>
+        public double ReleaseAfterSeconds { get; set; }
 
         /// <summary>
         /// ctor
@@ -54,9 +62,33 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
+        public override async Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
-            return store.DecrementAsync(limitKey, cost, request);
+            if (this.ReleaseAfterSeconds > 0)
+            {
+                // Delaying the semaphore release and doing it asynchronously
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+                Task.Delay(TimeSpan.FromSeconds(this.ReleaseAfterSeconds))
+                    .ContinueWith(async _ =>
+                    {
+                        try
+                        {
+                            await store.DecrementAsync(limitKey, cost, request);
+                        }
+                        catch(Exception ex)
+                        {
+                            store.Log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+                        }
+                    });
+
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            }
+            else
+            {
+                await store.DecrementAsync(limitKey, cost, request);
+            }
         }
 
         /// <inheritdoc/>
