@@ -49,5 +49,16 @@ namespace ThrottlingTroll.CounterStores.EfCore
         {
             this._configFunc(optionsBuilder);
         }
+
+        /// <inheritdoc />
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ThrottlingTrollCounter>(e =>
+            {
+                e.HasKey(c => c.Id);
+                e.Property(c => c.Count).IsRequired();
+                e.Property(c => c.ExpiresAt).IsRequired();
+            });
+        }
     }
 }
