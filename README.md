@@ -87,7 +87,7 @@ Install from Nuget:
           HttpClient-->>-YourService:✅ 200 OK
    ```
 
-* [**Request deduplication**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting#deduplicating-requests):
+* [**Request deduplication**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting#deduplicating-requests), aka allowing only one request with given ID per a certain period of time (and rejecting other requests with the same ID):
 
    ```mermaid
       sequenceDiagram
@@ -103,7 +103,7 @@ Install from Nuget:
         end
    ```
 
-   When configured, only one request with given ID will be allowed during the duplicate detection timeframe, other requests with same ID will be rejected. A budget way of ensuring Exactly-Once Processing.
+   A budget way of ensuring Exactly-Once Processing.
 
 * [**Storing rate counters in a distributed cache**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores), making your rate limiting policy consistent across all your computing instances. Supported distributed counter stores are:
   * [ThrottlingTroll.CounterStores.Redis](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresredis)
