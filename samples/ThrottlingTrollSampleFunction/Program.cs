@@ -199,7 +199,35 @@ builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) 
                         // Identifying counters by their id
                         return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
                     }
+                },
+
+
+                // Demonstrates how to use request deduplication
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/request-deduplication",
+
+                    LimitMethod = new SemaphoreRateLimitMethod
+                    {
+                        PermitLimit = 1,
+                        ReleaseAfterSeconds = 10
+                    },
+
+                    // Using "id" query string param to identify requests
+                    IdentityIdExtractor = request =>
+                    {
+                        return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                    },
+
+                    // Returning 409 Conflict for duplicate requests
+                    ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
+                    {
+                        responseProxy.StatusCode = (int)HttpStatusCode.Conflict;
+
+                        await responseProxy.WriteAsync("Duplicate request detected");
+                    }
                 }
+
             }
         };
 

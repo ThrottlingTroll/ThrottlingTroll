@@ -11,8 +11,8 @@
         <PackageReference Include="restsharp" Version="108.0.3" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 		
-        <PackageReference Include="ThrottlingTroll" Version="7.0.0" />
-		<PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.0.0" />
+        <PackageReference Include="ThrottlingTroll" Version="7.1.0-beta1" />
+		<PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.1.0-beta1" />
 	</ItemGroup>
 
 </Project>

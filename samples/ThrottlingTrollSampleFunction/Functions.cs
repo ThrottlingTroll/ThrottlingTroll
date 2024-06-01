@@ -1,4 +1,5 @@
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -226,6 +227,20 @@ namespace ThrottlingTrollSampleFunction
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "fixed-window-3-requests-per-5-seconds-configured-declaratively({num})")] HttpRequestData req,
             int num
         )
+        {
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString("OK");
+            return response;
+        }
+
+        /// <summary>
+        /// Demonstrates how to use request deduplication. First request with a given id will be processed, other requests with the same id will be rejected with 409 Conflict.
+        /// Duplicate detection window is set to 10 seconds.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="409">Conflict</response>
+        [Function(nameof(Test13))]
+        public HttpResponseData Test13([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "request-deduplication")] HttpRequestData req)
         {
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString("OK");

@@ -202,6 +202,19 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Demonstrates how to use request deduplication. First request with a given id will be processed, other requests with the same id will be rejected with 409 Conflict.
+        /// Duplicate detection window is set to 10 seconds.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="409">Conflict</response>
+        [HttpGet]
+        [Route("request-deduplication")]
+        public string Test12([FromQuery] string? id)
+        {
+            return "OK";
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>

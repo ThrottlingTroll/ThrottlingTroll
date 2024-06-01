@@ -243,6 +243,33 @@ namespace ThrottlingTrollSampleWeb
 
                                 return long.TryParse(cost, out long val) ? val : 1;
                             }
+                        },
+
+
+                        // Demonstrates how to use request deduplication
+                        new ThrottlingTrollRule
+                        {
+                            UriPattern = "/request-deduplication",
+
+                            LimitMethod = new SemaphoreRateLimitMethod
+                            {
+                                PermitLimit = 1,
+                                ReleaseAfterSeconds = 10
+                            },
+
+                            // Using "id" query string param to identify requests
+                            IdentityIdExtractor = request =>
+                            {
+                                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+                            },
+
+                            // Returning 409 Conflict for duplicate requests
+                            ResponseFabric = async (checkResults, requestProxy, responseProxy, requestAborted) =>
+                            {
+                                responseProxy.StatusCode = StatusCodes.Status409Conflict;
+
+                                await responseProxy.WriteAsync("Duplicate request detected");
+                            }
                         }
                     },
                 };
