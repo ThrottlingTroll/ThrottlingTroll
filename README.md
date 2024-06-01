@@ -91,6 +91,7 @@ Install from Nuget:
   * [ThrottlingTroll.CounterStores.Redis](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresredis)
   * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresazuretable)
   * [ThrottlingTroll.CounterStores.DistributedCache](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresdistributedcache)
+  * [ThrottlingTroll.CounterStores.EfCore](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresefcore)
 
   And [you can implement your own](https://github.com/ThrottlingTroll/ThrottlingTroll/blob/main/ThrottlingTroll.Core/CounterStores/ICounterStore.cs).
 
