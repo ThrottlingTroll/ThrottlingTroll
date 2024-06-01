@@ -123,6 +123,7 @@ namespace ThrottlingTroll
                     {
                         PermitLimit = settings.PermitLimit,
                         TimeoutInSeconds = settings.TimeoutInSeconds,
+                        ReleaseAfterSeconds = settings.ReleaseAfterSeconds,
                         // Intentionally setting this to true by default for SemaphoreRateLimitMethod
                         ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? true
                     };

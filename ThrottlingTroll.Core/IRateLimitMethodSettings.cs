@@ -42,6 +42,14 @@ namespace ThrottlingTroll
         public int TimeoutInSeconds { get; set; }
 
         /// <summary>
+        /// (Specific to <see cref="SemaphoreRateLimitMethod"/>)
+        /// When set to something > 0, the semaphore will be released not immediately 
+        /// upon request completion, but after this number of seconds.
+        /// This allows to implement request deduplication.
+        /// </summary>
+        public int ReleaseAfterSeconds { get; set; }
+
+        /// <summary>
         /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
         /// </summary>
         public bool? ShouldThrowOnFailures { get; set; }
