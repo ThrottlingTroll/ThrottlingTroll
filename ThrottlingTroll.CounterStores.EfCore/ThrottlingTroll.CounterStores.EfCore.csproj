@@ -5,10 +5,10 @@
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <IncludeSymbols>true</IncludeSymbols>
 
-        <PackageId>ThrottlingTroll.CounterStores.EntityFramework</PackageId>
-        <VersionPrefix>7.0.0</VersionPrefix>
+        <PackageId>ThrottlingTroll.CounterStores.EfCore</PackageId>
+        <VersionPrefix>7.1.0</VersionPrefix>
         <PackageTags>Rate Limiting;Throttling;ThrottlingTroll;EntityFramework;Entity Framework;EFCore;Entity Framework Core</PackageTags>
-        <Description>CounterStore for ThrottlingTroll. Stores counters in any database supported by Entity Framework Core.</Description>
+        <Description>CounterStore for ThrottlingTroll. Stores counters in any relational database supported by Entity Framework Core.</Description>
         <Authors>ThrottlingTroll</Authors>
         <RepositoryUrl>https://github.com/ThrottlingTroll/ThrottlingTroll</RepositoryUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>

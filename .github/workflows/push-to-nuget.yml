@@ -117,3 +117,22 @@ jobs:
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.CounterStores.DistributedCache/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+  push-throttlingTroll-counterstores-efcore:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Build ThrottlingTroll.CounterStores.EfCore
+      run: dotnet build -c Release ThrottlingTroll.CounterStores.EfCore
+    - name: Pack ThrottlingTroll.CounterStores.EfCore
+      run: dotnet pack ThrottlingTroll.CounterStores.EfCore/ThrottlingTroll.CounterStores.EfCore.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.CounterStores.EfCore/output
+    - name: Push ThrottlingTroll.CounterStores.EfCore
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ThrottlingTroll.CounterStores.EfCore/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
