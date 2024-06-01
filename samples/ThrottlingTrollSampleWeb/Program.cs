@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using StackExchange.Redis;
 using System.Text.Json;
 using ThrottlingTroll;
+using ThrottlingTroll.CounterStores.EfCore;
 using ThrottlingTroll.CounterStores.Redis;
 
 namespace ThrottlingTrollSampleWeb
@@ -33,6 +35,16 @@ namespace ThrottlingTrollSampleWeb
                     new RedisCounterStore(ConnectionMultiplexer.Connect(redisConnString))
                 );
             }
+
+            builder.Services.AddSingleton<ICounterStore>(
+
+                new EfCoreCounterStore(efBuilder => {
+
+                    efBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=ThrottlingTrollTest;Trusted_Connection=True;Encrypt=False;");
+                
+                })
+            );
+
 
             // <ThrottlingTroll Egress Configuration>
 

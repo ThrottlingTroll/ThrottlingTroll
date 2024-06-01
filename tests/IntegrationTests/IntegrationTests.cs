@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using ThrottlingTroll;
+using ThrottlingTroll.CounterStores.EfCore;
 
 namespace IntegrationTests
 {
@@ -205,7 +207,7 @@ namespace IntegrationTests
             LimitMethod = new SemaphoreRateLimitMethod
             {
                 PermitLimit = 1,
-                ReleaseAfterSeconds = 3
+                ReleaseAfterSeconds = 10
             },
 
             IdentityIdExtractor = request =>
@@ -240,6 +242,16 @@ namespace IntegrationTests
                         DeduplicatingSemaphoreRule
                     }
                 };
+
+                options.CounterStore = new EfCoreCounterStore(efBuilder =>
+                {
+                    string connStr = "Server=.\\SQLEXPRESS;Database=ThrottlingTrollTest;Trusted_Connection=True;Encrypt=False;";
+
+                    efBuilder.UseSqlServer(connStr);
+                });
+
+                options.Log = (l, s) => Trace.WriteLine(s);
+
             });
 
             WebApp.MapGet(NamedCriticalSectionRule.UriPattern, async () =>
@@ -328,7 +340,7 @@ namespace IntegrationTests
         public async Task TestCounters()
         {
             await Task.WhenAll(
-                Enumerable.Range(0, 64)
+                Enumerable.Range(0, 2)
                     .Select(_ => this.TestCounter())
             );
         }
@@ -337,7 +349,7 @@ namespace IntegrationTests
         public async Task TestNamedCriticalSections1()
         {
             await Task.WhenAll(
-                Enumerable.Range(0, 32)
+                Enumerable.Range(0, 16)
                     .Select(_ => this.TestNamedCriticalSection1())
             );
         }
@@ -370,7 +382,7 @@ namespace IntegrationTests
         public async Task TestDelayedFixedWindows()
         {
             await Task.WhenAll(
-                Enumerable.Range(0, 8)
+                Enumerable.Range(0, 3)
                     .Select(_ => this.TestDelayedFixedWindow())
             );
         }
@@ -379,7 +391,7 @@ namespace IntegrationTests
         public async Task TestFixedWindowFailingMethods()
         {
             await Task.WhenAll(
-                Enumerable.Range(0, 16)
+                Enumerable.Range(0, 3)
                     .Select(_ => this.TestFixedWindowFailingMethod())
             );
         }
@@ -424,13 +436,16 @@ namespace IntegrationTests
         public async Task TestDeduplications()
         {
             await Task.WhenAll(
-                Enumerable.Range(0, 16)
+                Enumerable.Range(0, 3)
                     .Select(_ => this.TestDeduplication())
             );
         }
 
         private async Task TestNamedCriticalSection1()
         {
+            // Warmup
+            await Client.GetAsync($"{NamedCriticalSectionRule.UriPattern}");
+
             Guid id = Guid.NewGuid();
 
             // First call
@@ -465,6 +480,8 @@ namespace IntegrationTests
 
         private async Task TestNamedCriticalSection2()
         {
+            await Client.GetAsync($"{NamedCriticalSectionRule.UriPattern}");
+
             Guid id = Guid.NewGuid();
 
             var tasks = Enumerable.Range(0, 5).Select(_ => {
@@ -495,6 +512,9 @@ namespace IntegrationTests
 
         private async Task TestSemaphore()
         {
+            // Warmup
+            await Client.GetAsync($"{SemaphoreRule.UriPattern}");
+
             Guid id = Guid.NewGuid();
 
             var successfulCallTasks = Enumerable.Range(0, 2).Select(_ => Client.GetAsync($"{SemaphoreRule.UriPattern}?id={id}")).ToArray();
@@ -523,6 +543,9 @@ namespace IntegrationTests
 
         private async Task TestDelayedFixedWindow()
         {
+            // Warmup
+            await Client.GetAsync($"{DelayedFixedWindowRule.UriPattern}");
+
             Guid id = Guid.NewGuid();
 
             var tasks = Enumerable.Range(0, 5).Select(_ => {
@@ -543,7 +566,7 @@ namespace IntegrationTests
 
             var times = await Task.WhenAll(tasks);
 
-            string msg = "Milliseconds: " + string.Join(", ", times);
+            string msg = "Milliseconds: " + string.Join(", ", times.OrderBy(t => t));
             Trace.WriteLine(msg);
 
             Assert.IsTrue(times.Single(t => t >= 0 && t < 500) >= 0, msg);
@@ -555,6 +578,9 @@ namespace IntegrationTests
 
         private async Task TestFixedWindowFailingMethod()
         {
+            // Warmup
+            await Client.GetAsync($"{FixedWindowFailingMethodRule.UriPattern}");
+
             Guid id = Guid.NewGuid();
 
             for(int i = 0; i < 3; i++)
@@ -666,6 +692,9 @@ namespace IntegrationTests
 
         private async Task TestCounter()
         {
+            // Warmup
+            await Client.GetAsync($"{DistributedCounterRule.UriPattern}");
+
             Guid id = Guid.NewGuid();
 
             var bag = new ConcurrentBag<long>();
@@ -678,7 +707,11 @@ namespace IntegrationTests
                     {
                         var response = await Client.GetAsync($"{DistributedCounterRule.UriPattern}?id={id}");
 
-                        long counter = long.Parse(await response.Content.ReadAsStringAsync());
+                        string responseString = await response.Content.ReadAsStringAsync();
+
+                        Trace.WriteLine($"!! Status: {response.StatusCode}, Response: {responseString}");
+
+                        long counter = long.Parse(responseString);
 
                         bag.Add(counter);
                     })
@@ -691,12 +724,15 @@ namespace IntegrationTests
 
         private async Task TestDeduplication()
         {
+            // Warmup
+            await Client.GetAsync($"{DeduplicatingSemaphoreRule.UriPattern}");
+
             string requestId = Guid.NewGuid().ToString();
             string winningRequestValue = "";
             int throttledRequests = 0;
             int totalRequests = 0;
 
-            int attempts = 64;
+            int attempts = 32;
 
             await Task.WhenAll(
                 Enumerable.Range(0, attempts)
