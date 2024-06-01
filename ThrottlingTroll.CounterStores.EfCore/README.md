@@ -14,7 +14,7 @@ Uses transactions, and therefore is subjected to locks. Use with caution, especi
     (
       [Id] [nvarchar](255) PRIMARY KEY,
       [Count] [bigint] NOT NULL,
-      [ExpiresAt] [datetimeoffset](7) NOT NULL
+      [ExpiresAt] [datetimeoffset] NOT NULL
     )    
    ```
 
