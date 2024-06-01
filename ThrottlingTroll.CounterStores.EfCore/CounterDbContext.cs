@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Reflection.Metadata;
-using System.Threading.Tasks;
 
 namespace ThrottlingTroll.CounterStores.EfCore
 {
@@ -26,7 +23,6 @@ namespace ThrottlingTroll.CounterStores.EfCore
         /// </summary>
         public DateTimeOffset ExpiresAt { get; set; }
     }
-
 
     /// <summary>
     /// EF Core data context for ThrottlingTroll counters
