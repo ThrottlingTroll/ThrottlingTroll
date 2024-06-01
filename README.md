@@ -87,6 +87,24 @@ Install from Nuget:
           HttpClient-->>-YourService:✅ 200 OK
    ```
 
+* [**Request deduplication**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting#deduplicating-requests):
+
+   ```mermaid
+      sequenceDiagram
+        par multiple requests with same id
+           Client->>+YourService: #127760;/process-shopping-cart?id=123
+           YourService-->>Client:✅ 200 OK
+
+           Client->>YourService: #127760;/process-shopping-cart?id=123
+           YourService-->>Client:❌ 429 TooManyRequests
+
+           Client->>YourService: #127760;/process-shopping-cart?id=123
+           YourService-->>-Client:❌ 429 TooManyRequests
+        end
+   ```
+
+   When configured, only one request with given ID will be allowed during the duplicate detection timeframe, other requests with same ID will be rejected. A budget way of ensuring Exactly-Once Processing.
+
 * [**Storing rate counters in a distributed cache**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores), making your rate limiting policy consistent across all your computing instances. Supported distributed counter stores are:
   * [ThrottlingTroll.CounterStores.Redis](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresredis)
   * [ThrottlingTroll.CounterStores.AzureTable](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/510.-Counter-Stores#-throttlingtrollcounterstoresazuretable)
