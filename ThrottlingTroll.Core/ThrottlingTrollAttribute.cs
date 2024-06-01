@@ -24,6 +24,9 @@ namespace ThrottlingTroll
         public int TimeoutInSeconds { get; set; } = 100;
 
         /// <inheritdoc />
+        public int ReleaseAfterSeconds { get; set; }
+
+        /// <inheritdoc />
         public bool? ShouldThrowOnFailures { get; set; }
 
         /// <summary>
