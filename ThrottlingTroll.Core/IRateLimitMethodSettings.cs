@@ -6,9 +6,41 @@ namespace ThrottlingTroll
     /// </summary>
     public enum RateLimitAlgorithm
     {
+        /// <summary>
+        /// Use <see cref="FixedWindowRateLimitMethod"/>
+        /// </summary>
         FixedWindow = 0,
+
+        /// <summary>
+        /// Use <see cref="SlidingWindowRateLimitMethod"/>
+        /// </summary>
         SlidingWindow,
+
+        /// <summary>
+        /// Use <see cref="SemaphoreRateLimitMethod"/>
+        /// </summary>
         Semaphore
+    }
+
+    /// <summary>
+    /// What to do on ThrottlingTroll's internal errors
+    /// </summary>
+    public enum ErrorHandlingBehavior
+    {
+        /// <summary>
+        /// Use the rate limiting algorithm's default setting
+        /// </summary>
+        Unspecified = 0,
+
+        /// <summary>
+        /// Log the exception and allow the request to proceed
+        /// </summary>
+        LogAndContinue,
+
+        /// <summary>
+        /// Re-throw the original exception (and therefore fail the request)
+        /// </summary>
+        ThrowExceptions
     }
 
     /// <summary>
@@ -50,8 +82,8 @@ namespace ThrottlingTroll
         public int ReleaseAfterSeconds { get; set; }
 
         /// <summary>
-        /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
+        /// What to do on ThrottlingTroll's internal errors
         /// </summary>
-        public bool? ShouldThrowOnFailures { get; set; }
+        public ErrorHandlingBehavior ErrorHandlingBehavior { get; set; }
     }
 }

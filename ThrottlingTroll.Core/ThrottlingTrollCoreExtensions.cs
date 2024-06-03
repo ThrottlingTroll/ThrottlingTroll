@@ -100,8 +100,9 @@ namespace ThrottlingTroll
                     {
                         PermitLimit = settings.PermitLimit,
                         IntervalInSeconds = settings.IntervalInSeconds,
-                        ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? false
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
                     };
+
                 case RateLimitAlgorithm.SlidingWindow:
 
                     CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
@@ -113,8 +114,9 @@ namespace ThrottlingTroll
                         PermitLimit = settings.PermitLimit,
                         IntervalInSeconds = settings.IntervalInSeconds,
                         NumOfBuckets = settings.NumOfBuckets,
-                        ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? false
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
                     };
+
                 case RateLimitAlgorithm.Semaphore:
 
                     CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
@@ -125,7 +127,9 @@ namespace ThrottlingTroll
                         TimeoutInSeconds = settings.TimeoutInSeconds,
                         ReleaseAfterSeconds = settings.ReleaseAfterSeconds,
                         // Intentionally setting this to true by default for SemaphoreRateLimitMethod
-                        ShouldThrowOnFailures = settings.ShouldThrowOnFailures ?? true
+                        ShouldThrowOnFailures = 
+                            settings.ErrorHandlingBehavior == ErrorHandlingBehavior.Unspecified || 
+                            settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
                     };
             }
 

@@ -29,6 +29,6 @@ namespace ThrottlingTroll
         public int ReleaseAfterSeconds { get; set; }
 
         /// <inheritdoc />
-        public bool? ShouldThrowOnFailures { get; set; }
+        public ErrorHandlingBehavior ErrorHandlingBehavior { get; set; }
     }
 }
