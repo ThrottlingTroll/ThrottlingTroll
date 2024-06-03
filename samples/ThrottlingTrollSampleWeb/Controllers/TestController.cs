@@ -27,11 +27,13 @@ namespace ThrottlingTrollSampleWeb.Controllers
         public string Test1()
         {
             // Here is how to set a custom header with the number of remaining requests
+
             // Obtaining the current list of limit check results from HttpContext.Items
+            // Note that the result might be null, if ThrottlingTroll had an internal failure (e.g. got disconnected from Redis)
             var limitCheckResults = this.HttpContext.GetThrottlingTrollLimitCheckResults();
 
             // Now finding the minimal RequestsRemaining number (since there can be multiple rules matched)
-            var minRequestsRemaining = limitCheckResults.OrderByDescending(r => r.RequestsRemaining).FirstOrDefault();
+            var minRequestsRemaining = limitCheckResults?.OrderByDescending(r => r.RequestsRemaining).FirstOrDefault();
             if (minRequestsRemaining != null)
             {
                 // Now setting the custom header

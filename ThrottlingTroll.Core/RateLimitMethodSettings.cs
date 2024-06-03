@@ -28,7 +28,29 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         public int ReleaseAfterSeconds { get; set; }
 
+        /// <summary>
+        /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
+        /// </summary>
+        [Obsolete("Use ErrorHandlingBehavior instead")]
+        public bool? ShouldThrowOnFailures 
+        { 
+            get 
+            {
+                return this.ErrorHandlingBehavior == ErrorHandlingBehavior.Unspecified ? 
+                    null : 
+                    (this.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions);
+            }
+            
+            set 
+            {
+                this.ErrorHandlingBehavior = value.HasValue ?
+                    (value.Value ? ErrorHandlingBehavior.ThrowExceptions : ErrorHandlingBehavior.LogAndContinue) : 
+                    ErrorHandlingBehavior.Unspecified;
+            } 
+        }
+
         /// <inheritdoc />
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public ErrorHandlingBehavior ErrorHandlingBehavior { get; set; }
     }
 }

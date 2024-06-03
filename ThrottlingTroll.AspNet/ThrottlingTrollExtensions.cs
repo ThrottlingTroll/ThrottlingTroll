@@ -57,7 +57,8 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
-        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
+        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request).
+        /// Returns null when ThrottlingTroll experienced an internal failure.
         /// </summary>
         public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
         {
