@@ -12,8 +12,8 @@
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.15.1" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 
-		<PackageReference Include="ThrottlingTroll.AzureFunctions" Version="7.1.0" />
-		<PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.1.0" />
+		<PackageReference Include="ThrottlingTroll.AzureFunctions" Version="7.1.1" />
+		<PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.1.1" />
 	</ItemGroup>
 	
     <ItemGroup>
