@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ThrottlingTroll.Core.Tests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:46310;http://localhost:46311"
+    }
+  }
+}

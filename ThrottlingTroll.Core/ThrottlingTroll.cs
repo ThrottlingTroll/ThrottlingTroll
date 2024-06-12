@@ -165,30 +165,41 @@ namespace ThrottlingTroll
         protected internal async Task<List<LimitCheckResult>> IsExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines)
         {
             var result = new List<LimitCheckResult>();
-            bool shouldThrowOnExceptions = false;
+
+            ThrottlingTrollConfig config;
             try
             {
-                var config = await this.GetCurrentConfig();
+                config = await this.GetCurrentConfig();
+            }
+            catch (Exception ex)
+            {
+                this._log(LogLevel.Error, $"ThrottlingTroll failed to get its config. {ex}");
 
-                // Adding the current ThrottlingTrollConfig, for client's reference. Doing this _before_ any extractors are called.
-                request.AppendToContextItem(ThrottlingTrollConfigsContextKey, new List<ThrottlingTrollConfig> { config });
+                return result;
+            }
 
-                if (config.Rules == null)
-                {
-                    return result;
-                }
+            // Adding the current ThrottlingTrollConfig, for client's reference. Doing this _before_ any extractors are called.
+            this.AppendToContextItem(request, ThrottlingTrollConfigsContextKey, new List<ThrottlingTrollConfig> { config });
 
-                // First checking if request whitelisted
-                if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
-                {
-                    this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
-                    return result;
-                }
+            if (config.Rules == null)
+            {
+                return result;
+            }
 
-                var dtStart = DateTimeOffset.UtcNow;
+            // First checking if request whitelisted
+            if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
+            {
+                this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
+                return result;
+            }
 
-                // Still need to check all limits, so that all counters get updated
-                foreach (var limit in config.Rules)
+            var dtStart = DateTimeOffset.UtcNow;
+
+            // Still need to check all limits, so that all counters get updated
+            foreach (var limit in config.Rules)
+            {
+                bool shouldThrowOnExceptions = false;
+                try
                 {
                     // The limit method defines whether we should throw on our internal failures
                     shouldThrowOnExceptions = limit.ShouldThrowOnFailures;
@@ -231,27 +242,19 @@ namespace ThrottlingTroll
 
                     result.Add(limitCheckResult);
                 }
+                catch (Exception ex)
+                {
+                    this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
 
-                try
-                {
-                    // Adding check results as an item to the HttpContext, so that client's code can use it
-                    request.AppendToContextItem(LimitCheckResultsContextKey, result);
-                }
-                catch (ObjectDisposedException ex)
-                {
-                    // At this point HttpContext might be already disposed, and in that case this happens.
-                    this._log(LogLevel.Warning, $"ThrottlingTroll failed to populate request context with LimitCheckResults. {ex}");
+                    if (shouldThrowOnExceptions)
+                    {
+                        throw;
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
 
-                if (shouldThrowOnExceptions)
-                {
-                    throw;
-                }
-            }
+            // Adding check results as an item to the HttpContext, so that client's code can use it
+            this.AppendToContextItem(request, LimitCheckResultsContextKey, result);
 
             return result;
         }
@@ -283,6 +286,20 @@ namespace ThrottlingTroll
             });
 
             this._getConfigTask = task;
+        }
+
+        private void AppendToContextItem<T>(IHttpRequestProxy request, string key, List<T> list)
+        {
+            try
+            {
+                // Adding check results as an item to the HttpContext, so that client's code can use it
+                request.AppendToContextItem(key, list);
+            }
+            catch (ObjectDisposedException ex)
+            {
+                // At this point HttpContext might be already disposed, and in that case this happens.
+                this._log(LogLevel.Warning, $"ThrottlingTroll failed to populate request context with LimitCheckResults. {ex}");
+            }
         }
 
         /// <summary>
