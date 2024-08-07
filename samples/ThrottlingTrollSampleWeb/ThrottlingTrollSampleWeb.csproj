@@ -12,7 +12,7 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 		
         <PackageReference Include="ThrottlingTroll" Version="7.1.2" />
-		<PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.1.2" />
+        <PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.1.2" />
 	</ItemGroup>
 
 </Project>
