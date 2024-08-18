@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -62,7 +61,6 @@ namespace ThrottlingTroll
         {
             this._disposed = true;
         }
-
 
         /// <summary>
         /// Returns the current <see cref="ThrottlingTrollConfig"/> snapshot
@@ -127,29 +125,38 @@ namespace ThrottlingTroll
             {
                 await nextAction();
             }
-            catch (ThrottlingTrollTooManyRequestsException throttlingEx)
+            catch (Exception ex)
             {
-                // Catching propagated exception from egress
-                checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
-            }
-            catch (AggregateException ex)
-            {
-                // Catching propagated exception from egress as AggregateException
-                // TODO: refactor to LINQ
+                // Adding/removing internal circuit breaking rules
+                // await this.CheckAndBreakTheCircuit(request, null, ex);
 
-                ThrottlingTrollTooManyRequestsException throttlingEx = null;
-
-                foreach (var exx in ex.Flatten().InnerExceptions)
+                if (ex is ThrottlingTrollTooManyRequestsException throttlingEx)
                 {
-                    throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
-                    if (throttlingEx != null)
+                    // Catching propagated exception from egress
+
+                    checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
+                }
+                else if (ex is AggregateException aggregateEx)
+                {
+                    // Catching propagated exception from egress as AggregateException
+
+                    throttlingEx = null;
+                    foreach (var exx in aggregateEx.Flatten().InnerExceptions)
                     {
-                        checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
-                        break;
+                        throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
+                        if (throttlingEx != null)
+                        {
+                            checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
+                            break;
+                        }
+                    }
+
+                    if (throttlingEx == null)
+                    {
+                        throw;
                     }
                 }
-
-                if (throttlingEx == null)
+                else
                 {
                     throw;
                 }
@@ -198,12 +205,8 @@ namespace ThrottlingTroll
             // Still need to check all limits, so that all counters get updated
             foreach (var limit in config.Rules)
             {
-                bool shouldThrowOnExceptions = false;
                 try
                 {
-                    // The limit method defines whether we should throw on our internal failures
-                    shouldThrowOnExceptions = limit.ShouldThrowOnFailures;
-
                     long requestCost = limit.GetCost(request);
 
                     var limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
@@ -246,7 +249,7 @@ namespace ThrottlingTroll
                 {
                     this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
 
-                    if (shouldThrowOnExceptions)
+                    if (limit.ShouldThrowOnFailures)
                     {
                         throw;
                     }
@@ -257,6 +260,75 @@ namespace ThrottlingTroll
             this.AppendToContextItem(request, LimitCheckResultsContextKey, result);
 
             return result;
+        }
+
+        /// <summary>
+        /// Applies the CircuitBreaker logic
+        /// </summary>
+        protected internal async Task CheckAndBreakTheCircuit(IHttpRequestProxy request, IHttpResponseProxy response, Exception exception)
+        {
+            ThrottlingTrollConfig config;
+            try
+            {
+                config = await this.GetCurrentConfig();
+            }
+            catch (Exception ex)
+            {
+                this._log(LogLevel.Error, $"ThrottlingTroll failed to get its config. {ex}");
+
+                return;
+            }
+
+            if (config?.Rules == null)
+            {
+                return;
+            }
+
+            // Checking all CircuitBreaker rules that this request matches
+            foreach (var limit in config.Rules)
+            {
+                try
+                {
+                    var circuitBreakerMethod = limit.LimitMethod as CircuitBreakerRateLimitMethod;
+                    if (circuitBreakerMethod == null || !limit.IsMatch(request))
+                    {
+                        continue;
+                    }
+
+                    string uniqueCacheKey = limit.GetUniqueCacheKey(request, config.UniqueName);
+
+                    if (circuitBreakerMethod.IsFailed(response, exception))
+                    {
+                        // Checking the failure count
+
+                        var now = DateTime.UtcNow;
+
+                        var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(circuitBreakerMethod.IntervalInSeconds);
+
+                        long failureCount = await this._counterStore.IncrementAndGetAsync(uniqueCacheKey, 1, ttl, 1, request);
+
+                        if (failureCount > circuitBreakerMethod.PermitLimit)
+                        {
+                            // If failure limit is exceeded, placing this limit into Trial mode, which limits request rate to 1 request per trial interval
+                            CircuitBreakerRateLimitMethod.PutIntoTrial(uniqueCacheKey);
+                        }
+                    }
+                    else
+                    {
+                        // Just lifting the trial mode
+                        CircuitBreakerRateLimitMethod.ReleaseFromTrial(uniqueCacheKey);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+
+                    if (limit.ShouldThrowOnFailures)
+                    {
+                        throw;
+                    }
+                }
+            }
         }
 
         /// <summary>

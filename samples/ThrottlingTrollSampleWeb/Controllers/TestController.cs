@@ -419,6 +419,47 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Calls /semi-failing-dummy endpoint 
+        /// using an HttpClient that is configured to break the circuit after receiving 2 errors within 10 seconds interval.
+        /// Once broken, will execute no more than 1 request per 30 seconds, other requests will shortcut to 429.
+        /// Once a request succceeds, will return to normal.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("egress-circuit-breaker-2-errors-per-10-seconds")]
+        public async Task<string> EgressTest7()
+        {
+            // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
+            using var client = new HttpClient
+            (
+                new ThrottlingTrollHandler
+                (
+                    new ThrottlingTrollEgressConfig
+                    {
+                        Rules = new[]
+                        {
+                            new ThrottlingTrollRule
+                            {
+                                LimitMethod = new CircuitBreakerRateLimitMethod
+                                {
+                                    PermitLimit = 2,
+                                    IntervalInSeconds = 10,
+                                    TrialIntervalInSeconds = 30
+                                }
+                            }
+                        }
+                    }
+                )
+            );
+
+            string url = $"{this.Request.Scheme}://{this.Request.Host}/semi-failing-dummy";
+
+            var response = await client.GetAsync(url);
+
+            return $"Dummy endpoint returned {response.StatusCode}";
+        }
+
+        /// <summary>
         /// Dummy endpoint for testing HttpClient. Isn't throttled.
         /// </summary>
         /// <response code="200">OK</response>
@@ -440,6 +481,28 @@ namespace ThrottlingTrollSampleWeb.Controllers
             await Task.Delay(TimeSpan.FromSeconds(10));
 
             return "OK";
+        }
+
+        /// <summary>
+        /// Dummy endpoint for testing Circuit Breaker. Fails 66% of times.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [HttpGet]
+        [Route("semi-failing-dummy")]
+        public IActionResult SemiFailingDummy()
+        {
+            if (Random.Shared.Next(0, 3) == 1)
+            {
+                Console.WriteLine("semi-failing-dummy succeeded");
+
+                return this.Ok("OK");
+            }
+            else
+            {
+                Console.WriteLine("semi-failing-dummy failed");
+
+                return this.StatusCode(500);
+            }
         }
 
         /// <summary>

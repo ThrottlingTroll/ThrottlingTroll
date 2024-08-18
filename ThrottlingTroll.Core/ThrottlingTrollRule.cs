@@ -146,8 +146,11 @@ namespace ThrottlingTroll
         /// Constructs a cache key for the limit counter, based on this filter's values.
         /// If <see cref="RequestFilter.IdentityIdExtractor"/> is set, applies it as well.
         /// </summary>
-        protected virtual string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
+        protected internal virtual string GetUniqueCacheKey(IHttpRequestProxy request, string configName)
         {
+            // Also adding this prefix, to make sure ingress and egress rules never collide
+            string ingressOrEgress = request is IOutgoingHttpRequestProxy ? "Egress" : "Ingress";
+
             if (this.IdentityIdExtractor == null)
             {
                 // Our key is static, so calculating its hash only once for optimization purposes
@@ -158,7 +161,7 @@ namespace ThrottlingTroll
                     this._cacheKey = this.GetHash(key);
                 }
 
-                return $"{configName}|{this._cacheKey}";
+                return $"{configName}|{ingressOrEgress}|{this._cacheKey}";
             }
             else
             {
@@ -169,7 +172,7 @@ namespace ThrottlingTroll
 
                 string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod.GetCacheKey()}>|<{identityId}>";
 
-                return $"{configName}|{this.GetHash(key)}";
+                return $"{configName}|{ingressOrEgress}|{this.GetHash(key)}";
             }
         }
 

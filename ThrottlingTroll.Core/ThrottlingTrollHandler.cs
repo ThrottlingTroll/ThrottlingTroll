@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -149,7 +148,7 @@ namespace ThrottlingTroll
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var requestProxy = new OutgoingHttpRequestProxy(request);
-            HttpResponseMessage response;
+            EgressHttpResponseProxy responseProxy;
             int retryCount = 0;
 
             while (true)
@@ -169,19 +168,40 @@ namespace ThrottlingTroll
                     .OrderByDescending(r => r.RetryAfterInSeconds)
                     .FirstOrDefault();
 
-                var responseFabric = exceededRule?.Rule?.ResponseFabric != null ? exceededRule.Rule.ResponseFabric : this._responseFabric;
-
                 try
                 {
                     if (exceededRule == null)
                     {
-                        // Just making the call as normal
-                        response = base.Send(request, cancellationToken);
+                        try
+                        {
+                            // Just making the call as normal
+                            var response = base.Send(request, cancellationToken);
+
+                            responseProxy = new EgressHttpResponseProxy(response, retryCount++);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Adding/removing internal circuit breaking rules
+                            Task.Run(() =>
+                            {
+                                return this._troll.CheckAndBreakTheCircuit(requestProxy, null, ex);
+                            })
+                            .Wait();
+
+                            throw;
+                        }
+
+                        // Adding/removing internal circuit breaking rules
+                        Task.Run(() =>
+                        {
+                            return this._troll.CheckAndBreakTheCircuit(requestProxy, responseProxy, null);
+                        })
+                        .Wait();
                     }
                     else
                     {
                         // Creating the TooManyRequests response
-                        response = this.CreateRetryAfterResponse(request, exceededRule);
+                        responseProxy = new EgressHttpResponseProxy(this.CreateFailureResponse(request, exceededRule), retryCount++);
                     }
                 }
                 finally
@@ -190,10 +210,17 @@ namespace ThrottlingTroll
                     Task.WaitAll(cleanupRoutines.Select(f => f()).ToArray());
                 }
 
-                if (response.StatusCode == HttpStatusCode.TooManyRequests && responseFabric != null)
+                Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric = null;
+
+                // Invoking the response fabric either if a rule was exceeded or if the service itself returned 429
+                if (exceededRule != null || responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
+                {
+                    responseFabric = exceededRule?.Rule?.ResponseFabric != null ? exceededRule.Rule.ResponseFabric : this._responseFabric;
+                }
+
+                if (responseFabric != null)
                 {
                     // Using custom response fabric
-                    var responseProxy = new EgressHttpResponseProxy(response, retryCount++);
 
                     // Decoupling from SynchronizationContext just in case
                     Task.Run(() =>
@@ -206,23 +233,21 @@ namespace ThrottlingTroll
                     {
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        Thread.Sleep(this.GetRetryAfterTimeSpan(response.Headers));
+                        Thread.Sleep(this.GetRetryAfterTimeSpan(responseProxy.Response.Headers));
 
                         cancellationToken.ThrowIfCancellationRequested();
 
                         // Retrying the call
                         continue;
                     }
-
-                    response = responseProxy.Response;
                 }
 
                 break;
             }
 
-            this.PropagateToIngressIfNeeded(response);
+            this.PropagateToIngressIfNeeded(responseProxy.Response);
 
-            return response;
+            return responseProxy.Response;
         }
 
         /// <summary>
@@ -231,7 +256,7 @@ namespace ThrottlingTroll
         protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var requestProxy = new OutgoingHttpRequestProxy(request);
-            HttpResponseMessage response;
+            EgressHttpResponseProxy responseProxy;
             int retryCount = 0;
 
             while (true)
@@ -246,19 +271,32 @@ namespace ThrottlingTroll
                     .OrderByDescending(r => r.RetryAfterInSeconds)
                     .FirstOrDefault();
 
-                var responseFabric = exceededRule?.Rule?.ResponseFabric != null ? exceededRule.Rule.ResponseFabric : this._responseFabric;
-
                 try
                 {
                     if (exceededRule == null)
                     {
-                        // Just making the call as normal
-                        response = await base.SendAsync(request, cancellationToken);
+                        try
+                        {
+                            // Just making the call as normal
+                            var response = await base.SendAsync(request, cancellationToken);
+
+                            responseProxy = new EgressHttpResponseProxy(response, retryCount++);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Adding/removing internal circuit breaking rules
+                            await this._troll.CheckAndBreakTheCircuit(requestProxy, null, ex);
+
+                            throw;
+                        }
+
+                        // Adding/removing internal circuit breaking rules
+                        await this._troll.CheckAndBreakTheCircuit(requestProxy, responseProxy, null);
                     }
                     else
                     {
                         // Creating the TooManyRequests response
-                        response = this.CreateRetryAfterResponse(request, exceededRule);
+                        responseProxy = new EgressHttpResponseProxy(this.CreateFailureResponse(request, exceededRule), retryCount++);
                     }
                 }
                 finally
@@ -267,30 +305,33 @@ namespace ThrottlingTroll
                     await Task.WhenAll(cleanupRoutines.Select(f => f()));
                 }
 
-                if (response.StatusCode == HttpStatusCode.TooManyRequests && responseFabric != null)
-                {
-                    // Using custom response fabric
-                    var responseProxy = new EgressHttpResponseProxy(response, retryCount++);
+                Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric = null;
 
+                // Invoking the response fabric either if a rule was exceeded or if the service itself returned 429
+                if (exceededRule != null || responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
+                {
+                    responseFabric = exceededRule?.Rule?.ResponseFabric != null ? exceededRule.Rule.ResponseFabric : this._responseFabric;
+                }
+
+                if (responseFabric != null)
+                {
                     await responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
 
                     if (responseProxy.ShouldRetry)
                     {
-                        await Task.Delay(this.GetRetryAfterTimeSpan(response.Headers), cancellationToken);
+                        await Task.Delay(this.GetRetryAfterTimeSpan(responseProxy.Response.Headers), cancellationToken);
 
                         // Retrying the call
                         continue;
                     }
-
-                    response = responseProxy.Response;
                 }
 
                 break;
             }
 
-            this.PropagateToIngressIfNeeded(response);
+            this.PropagateToIngressIfNeeded(responseProxy.Response);
 
-            return response;
+            return responseProxy.Response;
         }
 
         private const int DefaultDelayInSeconds = 5;
@@ -326,9 +367,14 @@ namespace ThrottlingTroll
             return TimeSpan.FromSeconds(DefaultDelayInSeconds);
         }
 
-        private HttpResponseMessage CreateRetryAfterResponse(HttpRequestMessage request, LimitCheckResult limitExceededResult)
+        private HttpResponseMessage CreateFailureResponse(HttpRequestMessage request, LimitCheckResult limitExceededResult)
         {
-            var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            // For Circuit Breaker returning 503 Service Unavailable
+            var response = new HttpResponseMessage(
+                limitExceededResult.Rule.LimitMethod is CircuitBreakerRateLimitMethod ? 
+                    HttpStatusCode.ServiceUnavailable : 
+                    HttpStatusCode.TooManyRequests
+            );
 
             if (DateTime.TryParse(limitExceededResult.RetryAfterHeaderValue, out var retryAfterDateTime))
             {
