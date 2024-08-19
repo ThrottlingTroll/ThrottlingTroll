@@ -37,7 +37,26 @@ namespace ThrottlingTroll
             try
             {
                 // Need to call the rest of the pipeline no more than one time
-                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(() => next());
+                var callNextOnce = ThrottlingTrollCoreExtensions.RunOnce(
+                    // Here we could just add a continuation task to the result of this._next(), but then CheckAndBreakTheCircuit() would not get executed, if an exception is thrown at the synchronous part of this._next().
+                    // So we'll have to make an async lambda
+                    async () =>
+                    {
+                        try
+                        {
+                            await next();
+
+                            // Adding/removing internal circuit breaking rules
+                            await this.CheckAndBreakTheCircuit(requestProxy, new IngressHttpResponseProxy(context.Response), null);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Adding/removing internal circuit breaking rules
+                            await this.CheckAndBreakTheCircuit(requestProxy, null, ex);
+
+                            throw;
+                        }
+                    });
 
                 var checkList = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 

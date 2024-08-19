@@ -125,38 +125,29 @@ namespace ThrottlingTroll
             {
                 await nextAction();
             }
-            catch (Exception ex)
+            catch (ThrottlingTrollTooManyRequestsException throttlingEx)
             {
-                // Adding/removing internal circuit breaking rules
-                // await this.CheckAndBreakTheCircuit(request, null, ex);
+                // Catching propagated exception from egress
+                checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
+            }
+            catch (AggregateException ex)
+            {
+                // Catching propagated exception from egress as AggregateException
+                // TODO: refactor to LINQ
 
-                if (ex is ThrottlingTrollTooManyRequestsException throttlingEx)
+                ThrottlingTrollTooManyRequestsException throttlingEx = null;
+
+                foreach (var exx in ex.Flatten().InnerExceptions)
                 {
-                    // Catching propagated exception from egress
-
-                    checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
-                }
-                else if (ex is AggregateException aggregateEx)
-                {
-                    // Catching propagated exception from egress as AggregateException
-
-                    throttlingEx = null;
-                    foreach (var exx in aggregateEx.Flatten().InnerExceptions)
+                    throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
+                    if (throttlingEx != null)
                     {
-                        throttlingEx = exx as ThrottlingTrollTooManyRequestsException;
-                        if (throttlingEx != null)
-                        {
-                            checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
-                            break;
-                        }
-                    }
-
-                    if (throttlingEx == null)
-                    {
-                        throw;
+                        checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
+                        break;
                     }
                 }
-                else
+
+                if (throttlingEx == null)
                 {
                     throw;
                 }
