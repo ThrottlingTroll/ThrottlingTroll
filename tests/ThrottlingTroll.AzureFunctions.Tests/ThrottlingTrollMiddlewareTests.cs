@@ -1,6 +1,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Moq;
+using System.Collections;
 using System.Net;
 using System.Security.Claims;
 
@@ -63,7 +64,10 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
         public override IDictionary<object, object> Items { get; set; } = new Dictionary<object, object>();
 
-        public override IInvocationFeatures Features => throw new NotImplementedException();
+
+        public static Exception FeaturesNotImplementedException = new NotImplementedException("This indicates that request.FunctionContext.GetHttpResponseData() was called");
+
+        public override IInvocationFeatures Features { get { throw FeaturesNotImplementedException; } }
     }
 
     class AlwaysExceededMethod : RateLimitMethod
@@ -114,17 +118,26 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
+            try
             {
-                Assert.IsFalse(nextWasCalled);
+                var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
+                {
+                    Assert.IsFalse(nextWasCalled);
 
-                nextWasCalled = true;
+                    nextWasCalled = true;
 
-            }, default);
+                }, default);
+            }
+            catch (Exception ex)
+            {
+                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
+                // that this particular exception instance was thrown by FakeFunctionContext
+
+                Assert.AreEqual(FakeFunctionContext.FeaturesNotImplementedException, ex);
+            }
 
             // Assert
 
-            Assert.IsNull(result);
             Assert.IsTrue(nextWasCalled);
         }
 
@@ -430,16 +443,25 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
+            try
             {
-                Assert.IsFalse(nextWasCalled);
-                nextWasCalled = true;
+                var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
+                {
+                    Assert.IsFalse(nextWasCalled);
+                    nextWasCalled = true;
 
-            }, default);
+                }, default);
+            }
+            catch (Exception ex)
+            {
+                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
+                // that this particular exception instance was thrown by FakeFunctionContext
+
+                Assert.AreEqual(FakeFunctionContext.FeaturesNotImplementedException, ex);
+            }
 
             // Assert
 
-            Assert.IsNull(result);
             Assert.IsTrue(nextWasCalled);
         }
 
@@ -471,16 +493,25 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
+            try
             {
-                Assert.IsFalse(nextWasCalled);
-                nextWasCalled = true;
+                var result = await middleware.InvokeAsync(new FakeHttpRequestData(), async () =>
+                {
+                    Assert.IsFalse(nextWasCalled);
+                    nextWasCalled = true;
 
-            }, default);
+                }, default);
+            }
+            catch (Exception ex) 
+            {
+                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
+                // that this particular exception instance was thrown by FakeFunctionContext
+
+                Assert.AreEqual(FakeFunctionContext.FeaturesNotImplementedException, ex);
+            }
 
             // Assert
 
-            Assert.IsNull(result);
             Assert.IsTrue(nextWasCalled);
         }
     }
