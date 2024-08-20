@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using Grpc.Core;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using System;
 using System.Collections.Generic;
@@ -71,37 +72,40 @@ namespace ThrottlingTroll
 
         private async Task<HttpResponseData> ConstructResponse(HttpRequestData request, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce, CancellationToken cancellationToken)
         {
-            var result = checkList
+            var exceededLimit = checkList
                 .Where(r => r.RequestsRemaining < 0)
                 // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                 .OrderByDescending(r => r.RetryAfterInSeconds)
                 .FirstOrDefault();
 
-            if (result == null)
+            if (exceededLimit == null)
             {
                 return null;
             }
 
             // Exceeded rule's ResponseFabric takes precedence.
             // But 1) it can be null and 2) result.Rule can also be null (when 429 is propagated from egress)
-            var responseFabric = result.Rule?.ResponseFabric ?? this._responseFabric;
+            var responseFabric = exceededLimit.Rule?.ResponseFabric ?? this._responseFabric;
 
             var response = request.CreateResponse(HttpStatusCode.OK);
 
             if (responseFabric == null)
             {
-                response.StatusCode = HttpStatusCode.TooManyRequests;
+                // For Circuit Breaker returning 503 Service Unavailable
+                response.StatusCode = exceededLimit.Rule?.LimitMethod is CircuitBreakerRateLimitMethod ?
+                    HttpStatusCode.ServiceUnavailable :
+                    HttpStatusCode.TooManyRequests;
 
                 // Formatting default Retry-After response
 
-                if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+                if (!string.IsNullOrEmpty(exceededLimit.RetryAfterHeaderValue))
                 {
-                    response.Headers.Add("Retry-After", result.RetryAfterHeaderValue);
+                    response.Headers.Add("Retry-After", exceededLimit.RetryAfterHeaderValue);
                 }
 
-                string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
-                    result.RetryAfterHeaderValue :
-                    $"{result.RetryAfterHeaderValue} seconds";
+                string responseString = DateTime.TryParse(exceededLimit.RetryAfterHeaderValue, out var dt) ?
+                    exceededLimit.RetryAfterHeaderValue :
+                    $"{exceededLimit.RetryAfterHeaderValue} seconds";
 
                 await response.WriteStringAsync($"Retry after {responseString}");
 

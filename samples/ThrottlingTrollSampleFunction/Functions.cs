@@ -248,6 +248,35 @@ namespace ThrottlingTrollSampleFunction
         }
 
         /// <summary>
+        /// Demonstrates how to use circuit breaker. The method itself throws 50% of times.
+        /// Once the limit of 2 errors per a 10 seconds interval is exceeded, the endpoint goes into Trial state.
+        /// While in Trial state, only 1 request per 20 seconds is allowed to go through
+        /// (the rest will be handled by ThrottlingTroll, which will return 503 Service Unavailable).
+        /// Once a probe request succeeds, the endpoint goes back to normal state.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="503">Service Unavailable</response>
+        [Function(nameof(Test14))]
+        public HttpResponseData Test14([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "circuit-breaker-2-errors-per-10-seconds")] HttpRequestData req)
+        {
+            if (Random.Shared.Next(0, 2) == 1)
+            {
+                Console.WriteLine("circuit-breaker-2-errors-per-10-seconds succeeded");
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.WriteString("OK");
+                return response;
+            }
+            else
+            {
+                Console.WriteLine("circuit-breaker-2-errors-per-10-seconds failed");
+
+                throw new Exception("Oops, I am broken");
+            }
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
@@ -405,6 +434,48 @@ namespace ThrottlingTrollSampleFunction
         }
 
         /// <summary>
+        /// Calls /semi-failing-dummy endpoint 
+        /// using an HttpClient that is configured to break the circuit after receiving 2 errors within 10 seconds interval.
+        /// Once broken, will execute no more than 1 request per 20 seconds, other requests will shortcut to 429.
+        /// Once a request succceeds, will return to normal.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [Function("egress-circuit-breaker-2-errors-per-10-seconds")]
+        public async Task<HttpResponseData> EgressTest7([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
+            using var client = new HttpClient
+            (
+                new ThrottlingTrollHandler
+                (
+                    new ThrottlingTrollEgressConfig
+                    {
+                        Rules = new[]
+                        {
+                            new ThrottlingTrollRule
+                            {
+                                LimitMethod = new CircuitBreakerRateLimitMethod
+                                {
+                                    PermitLimit = 2,
+                                    IntervalInSeconds = 10,
+                                    TrialIntervalInSeconds = 20
+                                }
+                            }
+                        }
+                    }
+                )
+            );
+
+            string url = $"{req.Url.Scheme}://{req.Url.Authority}/api/semi-failing-dummy";
+
+            var clientResponse = await client.GetAsync(url);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString($"Dummy endpoint returned {clientResponse.StatusCode}");
+            return response;
+        }
+
+        /// <summary>
         /// Dummy endpoint for testing HttpClient. Isn't throttled.
         /// </summary>
         /// <response code="200">OK</response>
@@ -428,6 +499,32 @@ namespace ThrottlingTrollSampleFunction
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.WriteString("OK");
             return response;
+        }
+
+        /// <summary>
+        /// Dummy endpoint for testing Circuit Breaker. Fails 50% of times.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="500">Internal Server Error</response>
+        [Function("semi-failing-dummy")]
+        public HttpResponseData SemiFailingDummy([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            if (Random.Shared.Next(0, 2) == 1)
+            {
+                Console.WriteLine("semi-failing-dummy succeeded");
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.WriteString("OK");
+                return response;
+            }
+            else
+            {
+                Console.WriteLine("semi-failing-dummy failed");
+
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                response.WriteString("Internal Server Error");
+                return response;
+            }
         }
 
         /// <summary>

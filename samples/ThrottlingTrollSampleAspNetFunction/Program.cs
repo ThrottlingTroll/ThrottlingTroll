@@ -225,8 +225,21 @@ builder.ConfigureFunctionsWebApplication((builderContext, workerAppBuilder) => {
 
                         await responseProxy.WriteAsync("Duplicate request detected");
                     }
-                }
+                },
 
+
+                // Demonstrates how to use circuit breaker
+                new ThrottlingTrollRule
+                {
+                    UriPattern = "/circuit-breaker-2-errors-per-10-seconds",
+
+                    LimitMethod = new CircuitBreakerRateLimitMethod
+                    {
+                        PermitLimit = 2,
+                        IntervalInSeconds = 10,
+                        TrialIntervalInSeconds = 20
+                    }
+                }
             },
         };
 

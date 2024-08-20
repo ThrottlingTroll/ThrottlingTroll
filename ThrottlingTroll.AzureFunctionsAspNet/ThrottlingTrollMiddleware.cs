@@ -72,35 +72,38 @@ namespace ThrottlingTroll
 
         private async Task ConstructResponse(HttpContext context, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce)
         {
-            var result = checkList
+            var exceededLimit = checkList
                 .Where(r => r.RequestsRemaining < 0)
                 // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
                 .OrderByDescending(r => r.RetryAfterInSeconds)
                 .FirstOrDefault();
 
-            if (result == null)
+            if (exceededLimit == null)
             {
                 return;
             }
 
             // Exceeded rule's ResponseFabric takes precedence.
             // But 1) it can be null and 2) result.Rule can also be null (when 429 is propagated from egress)
-            var responseFabric = result.Rule?.ResponseFabric ?? this._responseFabric;
+            var responseFabric = exceededLimit.Rule?.ResponseFabric ?? this._responseFabric;
 
             if (responseFabric == null)
             {
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                // For Circuit Breaker returning 503 Service Unavailable
+                context.Response.StatusCode = exceededLimit.Rule?.LimitMethod is CircuitBreakerRateLimitMethod ? 
+                    StatusCodes.Status503ServiceUnavailable : 
+                    StatusCodes.Status429TooManyRequests;
 
                 // Formatting default Retry-After response
 
-                if (!string.IsNullOrEmpty(result.RetryAfterHeaderValue))
+                if (!string.IsNullOrEmpty(exceededLimit.RetryAfterHeaderValue))
                 {
-                    context.Response.Headers.Add(HeaderNames.RetryAfter, result.RetryAfterHeaderValue);
+                    context.Response.Headers.Add(HeaderNames.RetryAfter, exceededLimit.RetryAfterHeaderValue);
                 }
 
-                string responseString = DateTime.TryParse(result.RetryAfterHeaderValue, out var dt) ?
-                    result.RetryAfterHeaderValue :
-                    $"{result.RetryAfterHeaderValue} seconds";
+                string responseString = DateTime.TryParse(exceededLimit.RetryAfterHeaderValue, out var dt) ?
+                    exceededLimit.RetryAfterHeaderValue :
+                    $"{exceededLimit.RetryAfterHeaderValue} seconds";
 
                 await context.Response.WriteAsync($"Retry after {responseString}");
             }

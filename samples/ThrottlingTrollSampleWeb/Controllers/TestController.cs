@@ -217,6 +217,34 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
+        /// Demonstrates how to use circuit breaker. The method itself throws 50% of times.
+        /// Once the limit of 2 errors per a 10 seconds interval is exceeded, the endpoint goes into Trial state.
+        /// While in Trial state, only 1 request per 20 seconds is allowed to go through
+        /// (the rest will be handled by ThrottlingTroll, which will return 503 Service Unavailable).
+        /// Once a probe request succeeds, the endpoint goes back to normal state.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="503">Service Unavailable</response>
+        [HttpGet]
+        [Route("circuit-breaker-2-errors-per-10-seconds")]
+        public IActionResult Test13()
+        {
+            if (Random.Shared.Next(0, 2) == 1)
+            {
+                Console.WriteLine("circuit-breaker-2-errors-per-10-seconds succeeded");
+
+                return this.Ok("OK");
+            }
+            else
+            {
+                Console.WriteLine("circuit-breaker-2-errors-per-10-seconds failed");
+
+                throw new Exception("Oops, I am broken");
+            }
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
@@ -421,7 +449,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
         /// <summary>
         /// Calls /semi-failing-dummy endpoint 
         /// using an HttpClient that is configured to break the circuit after receiving 2 errors within 10 seconds interval.
-        /// Once broken, will execute no more than 1 request per 30 seconds, other requests will shortcut to 429.
+        /// Once broken, will execute no more than 1 request per 20 seconds, other requests will shortcut to 429.
         /// Once a request succceeds, will return to normal.
         /// </summary>
         /// <response code="200">OK</response>
@@ -444,7 +472,7 @@ namespace ThrottlingTrollSampleWeb.Controllers
                                 {
                                     PermitLimit = 2,
                                     IntervalInSeconds = 10,
-                                    TrialIntervalInSeconds = 30
+                                    TrialIntervalInSeconds = 20
                                 }
                             }
                         }
@@ -484,14 +512,15 @@ namespace ThrottlingTrollSampleWeb.Controllers
         }
 
         /// <summary>
-        /// Dummy endpoint for testing Circuit Breaker. Fails 66% of times.
+        /// Dummy endpoint for testing Circuit Breaker. Fails 50% of times.
         /// </summary>
         /// <response code="200">OK</response>
+        /// <response code="500">Internal Server Error</response>
         [HttpGet]
         [Route("semi-failing-dummy")]
         public IActionResult SemiFailingDummy()
         {
-            if (Random.Shared.Next(0, 3) == 1)
+            if (Random.Shared.Next(0, 2) == 1)
             {
                 Console.WriteLine("semi-failing-dummy succeeded");
 

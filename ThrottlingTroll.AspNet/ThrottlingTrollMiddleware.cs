@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
@@ -92,7 +93,10 @@ namespace ThrottlingTroll
 
             if (responseFabric == null)
             {
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                // For Circuit Breaker returning 503 Service Unavailable
+                context.Response.StatusCode = exceededLimit.Rule?.LimitMethod is CircuitBreakerRateLimitMethod ?
+                    StatusCodes.Status503ServiceUnavailable :
+                    StatusCodes.Status429TooManyRequests;
 
                 // Formatting default Retry-After response
 

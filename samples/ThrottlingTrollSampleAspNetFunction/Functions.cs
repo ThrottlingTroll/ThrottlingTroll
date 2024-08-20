@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -210,6 +211,33 @@ namespace ThrottlingTrollSampleAspNetFunction
         }
 
         /// <summary>
+        /// Demonstrates how to use circuit breaker. The method itself throws 50% of times.
+        /// Once the limit of 2 errors per a 10 seconds interval is exceeded, the endpoint goes into Trial state.
+        /// While in Trial state, only 1 request per 20 seconds is allowed to go through
+        /// (the rest will be handled by ThrottlingTroll, which will return 503 Service Unavailable).
+        /// Once a probe request succeeds, the endpoint goes back to normal state.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="500">Internal Server Error</response>
+        /// <response code="503">Service Unavailable</response>
+        [Function(nameof(Test14))]
+        public IActionResult Test14([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "circuit-breaker-2-errors-per-10-seconds")] HttpRequestData req)
+        {
+            if (Random.Shared.Next(0, 2) == 1)
+            {
+                Console.WriteLine("circuit-breaker-2-errors-per-10-seconds succeeded");
+
+                return new OkObjectResult("OK");
+            }
+            else
+            {
+                Console.WriteLine("circuit-breaker-2-errors-per-10-seconds failed");
+
+                throw new Exception("Oops, I am broken");
+            }
+        }
+
+        /// <summary>
         /// Uses a rate-limited HttpClient to make calls to a dummy endpoint. Rate limited to 2 requests per a fixed window of 5 seconds.
         /// </summary>
         /// <response code="200">OK</response>
@@ -361,6 +389,46 @@ namespace ThrottlingTrollSampleAspNetFunction
         }
 
         /// <summary>
+        /// Calls /semi-failing-dummy endpoint 
+        /// using an HttpClient that is configured to break the circuit after receiving 2 errors within 10 seconds interval.
+        /// Once broken, will execute no more than 1 request per 20 seconds, other requests will shortcut to 429.
+        /// Once a request succceeds, will return to normal.
+        /// </summary>
+        /// <response code="200">OK</response>
+        [Function("egress-circuit-breaker-2-errors-per-10-seconds")]
+        public async Task<IActionResult> EgressTest7([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+        {
+            // NOTE: HttpClient instances should normally be reused. Here we're creating separate instances only for the sake of simplicity.
+            using var client = new HttpClient
+            (
+                new ThrottlingTrollHandler
+                (
+                    new ThrottlingTrollEgressConfig
+                    {
+                        Rules = new[]
+                        {
+                            new ThrottlingTrollRule
+                            {
+                                LimitMethod = new CircuitBreakerRateLimitMethod
+                                {
+                                    PermitLimit = 2,
+                                    IntervalInSeconds = 10,
+                                    TrialIntervalInSeconds = 20
+                                }
+                            }
+                        }
+                    }
+                )
+            );
+
+            string url = $"{req.Scheme}://{GetHostAndPort(req)}/api/semi-failing-dummy";
+
+            var clientResponse = await client.GetAsync(url);
+
+            return new OkObjectResult($"Dummy endpoint returned {clientResponse.StatusCode}");
+        }
+
+        /// <summary>
         /// Dummy endpoint for testing HttpClient. Isn't throttled.
         /// </summary>
         /// <response code="200">OK</response>
@@ -380,6 +448,28 @@ namespace ThrottlingTrollSampleAspNetFunction
             await Task.Delay(TimeSpan.FromSeconds(10));
 
             return new OkObjectResult("OK");
+        }
+
+        /// <summary>
+        /// Dummy endpoint for testing Circuit Breaker. Fails 50% of times.
+        /// </summary>
+        /// <response code="200">OK</response>
+        /// <response code="500">Internal Server Error</response>
+        [Function("semi-failing-dummy")]
+        public IActionResult SemiFailingDummy([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            if (Random.Shared.Next(0, 2) == 1)
+            {
+                Console.WriteLine("semi-failing-dummy succeeded");
+
+                return new OkObjectResult("OK");
+            }
+            else
+            {
+                Console.WriteLine("semi-failing-dummy failed");
+
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
 
         /// <summary>
