@@ -214,7 +214,27 @@ namespace IntegrationTests
             }
         };
 
+        static ThrottlingTrollRule CircuitBreakerRule = new ThrottlingTrollRule
+        {
+            UriPattern = "circuit-breaker",
+
+            LimitMethod = new CircuitBreakerRateLimitMethod
+            {
+                PermitLimit = 3,
+                IntervalInSeconds = 1,
+                TrialIntervalInSeconds = 2
+            },
+
+            IdentityIdExtractor = request =>
+            {
+                // Identifying counters by their id
+                return ((IIncomingHttpRequestProxy)request).Request.Query["id"];
+            }
+        };
+
         static ConcurrentDictionary<string, string> DedupTestValues = new ConcurrentDictionary<string, string>();
+
+        static ConcurrentDictionary<string, bool> CircuitBreakerFailingRequestIds = new ConcurrentDictionary<string, bool>();
 
         [ClassInitialize]
         public static void Init(TestContext context)
@@ -313,6 +333,11 @@ namespace IntegrationTests
             WebApp.MapGet(DeduplicatingSemaphoreRule.UriPattern, ([FromQuery] string id, [FromQuery] string val) =>
             {
                 DedupTestValues[id] = val;
+            });
+
+            WebApp.MapGet(CircuitBreakerRule.UriPattern, ([FromQuery] string id) =>
+            {
+                return Results.StatusCode(CircuitBreakerFailingRequestIds.ContainsKey(id) ? (int)HttpStatusCode.BadRequest : (int)HttpStatusCode.OK);
             });
 
             WebApp.Start();
@@ -426,6 +451,16 @@ namespace IntegrationTests
             await Task.WhenAll(
                 Enumerable.Range(0, 16)
                     .Select(_ => this.TestDeduplication())
+            );
+        }
+
+
+        [TestMethod]
+        public async Task TestCircuitBreakers()
+        {
+            await Task.WhenAll(
+                Enumerable.Range(0, 16)
+                    .Select(_ => this.TestCircuitBreaker())
             );
         }
 
@@ -726,6 +761,56 @@ namespace IntegrationTests
             Assert.AreEqual(attempts - 1, throttledRequests);
 
             Assert.AreEqual(DedupTestValues[requestId], winningRequestValue);
+        }
+
+        private async Task TestCircuitBreaker()
+        {
+            Guid id = Guid.NewGuid();
+
+            // Making three failing requests
+
+            var response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            CircuitBreakerFailingRequestIds[id.ToString()] = true;
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+            CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            CircuitBreakerFailingRequestIds[id.ToString()] = true;
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+            CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            CircuitBreakerFailingRequestIds[id.ToString()] = true;
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+
+            // From now on the rule should be in Trial mode - testing it for 5 seconds
+
+            for (int i = 0; i < 50; i++)
+            {
+                response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+                Assert.IsTrue(response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.ServiceUnavailable);
+
+                await Task.Delay(100);
+            }
+
+            // Making a successful request
+            CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            // Now it should be back to normal
+            for (int i = 0; i < 5; i++)
+            {
+                response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+                Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            }
         }
     }
 }
