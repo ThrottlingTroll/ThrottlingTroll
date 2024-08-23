@@ -80,7 +80,7 @@ namespace ThrottlingTroll
         /// Checks whether this particular response or this particular exception is considered a failure 
         /// by this particular limit instance
         /// </summary>
-        internal virtual bool IsFailed(IHttpResponseProxy response, Exception exception)
+        protected internal virtual bool IsFailed(IHttpResponseProxy response, Exception exception)
         {
             if (this.IntervalInSeconds <= 0 || this.TrialIntervalInSeconds <= 0)
             {

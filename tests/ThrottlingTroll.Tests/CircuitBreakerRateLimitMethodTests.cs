@@ -1,3 +1,4 @@
+using Moq;
 using System.Diagnostics;
 
 namespace ThrottlingTroll.Tests;
@@ -61,5 +62,89 @@ public class CircuitBreakerRateLimitMethodTests
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Finished");
+    }
+
+    [TestMethod]
+    public void IsFailed_EverythingIsNull_DoesNothing()
+    {
+        // Arrange
+
+        var limiter = new CircuitBreakerRateLimitMethod();
+
+        // Act
+
+        bool result = limiter.IsFailed(null, null);
+
+        // Assert
+
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod]
+    public void IsFailed_ExceptionIsNull_FalseIfResponseSuccessful()
+    {
+        // Arrange
+
+        var limiter = new CircuitBreakerRateLimitMethod()
+        {
+            IntervalInSeconds = 1,
+            TrialIntervalInSeconds = 2
+        };
+
+        var responseProxyMock = new Mock<IHttpResponseProxy>();
+
+        responseProxyMock.SetupGet(m => m.StatusCode).Returns(200);
+
+        // Act
+
+        bool result = limiter.IsFailed(responseProxyMock.Object, null);
+
+        // Assert
+
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod]
+    public void IsFailed_ExceptionIsNull_TrueIfResponseFailed()
+    {
+        // Arrange
+
+        var limiter = new CircuitBreakerRateLimitMethod()
+        {
+            IntervalInSeconds = 1,
+            TrialIntervalInSeconds = 2
+        };
+
+        var responseProxyMock = new Mock<IHttpResponseProxy>();
+
+        responseProxyMock.SetupGet(m => m.StatusCode).Returns(400);
+
+        // Act
+
+        bool result = limiter.IsFailed(responseProxyMock.Object, null);
+
+        // Assert
+
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public void IsFailed_ResponseIsNull_TrueOnException()
+    {
+        // Arrange
+
+        var limiter = new CircuitBreakerRateLimitMethod()
+        {
+            IntervalInSeconds = 1,
+            TrialIntervalInSeconds = 2
+        };
+
+        // Act
+
+        bool result = limiter.IsFailed(null, new Exception());
+
+        // Assert
+
+        Assert.IsTrue(result);
     }
 }
