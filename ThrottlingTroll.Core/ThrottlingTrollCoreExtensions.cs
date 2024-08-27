@@ -131,6 +131,20 @@ namespace ThrottlingTroll
                             settings.ErrorHandlingBehavior == ErrorHandlingBehavior.Unspecified || 
                             settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
                     };
+
+                case RateLimitAlgorithm.CircuitBreaker:
+
+                    CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
+                    CheckLimitValue(settings.Algorithm, settings.IntervalInSeconds > 0, "IntervalInSeconds should be more than 0.");
+                    CheckLimitValue(settings.Algorithm, settings.TrialIntervalInSeconds > 0, "TrialIntervalInSeconds should be more than 0.");
+
+                    return new CircuitBreakerRateLimitMethod
+                    {
+                        PermitLimit = settings.PermitLimit,
+                        IntervalInSeconds = settings.IntervalInSeconds,
+                        TrialIntervalInSeconds = settings.TrialIntervalInSeconds,
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
+                    };
             }
 
             throw new InvalidOperationException("Failed to initialize ThrottlingTroll. Rate limit algorithm not recognized.");

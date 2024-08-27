@@ -15,7 +15,7 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
 
         /// <summary>
-        /// Defines how often to check whether the resource has healed itself.
+        /// How often to check whether the endpoint has healed itself.
         /// Once a failure limit is exceeded, the request rate will be limited to 1 request per this timeframe.
         /// </summary>
         public int TrialIntervalInSeconds { get; set; } = 100;

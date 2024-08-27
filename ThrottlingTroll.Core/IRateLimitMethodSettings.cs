@@ -19,7 +19,12 @@ namespace ThrottlingTroll
         /// <summary>
         /// Use <see cref="SemaphoreRateLimitMethod"/>
         /// </summary>
-        Semaphore
+        Semaphore,
+
+        /// <summary>
+        /// Use <see cref="CircuitBreakerRateLimitMethod"/>
+        /// </summary>
+        CircuitBreaker
     }
 
     /// <summary>
@@ -62,6 +67,12 @@ namespace ThrottlingTroll
         /// Window size in seconds
         /// </summary>
         public int IntervalInSeconds { get; set; }
+
+        /// <summary>
+        /// How often to check whether the endpoint has healed itself.
+        /// Once a failure limit is exceeded, the request rate will be limited to 1 request per this timeframe.
+        /// </summary>
+        public int TrialIntervalInSeconds { get; set; }
 
         /// <summary>
         /// (Specific to <see cref="SlidingWindowRateLimitMethod"/>) Number of intervals to divide the window into. Should not be less than <see cref="IntervalInSeconds"/>.

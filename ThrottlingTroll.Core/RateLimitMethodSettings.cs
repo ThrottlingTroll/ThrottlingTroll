@@ -20,6 +20,9 @@ namespace ThrottlingTroll
         public int IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
+        public int TrialIntervalInSeconds { get; set; }
+
+        /// <inheritdoc />
         public int NumOfBuckets { get; set; }
 
         /// <inheritdoc />
