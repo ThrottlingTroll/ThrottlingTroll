@@ -80,6 +80,9 @@ namespace ThrottlingTroll
         /// Checks whether this particular response or this particular exception is considered a failure 
         /// by this particular limit instance
         /// </summary>
+        /// <param name="response">The result of processing the HTTP call (if there were no exceptions). Will be null, if an exception was thrown.</param>
+        /// <param name="exception">The exception that was thrown by processing the HTTP call. Will be null, if there were no exceptions.</param>
+        /// <returns>True, if the request should be considered a failure. False otherwise.</returns>
         protected internal virtual bool IsFailed(IHttpResponseProxy response, Exception exception)
         {
             if (this.IntervalInSeconds <= 0 || this.TrialIntervalInSeconds <= 0)

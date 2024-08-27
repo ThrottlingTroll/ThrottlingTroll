@@ -46,8 +46,9 @@ namespace ThrottlingTroll
                         {
                             await next();
 
-                            // Adding/removing internal circuit breaking rules
-                            await this.CheckAndBreakTheCircuit(requestProxy, new IngressHttpResponseProxy(context.Response), null);
+                            // With ASP.Net Core Integration, at this point context.Response is not yet populated.
+                            // So we'll have to add the limit check as response's OnComplete() event
+                            context.Response.OnCompleted(() => this.CheckAndBreakTheCircuit(requestProxy, new IngressHttpResponseProxy(context.Response), null));
                         }
                         catch (Exception ex)
                         {
