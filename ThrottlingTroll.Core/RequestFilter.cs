@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Defines a Request Filter (a condition that requests must match in order to be throttled or whitelisted)
+    /// Defines a Request Filter (a condition that requests must match in order to be throttled or allowlisted)
     /// </summary>
     public class RequestFilter
     {

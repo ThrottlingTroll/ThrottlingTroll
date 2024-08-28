@@ -88,9 +88,9 @@ namespace ThrottlingTroll
                 }
             }
 
-            if (config.WhiteList != null)
+            if (config.AllowList != null)
             {
-                foreach (var rule in config.WhiteList)
+                foreach (var rule in config.AllowList)
                 {
                     if (rule.IdentityIdExtractor == null)
                     {
@@ -184,10 +184,10 @@ namespace ThrottlingTroll
                 return result;
             }
 
-            // First checking if request whitelisted
-            if (config.WhiteList != null && config.WhiteList.Any(filter => filter.IsMatch(request)))
+            // First checking if request allowlisted
+            if (config.AllowList != null && config.AllowList.Any(filter => filter.IsMatch(request)))
             {
-                this._log(LogLevel.Information, $"ThrottlingTroll whitelisted {request.Method} {request.UriWithoutQueryString}");
+                this._log(LogLevel.Information, $"ThrottlingTroll allowlisted {request.Method} {request.UriWithoutQueryString}");
                 return result;
             }
 

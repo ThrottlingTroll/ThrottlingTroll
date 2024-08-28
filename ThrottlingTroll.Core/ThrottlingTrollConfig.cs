@@ -23,12 +23,18 @@ namespace ThrottlingTroll
         public string UniqueName { get; set; }
 
         /// <summary>
-        /// Requests to be whitelisted (exempt from Rules)
+        /// Requests to be allowlisted (exempt from Rules)
         /// </summary>
-        public IList<RequestFilter> WhiteList { get; set; }
+        [Obsolete("Use AllowList instead.")]
+        public IList<RequestFilter> WhiteList { get => this.AllowList; set => this.AllowList = value; }
 
         /// <summary>
-        /// Merges two ThrottlingTrollConfig objects (by concatenating <see cref="Rules"/> and <see cref="WhiteList"/> fields)
+        /// Requests to be allowlisted (exempt from Rules)
+        /// </summary>
+        public IList<RequestFilter> AllowList { get; set; }
+
+        /// <summary>
+        /// Merges two ThrottlingTrollConfig objects (by concatenating <see cref="Rules"/> and <see cref="AllowList"/> fields)
         /// </summary>
         public ThrottlingTrollConfig MergeWith(ThrottlingTrollConfig that)
         {
@@ -43,7 +49,7 @@ namespace ThrottlingTroll
             }
 
             this.Rules = ThrottlingTrollCoreExtensions.UnionOf(this.Rules, that.Rules);
-            this.WhiteList = ThrottlingTrollCoreExtensions.UnionOf(this.WhiteList, that.WhiteList);
+            this.AllowList = ThrottlingTrollCoreExtensions.UnionOf(this.AllowList, that.AllowList);
 
             return this;
         }
