@@ -30,10 +30,8 @@ public class CircuitBreakerRateLimitMethodTests
 
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Started");
 
-        for (int i = 0; i < limiter.PermitLimit; i++) 
-        {
-            Assert.AreNotEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
-        }
+        // CircuitBreaker allows 1 request per TrialIntervalInSeconds in trial mode
+        Assert.AreNotEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
 
         // Now we should exceed
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
@@ -53,10 +51,7 @@ public class CircuitBreakerRateLimitMethodTests
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Reached next second");
 
         // Now we should be good again
-        for (int i = 0; i < limiter.PermitLimit; i++)
-        {
-            Assert.AreNotEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
-        }
+        Assert.AreNotEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
 
         // Now we should exceed again
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));

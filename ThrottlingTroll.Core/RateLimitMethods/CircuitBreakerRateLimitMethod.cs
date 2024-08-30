@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -23,6 +24,11 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         public override int RetryAfterInSeconds => this.IntervalInSeconds;
 
+        /// <summary>
+        /// This algorithm always allows no more than 1 request per TrialIntervalInSeconds
+        /// </summary>
+        private const int TrialModePermitLimit = 1;
+
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore _, IHttpRequestProxy request)
         {
@@ -39,13 +45,13 @@ namespace ThrottlingTroll
             // Checking the failure count in the last ProbationIntervalInSeconds
             long count = await Store.IncrementAndGetAsync(limitKey, cost, ttl, 1, request);
 
-            if (count > this.PermitLimit)
+            if (count > TrialModePermitLimit)
             {
                 return -1;
             }
             else
             {
-                return this.PermitLimit - (int)count;
+                return 0;
             }
         }
 
@@ -60,7 +66,7 @@ namespace ThrottlingTroll
 
             long count = await Store.GetAsync(limitKey, request);
 
-            return count >= this.PermitLimit;
+            return count >= TrialModePermitLimit;
         }
 
         /// <inheritdoc />
@@ -73,12 +79,13 @@ namespace ThrottlingTroll
         /// <inheritdoc/>
         public override string GetCacheKey()
         {
-            return $"{nameof(FixedWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds})";
+            return $"{nameof(FixedWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds},{this.TrialIntervalInSeconds})";
         }
 
         /// <summary>
         /// Checks whether this particular response or this particular exception is considered a failure 
-        /// by this particular limit instance
+        /// by this particular limit instance.
+        /// Override this method, if some more advanced logic is needed.
         /// </summary>
         /// <param name="response">The result of processing the HTTP call (if there were no exceptions). Will be null, if an exception was thrown.</param>
         /// <param name="exception">The exception that was thrown by processing the HTTP call. Will be null, if there were no exceptions.</param>

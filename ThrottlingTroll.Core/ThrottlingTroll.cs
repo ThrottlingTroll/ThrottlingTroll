@@ -296,7 +296,9 @@ namespace ThrottlingTroll
 
                         var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(circuitBreakerMethod.IntervalInSeconds);
 
-                        long failureCount = await this._counterStore.IncrementAndGetAsync(uniqueCacheKey, 1, ttl, 1, request);
+                        string failureCountCacheKey = $"CircuitBreakerFailureCount|{uniqueCacheKey}";
+
+                        long failureCount = await this._counterStore.IncrementAndGetAsync(failureCountCacheKey, 1, ttl, 1, request);
 
                         if (failureCount > circuitBreakerMethod.PermitLimit)
                         {
