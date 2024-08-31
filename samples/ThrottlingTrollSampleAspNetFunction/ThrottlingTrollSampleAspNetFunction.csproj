@@ -11,15 +11,11 @@
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.15.1" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.1.0" />
+        <PackageReference Include="ThrottlingTroll.AzureFunctionsAspNet" Version="7.2.0-beta1" />
+        <PackageReference Include="ThrottlingTroll.CounterStores.Redis" Version="7.2.0-beta1" />
+    </ItemGroup>
 
-	</ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\ThrottlingTroll.AzureFunctionsAspNet\ThrottlingTroll.AzureFunctionsAspNet.csproj" />
-    <ProjectReference Include="..\..\ThrottlingTroll.CounterStores.Redis\ThrottlingTroll.CounterStores.Redis.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ItemGroup>
         <None Update="host.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
