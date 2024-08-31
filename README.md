@@ -147,6 +147,10 @@ Install from Nuget:
    
      If you set Semaphore's **PermitLimit** to  **1** and use  **RedisCounterStore**, then ThrottlingTroll will act as a distributed lock. If you add an **IdentityIdExtractor** (identifying requests by e.g. a query string parameter), then it will turn into *named* distributed locks. 
 
+* [**CircuitBreaker**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-circuitbreaker). No more than **PermitLimit** failures are allowed in **IntervalInSeconds**. Once the failure limit is exceeded, goes into Trial mode. In Trial mode one request per **TrialIntervalInSeconds** is allowed to pass through. Once that request succeeds, goes back to normal.
+
+    [video is coming]
+
 
 ## [Documentation](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki)
 
