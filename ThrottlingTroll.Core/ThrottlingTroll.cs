@@ -296,7 +296,9 @@ namespace ThrottlingTroll
 
                         var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(circuitBreakerMethod.IntervalInSeconds);
 
-                        string failureCountCacheKey = $"CircuitBreakerFailureCount|{uniqueCacheKey}";
+                        // Better to use a separate counter for failures, because Trial mode increments the counter regardless of the output.
+                        // We don't want to count successes as failures, that would distort the picture.
+                        string failureCountCacheKey = $"{uniqueCacheKey}|CircuitBreakerFailureCount";
 
                         long failureCount = await this._counterStore.IncrementAndGetAsync(failureCountCacheKey, 1, ttl, 1, request);
 

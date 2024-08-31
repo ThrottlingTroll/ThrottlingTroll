@@ -770,7 +770,7 @@ namespace IntegrationTests
         {
             Guid id = Guid.NewGuid();
 
-            // Making four failing requests
+            // Making three failing requests
 
             var response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
@@ -795,6 +795,8 @@ namespace IntegrationTests
             CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
             response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+            // This fourth failing request will turn the rule into Trial mode (yet the client will still get BadRequest, because that switch happens post factum)
 
             CircuitBreakerFailingRequestIds[id.ToString()] = true;
             response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
