@@ -78,6 +78,14 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
+        /// Whether <see cref="ThrottlingTrollConfig.AllowList"/> should be ignored when evaluating a matching request.
+        /// </summary>
+        public bool IgnoreAllowList 
+        { 
+            get { return this._limitMethod?.IgnoreAllowList ?? false; }
+        }
+
+        /// <summary>
         /// Checks if limit of calls is exceeded for a given request.
         /// If request does not match the rule, returns null.
         /// If limit exceeded, returns number of seconds to retry after and unique counter ID.

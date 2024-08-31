@@ -25,6 +25,15 @@ namespace ThrottlingTroll
         public override int RetryAfterInSeconds => this.IntervalInSeconds;
 
         /// <summary>
+        /// ctor
+        /// </summary>
+        public CircuitBreakerRateLimitMethod()
+        {
+            // Circuit Breaker should ignore AllowList by default 
+            this.IgnoreAllowList = true;
+        }
+
+        /// <summary>
         /// This algorithm always allows no more than 1 request per TrialIntervalInSeconds
         /// </summary>
         private const int TrialModePermitLimit = 1;

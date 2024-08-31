@@ -45,6 +45,11 @@ namespace ThrottlingTroll
         public bool ShouldThrowOnFailures { get; set; } = false;
 
         /// <summary>
+        /// Whether <see cref="ThrottlingTrollConfig.AllowList"/> should be ignored when evaluating a matching request.
+        /// </summary>
+        public bool IgnoreAllowList { get; set; } = false;
+
+        /// <summary>
         /// Suggested number of seconds to retry after, when a limit is exceeded.
         /// </summary>
         public abstract int RetryAfterInSeconds { get; }

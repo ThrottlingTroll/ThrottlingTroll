@@ -184,13 +184,7 @@ namespace ThrottlingTroll
                 return result;
             }
 
-            // First checking if request allowlisted
-            if (config.AllowList != null && config.AllowList.Any(filter => filter.IsMatch(request)))
-            {
-                this._log(LogLevel.Information, $"ThrottlingTroll allowlisted {request.Method} {request.UriWithoutQueryString}");
-                return result;
-            }
-
+            bool allowListed = false;
             var dtStart = DateTimeOffset.UtcNow;
 
             // Still need to check all limits, so that all counters get updated
@@ -198,6 +192,13 @@ namespace ThrottlingTroll
             {
                 try
                 {
+                    // First checking if request allowlisted
+                    if (!limit.IgnoreAllowList && config.AllowList != null && config.AllowList.Any(filter => filter.IsMatch(request)))
+                    {
+                        allowListed = true;
+                        continue;
+                    }
+
                     long requestCost = limit.GetCost(request);
 
                     var limitCheckResult = await limit.IsExceededAsync(request, requestCost, this._counterStore, config.UniqueName, this._log);
@@ -245,6 +246,11 @@ namespace ThrottlingTroll
                         throw;
                     }
                 }
+            }
+
+            if (allowListed)
+            {
+                this._log(LogLevel.Information, $"ThrottlingTroll allowlisted {request.Method} {request.UriWithoutQueryString}");
             }
 
             // Adding check results as an item to the HttpContext, so that client's code can use it
