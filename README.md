@@ -1,6 +1,6 @@
 # ThrottlingTroll
 
-Rate limiting/throttling middleware for ASP.NET Core and Azure Functions.
+Rate limiting/throttling/circuit-breaking middleware for ASP.NET Core and Azure Functions.
 
 [![.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/actions/workflows/dotnet.yml/badge.svg)](https://github.com/ThrottlingTroll/ThrottlingTroll/actions/workflows/dotnet.yml)
 [<img alt="Nuget" src="https://img.shields.io/nuget/v/ThrottlingTroll?label=current%20version">](https://www.nuget.org/packages/ThrottlingTroll)
