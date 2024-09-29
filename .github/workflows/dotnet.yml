@@ -30,5 +30,3 @@ jobs:
       run: dotnet build --no-restore ThrottlingTroll.AzureFunctions
     - name: Test
       run: dotnet test --verbosity normal
-    - name: Build Sample Project
-      run: dotnet build samples/ThrottlingTrollSampleWeb/ThrottlingTrollSampleWeb.csproj

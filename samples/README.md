@@ -1,8 +1,7 @@
 # ThrottlingTroll Samples
 
-A set of samples demonstrating all the features of ThrottlingTroll.
+Comprehensive sample projects demonstrating all the features of ThrottlingTroll are located in separate repos:
 
-* [ThrottlingTrollSampleWeb](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb) - an ASP.NET project demonstrating [ThrottlingTroll](https://www.nuget.org/packages/ThrottlingTroll).
-* [ThrottlingTrollSampleFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction) - an Azure Functions project demonstrating [ThrottlingTroll.AzureFunctions](https://www.nuget.org/packages/ThrottlingTroll.AzureFunctions)
-* [ThrottlingTrollSampleFunctionAspNet](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunctionAspNet) - an Azure Functions project demonstrating [ThrottlingTroll.AzureFunctionsAspNet](https://www.nuget.org/packages/ThrottlingTroll.AzureFunctionsAspNet).
-* [ThrottlingTrollSampleDotNet6InProcDurableFunction](https://github.com/scale-tone/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleDotNet6InProcDurableFunction) - demonstrates how to use ThrottlingTroll's egress throttling capabilities in a .NET 6 InProc Azure Function.
+| ASP.NET Core | Azure Functions |
+| -            | -               |
+| [ThrottlingTroll-AspDotNetCore-Samples](https://github.com/ThrottlingTroll/ThrottlingTroll-AspDotNetCore-Samples) | [ThrottlingTroll-AzureFunctions-Samples](https://github.com/ThrottlingTroll/ThrottlingTroll-AzureFunctions-Samples)  |  
