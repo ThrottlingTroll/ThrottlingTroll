@@ -199,13 +199,11 @@ app.UseThrottlingTroll(options =>
 app.Run();
 ```
 
-Sample projects that demonstrate all the above concepts:
+Comprehensive sample projects that demonstrate all the above concepts are located in separate repos:
 
 | ASP.NET Core | Azure Functions |
 | -            | -               |
-| [ThrottlingTrollSampleWeb](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb) | [ThrottlingTrollSampleFunction](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleFunction)  |
-|                                                                                                                      | [ThrottlingTrollSampleAspNetFunction](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction)  
-|                                                                                                                      | [ThrottlingTrollSampleDotNet6InProcDurableFunction](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleDotNet6InProcDurableFunction)  
+| [ThrottlingTroll-AspDotNetCore-Samples](https://github.com/ThrottlingTroll/ThrottlingTroll-AspDotNetCore-Samples) | [ThrottlingTroll-AzureFunctions-Samples](https://github.com/ThrottlingTroll/ThrottlingTroll-AzureFunctions-Samples)  |  
 
 
 ## Contributing
