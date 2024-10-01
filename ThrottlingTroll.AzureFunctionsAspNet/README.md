@@ -28,4 +28,4 @@ builder.ConfigureFunctionsWebApplication((builderContext, workerAppBuilder) => {
 
 ## Samples
 
-[Here is a sample project, that demonstrates all the above concepts](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleAspNetFunction).
+[Here is a sample project, that demonstrates all the above concepts](https://github.com/ThrottlingTroll/ThrottlingTroll-AzureFunctions-Samples/tree/main/ThrottlingTrollSampleAspNetFunction).
