@@ -29,5 +29,5 @@ public static void Main(string[] args)
 
 ## Samples
 
-[Here is a sample project, that demonstrates how to use ThrottlingTroll in ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/samples/ThrottlingTrollSampleWeb).
+[Here is a separate repo with sample projects, that demonstrates how to use ThrottlingTroll in ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll-AspDotNetCore-Samples).
 
