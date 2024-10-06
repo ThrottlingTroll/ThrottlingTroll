@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +19,8 @@ namespace ThrottlingTroll
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
         private TimeSpan _sleepTimeSpan = TimeSpan.FromMilliseconds(50);
+
+        private ActivitySource _activitySource;
 
         /// <summary>
         /// Ctor
@@ -59,6 +62,7 @@ namespace ThrottlingTroll
         /// </summary>
         public void Dispose()
         {
+            this._activitySource?.Dispose();
             this._disposed = true;
         }
 
@@ -97,6 +101,12 @@ namespace ThrottlingTroll
                         rule.IdentityIdExtractor = this._identityIdExtractor;
                     }
                 }
+            }
+
+            // Now is a good moment to check if telemetry was initialized, and do it if not yet.
+            if (this._activitySource == null)
+            {
+                this._activitySource = new ActivitySource(string.IsNullOrEmpty(config.UniqueName) ? "ThrottlingTroll" : $"ThrottlingTroll.{config.UniqueName}");
             }
 
             // This must be done at the very end of this method
