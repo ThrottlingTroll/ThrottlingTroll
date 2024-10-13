@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -96,5 +97,18 @@ namespace ThrottlingTroll
         {
             return $"{nameof(SemaphoreRateLimitMethod)}({this.PermitLimit},{this.TimeoutInSeconds})";
         }
+
+        #region Telemetry
+        internal override void AddTagsToActivity(Activity activity)
+        {
+            activity?.AddTag($"{nameof(SemaphoreRateLimitMethod)}.{nameof(this.PermitLimit)}", this.PermitLimit);
+            activity?.AddTag($"{nameof(SemaphoreRateLimitMethod)}.{nameof(this.ShouldThrowOnFailures)}", base.ShouldThrowOnFailures);
+            activity?.AddTag($"{nameof(SemaphoreRateLimitMethod)}.{nameof(this.IgnoreAllowList)}", this.IgnoreAllowList);
+            activity?.AddTag($"{nameof(SemaphoreRateLimitMethod)}.{nameof(this.RetryAfterInSeconds)}", this.RetryAfterInSeconds);
+
+            activity?.AddTag($"{nameof(SemaphoreRateLimitMethod)}.{nameof(this.TimeoutInSeconds)}", this.TimeoutInSeconds);
+            activity?.AddTag($"{nameof(SemaphoreRateLimitMethod)}.{nameof(this.ReleaseAfterSeconds)}", this.ReleaseAfterSeconds);
+        }
+        #endregion
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -14,6 +15,12 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollRule : RequestFilter
     {
+        /// <summary>
+        /// This rule's name. Only used for telemetry. 
+        /// Provide a meaningful name of your choice, if you want to see it in distributed traces.
+        /// </summary>
+        public string Name { get; set; }
+
         /// <summary>
         /// Rate Limiting algorithm to use. Should be set to one of <see cref="RateLimitMethod"/>'s inheritors.
         /// </summary>
@@ -197,5 +204,35 @@ namespace ThrottlingTroll
                 return Convert.ToBase64String(bytes);
             }
         }
+
+        #region Telemetry
+
+        internal string GetNameForTelemetry()
+        {
+            if (string.IsNullOrEmpty(this.Name))
+            {
+                string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod?.GetCacheKey()}>";
+                return this.GetHash(name).Substring(0, 16);
+            }
+            else
+            {
+                return this.Name;
+            }
+        }
+
+        internal void AddTagsToActivity(Activity activity)
+        {
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.{nameof(base.UriPattern)}", base.UriPattern);
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.{nameof(base.Method)}", base.Method);
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.{nameof(base.HeaderName)}", base.HeaderName);
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.{nameof(base.HeaderValue)}", base.HeaderValue);
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.{nameof(base.IdentityId)}", base.IdentityId);
+
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.{nameof(this.MaxDelayInSeconds)}", this.MaxDelayInSeconds);
+            activity?.AddTag($"{nameof(ThrottlingTrollRule)}.LimitMethod", this.LimitMethod?.GetType().Name);
+
+            this.LimitMethod?.AddTagsToActivity(activity);
+        }
+        #endregion
     }
 }

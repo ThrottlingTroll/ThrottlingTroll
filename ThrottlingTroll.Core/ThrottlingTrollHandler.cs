@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -147,6 +148,11 @@ namespace ThrottlingTroll
         /// </summary>
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            #region Telemetry
+            using var activity = ThrottlingTroll.ActivitySource.StartActivity("ThrottlingTroll.Egress");
+            string msg;
+            #endregion
+
             var requestProxy = new OutgoingHttpRequestProxy(request);
             EgressHttpResponseProxy responseProxy;
             int retryCount = 0;
@@ -197,11 +203,34 @@ namespace ThrottlingTroll
                             return this._troll.CheckAndBreakTheCircuit(requestProxy, responseProxy, null);
                         })
                         .Wait();
+
+                        #region Telemetry
+                        if (responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
+                        {
+                            #region Telemetry
+                            msg = "Remote call resulted in 429 TooManyRequests";
+                            activity?.AddEvent(new ActivityEvent(msg));
+                            activity?.SetStatus(ActivityStatusCode.Error, msg);
+                            #endregion
+                        }
+                        else
+                        {
+                            msg = "Remote call succeeded";
+                            activity?.AddEvent(new ActivityEvent(msg));
+                            activity?.SetStatus(ActivityStatusCode.Ok, msg);
+                        }
+                        #endregion
                     }
                     else
                     {
                         // Creating the TooManyRequests response
                         responseProxy = new EgressHttpResponseProxy(this.CreateFailureResponse(request, exceededRule), retryCount++);
+
+                        #region Telemetry
+                        msg = "Request limit exceeded";
+                        activity?.AddEvent(new ActivityEvent(msg));
+                        activity?.SetStatus(ActivityStatusCode.Error, msg);
+                        #endregion
                     }
                 }
                 finally
@@ -233,14 +262,30 @@ namespace ThrottlingTroll
                     {
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        Thread.Sleep(this.GetRetryAfterTimeSpan(responseProxy.Response.Headers));
+                        var delayTimespan = this.GetRetryAfterTimeSpan(responseProxy.Response.Headers);
+
+                        #region Telemetry
+                        using var waitingActivity = ThrottlingTroll.ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
+                        waitingActivity?.AddTag("WaitingTime", delayTimespan);
+                        #endregion
+
+                        Thread.Sleep(delayTimespan);
 
                         cancellationToken.ThrowIfCancellationRequested();
 
                         // Retrying the call
+
+                        #region Telemetry
+                        waitingActivity?.SetStatus(ActivityStatusCode.Ok, "Retrying the call");
+                        #endregion
+
                         continue;
                     }
                 }
+
+                #region Telemetry
+                activity?.AddTag("Result", msg);
+                #endregion
 
                 break;
             }
@@ -255,6 +300,11 @@ namespace ThrottlingTroll
         /// </summary>
         protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            #region Telemetry
+            using var activity = ThrottlingTroll.ActivitySource.StartActivity("ThrottlingTroll.Egress");
+            string msg;
+            #endregion
+
             var requestProxy = new OutgoingHttpRequestProxy(request);
             EgressHttpResponseProxy responseProxy;
             int retryCount = 0;
@@ -292,11 +342,34 @@ namespace ThrottlingTroll
 
                         // Adding/removing internal circuit breaking rules
                         await this._troll.CheckAndBreakTheCircuit(requestProxy, responseProxy, null);
+
+                        #region Telemetry
+                        if(responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
+                        {
+                            #region Telemetry
+                            msg = "Remote call resulted in 429 TooManyRequests";
+                            activity?.AddEvent(new ActivityEvent(msg));
+                            activity?.SetStatus(ActivityStatusCode.Error, msg);
+                            #endregion
+                        }
+                        else
+                        {
+                            msg = "Remote call succeeded";
+                            activity?.AddEvent(new ActivityEvent(msg));
+                            activity?.SetStatus(ActivityStatusCode.Ok, msg);
+                        }
+                        #endregion
                     }
                     else
                     {
                         // Creating the TooManyRequests response
                         responseProxy = new EgressHttpResponseProxy(this.CreateFailureResponse(request, exceededRule), retryCount++);
+
+                        #region Telemetry
+                        msg = "Request limit exceeded";
+                        activity?.AddEvent(new ActivityEvent(msg));
+                        activity?.SetStatus(ActivityStatusCode.Error, msg);
+                        #endregion
                     }
                 }
                 finally
@@ -319,12 +392,28 @@ namespace ThrottlingTroll
 
                     if (responseProxy.ShouldRetry)
                     {
-                        await Task.Delay(this.GetRetryAfterTimeSpan(responseProxy.Response.Headers), cancellationToken);
+                        var delayTimespan = this.GetRetryAfterTimeSpan(responseProxy.Response.Headers);
+
+                        #region Telemetry
+                        using var waitingActivity = ThrottlingTroll.ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
+                        waitingActivity?.AddTag("WaitingTime", delayTimespan);
+                        #endregion
+
+                        await Task.Delay(delayTimespan, cancellationToken);
 
                         // Retrying the call
+
+                        #region Telemetry
+                        waitingActivity?.SetStatus(ActivityStatusCode.Ok, "Retrying the call");
+                        #endregion
+
                         continue;
                     }
                 }
+
+                #region Telemetry
+                activity?.AddTag("Result", msg);
+                #endregion
 
                 break;
             }

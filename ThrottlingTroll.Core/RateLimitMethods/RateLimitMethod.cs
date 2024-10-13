@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("ThrottlingTroll.Core.Tests")]
@@ -53,5 +54,11 @@ namespace ThrottlingTroll
         /// Suggested number of seconds to retry after, when a limit is exceeded.
         /// </summary>
         public abstract int RetryAfterInSeconds { get; }
+
+        #region Telemetry
+        internal virtual void AddTagsToActivity(Activity activity)
+        {
+        }
+        #endregion
     }
 }

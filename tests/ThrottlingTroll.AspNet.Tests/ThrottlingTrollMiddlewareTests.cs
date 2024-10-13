@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using Moq;
+using System.Diagnostics;
 using System.Net.Http;
 
 namespace ThrottlingTroll.AspNet.Tests
@@ -472,7 +473,7 @@ namespace ThrottlingTroll.AspNet.Tests
 
             public override string GetCacheKey()
             {
-                throw new NotImplementedException();
+                return string.Empty;
             }
         }
 

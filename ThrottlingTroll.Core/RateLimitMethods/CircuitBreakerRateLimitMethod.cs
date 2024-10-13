@@ -144,5 +144,19 @@ namespace ThrottlingTroll
         /// This method uses its own private MemoryCacheCounterStore, because the limit should be applied on a per-instance basis
         /// </summary>
         private static readonly ICounterStore Store = new MemoryCacheCounterStore();
+
+        #region Telemetry
+        internal override void AddTagsToActivity(Activity activity)
+        {
+            activity?.AddTag($"{nameof(CircuitBreakerRateLimitMethod)}.{nameof(this.PermitLimit)}", this.PermitLimit);
+            activity?.AddTag($"{nameof(CircuitBreakerRateLimitMethod)}.{nameof(this.ShouldThrowOnFailures)}", base.ShouldThrowOnFailures);
+            activity?.AddTag($"{nameof(CircuitBreakerRateLimitMethod)}.{nameof(this.IgnoreAllowList)}", this.IgnoreAllowList);
+            activity?.AddTag($"{nameof(CircuitBreakerRateLimitMethod)}.{nameof(this.RetryAfterInSeconds)}", this.RetryAfterInSeconds);
+
+            activity?.AddTag($"{nameof(CircuitBreakerRateLimitMethod)}.{nameof(this.IntervalInSeconds)}", this.IntervalInSeconds);
+            activity?.AddTag($"{nameof(CircuitBreakerRateLimitMethod)}.{nameof(this.TrialIntervalInSeconds)}", this.TrialIntervalInSeconds);
+        }
+        #endregion
+
     }
 }

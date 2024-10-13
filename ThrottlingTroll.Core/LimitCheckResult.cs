@@ -1,4 +1,6 @@
 ﻿
+using System.Diagnostics;
+
 namespace ThrottlingTroll
 {
     /// <summary>
@@ -52,5 +54,15 @@ namespace ThrottlingTroll
             this.RetryAfterHeaderValue = retryAfter;
             this.RequestsRemaining = -1;
         }
+
+        #region Telemetry
+        internal void AddTagsToActivity(Activity activity)
+        {
+            activity?.AddTag($"{nameof(LimitCheckResult)}.{nameof(this.CounterId)}", this.CounterId);
+            activity?.AddTag($"{nameof(LimitCheckResult)}.{nameof(this.RequestsRemaining)}", this.RequestsRemaining);
+            activity?.AddTag($"{nameof(LimitCheckResult)}.{nameof(this.RetryAfterHeaderValue)}", this.RetryAfterHeaderValue);
+            activity?.AddTag($"{nameof(LimitCheckResult)}.{nameof(this.RetryAfterInSeconds)}", this.RetryAfterInSeconds);
+        }
+        #endregion
     }
 }

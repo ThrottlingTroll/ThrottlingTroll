@@ -33,6 +33,12 @@ namespace ThrottlingTroll
         public ErrorHandlingBehavior ErrorHandlingBehavior { get; set; }
 
         /// <summary>
+        /// This rule's name. Only used for telemetry. 
+        /// Provide a meaningful name of your choice, if you want to see it in distributed traces.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
         /// A Regex pattern to match request URI against.
         /// Use this property to explicitly specify the pattern, if ThrottlingTroll is unable to automatically infer it correctly.
         /// </summary>
@@ -85,6 +91,7 @@ namespace ThrottlingTroll
         {
             var rule = new ThrottlingTrollRule
             {
+                Name = this.Name,
                 LimitMethod = this.ToRateLimitMethod(),
                 UriPattern = string.IsNullOrEmpty(this.UriPattern) ?  uriPattern : this.UriPattern,
                 Method = string.IsNullOrEmpty(this.Method) ? httpMethods : this.Method,

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
@@ -117,5 +118,18 @@ namespace ThrottlingTroll
         {
             return $"{nameof(SlidingWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds},{this.NumOfBuckets})";
         }
+
+        #region Telemetry
+        internal override void AddTagsToActivity(Activity activity)
+        {
+            activity?.AddTag($"{nameof(SlidingWindowRateLimitMethod)}.{nameof(this.PermitLimit)}", this.PermitLimit);
+            activity?.AddTag($"{nameof(SlidingWindowRateLimitMethod)}.{nameof(this.ShouldThrowOnFailures)}", base.ShouldThrowOnFailures);
+            activity?.AddTag($"{nameof(SlidingWindowRateLimitMethod)}.{nameof(this.IgnoreAllowList)}", this.IgnoreAllowList);
+            activity?.AddTag($"{nameof(SlidingWindowRateLimitMethod)}.{nameof(this.RetryAfterInSeconds)}", this.RetryAfterInSeconds);
+
+            activity?.AddTag($"{nameof(SlidingWindowRateLimitMethod)}.{nameof(this.IntervalInSeconds)}", this.IntervalInSeconds);
+            activity?.AddTag($"{nameof(SlidingWindowRateLimitMethod)}.{nameof(this.NumOfBuckets)}", this.NumOfBuckets);
+        }
+        #endregion
     }
 }
