@@ -76,6 +76,8 @@ namespace ThrottlingTroll
         protected RateLimitMethod _limitMethod { get; set; }
         protected string _cacheKey;
 
+        private string _nameForTelemetry;
+
         /// <summary>
         /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
         /// </summary>
@@ -209,15 +211,20 @@ namespace ThrottlingTroll
 
         internal string GetNameForTelemetry()
         {
-            if (string.IsNullOrEmpty(this.Name))
+            if (this._nameForTelemetry == null)
             {
-                string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod?.GetCacheKey()}>";
-                return this.GetHash(name).Substring(0, 16);
+                if (string.IsNullOrEmpty(this.Name))
+                {
+                    string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod?.GetCacheKey()}>";
+                    this._nameForTelemetry = this.GetHash(name).Substring(0, 10);
+                }
+                else
+                {
+                    this._nameForTelemetry = this.Name;
+                }
             }
-            else
-            {
-                return this.Name;
-            }
+
+            return this._nameForTelemetry;
         }
 
         internal void AddTagsToActivity(Activity activity)

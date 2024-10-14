@@ -168,6 +168,18 @@ namespace ThrottlingTroll
                 })
                 .Result;
 
+                #region Telemetry
+                foreach (var checkResult in checkList)
+                {
+                    ThrottlingTroll.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+
+                    if (checkResult.RequestsRemaining < 0)
+                    {
+                        ThrottlingTroll.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                    }
+                }
+                #endregion
+
                 var exceededRule = checkList
                     .Where(r => r.RequestsRemaining < 0)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
@@ -194,6 +206,12 @@ namespace ThrottlingTroll
                             })
                             .Wait();
 
+                            #region Telemetry
+                            msg = "Remote call failed with exception";
+                            activity?.AddTag("Result", msg);
+                            activity?.SetStatus(ActivityStatusCode.Error, msg);
+                            #endregion
+
                             throw;
                         }
 
@@ -207,11 +225,9 @@ namespace ThrottlingTroll
                         #region Telemetry
                         if (responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
                         {
-                            #region Telemetry
                             msg = "Remote call resulted in 429 TooManyRequests";
                             activity?.AddEvent(new ActivityEvent(msg));
                             activity?.SetStatus(ActivityStatusCode.Error, msg);
-                            #endregion
                         }
                         else
                         {
@@ -315,6 +331,18 @@ namespace ThrottlingTroll
 
                 var checkList = await this._troll.IsExceededAsync(requestProxy, cleanupRoutines);
 
+                #region Telemetry
+                foreach (var checkResult in checkList)
+                {
+                    ThrottlingTroll.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+
+                    if (checkResult.RequestsRemaining < 0)
+                    {
+                        ThrottlingTroll.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                    }
+                }
+                #endregion
+
                 var exceededRule = checkList
                     .Where(r => r.RequestsRemaining < 0)
                     // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
@@ -337,6 +365,12 @@ namespace ThrottlingTroll
                             // Adding/removing internal circuit breaking rules
                             await this._troll.CheckAndBreakTheCircuit(requestProxy, null, ex);
 
+                            #region Telemetry
+                            msg = "Remote call failed with exception";
+                            activity?.AddTag("Result", msg);
+                            activity?.SetStatus(ActivityStatusCode.Error, msg);
+                            #endregion
+
                             throw;
                         }
 
@@ -344,13 +378,11 @@ namespace ThrottlingTroll
                         await this._troll.CheckAndBreakTheCircuit(requestProxy, responseProxy, null);
 
                         #region Telemetry
-                        if(responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
+                        if (responseProxy.StatusCode == (int)HttpStatusCode.TooManyRequests)
                         {
-                            #region Telemetry
                             msg = "Remote call resulted in 429 TooManyRequests";
                             activity?.AddEvent(new ActivityEvent(msg));
                             activity?.SetStatus(ActivityStatusCode.Error, msg);
-                            #endregion
                         }
                         else
                         {
