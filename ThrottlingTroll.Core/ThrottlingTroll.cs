@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +20,29 @@ namespace ThrottlingTroll
         private Task<ThrottlingTrollConfig> _getConfigTask;
         private bool _disposed = false;
         private TimeSpan _sleepTimeSpan = TimeSpan.FromMilliseconds(50);
+
+        #region Telemetry
+        internal static readonly ActivitySource ActivitySource = new ActivitySource("ThrottlingTroll");
+
+        internal static readonly Meter Meter = new Meter("ThrottlingTroll");
+
+        internal static readonly Counter<int> IngressRuleMatchesCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.ingress.rules_matched", "Counts how many rate limiting rules were matched by incoming requests");
+        internal static readonly Counter<int> IngressRequestsThrottledCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.ingress.requests_throttled", "Counts how many incoming requests were throttled (hit the limit)");
+
+        internal static readonly Counter<int> EgressRuleMatchesCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.egress.rules_matched", "Counts how many rate limiting rules were matched by outgoing requests");
+        internal static readonly Counter<int> EgressRequestsThrottledCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.egress.requests_throttled", "Counts how many outgoing requests were throttled (hit the limit)");
+
+        internal static readonly Counter<int> FailuresCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.internal_failures", "Counts how many internal failures ThrottlingTroll experienced");
+        internal static readonly Counter<int> GetConfigFuncSuccessesCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.get_config_func_successes", "Counts how many times ThrottlingTrollOptions.GetConfigFunc was successfully called");
+        internal static readonly Counter<int> GetConfigFuncFailuresCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.get_config_func_failures", "Counts how many times ThrottlingTrollOptions.GetConfigFunc failed");
+        #endregion
 
         /// <summary>
         /// Ctor
@@ -111,8 +136,29 @@ namespace ThrottlingTroll
         /// </summary>
         protected internal async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
         {
+            #region Telemetry
+            // Important to create this activity _before_ calling IsExceededAsync
+            using var activity = ActivitySource.StartActivity("ThrottlingTroll.Ingress");
+            #endregion
+
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
+
+            #region Telemetry
+            foreach (var checkResult in checkList)
+            {
+                IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+
+                if (checkResult.RequestsRemaining < 0)
+                {
+                    string msg = "Request limit exceeded";
+                    activity?.AddTag("Result", msg);
+                    activity?.SetStatus(ActivityStatusCode.Error, msg);
+
+                    IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                }
+            }
+            #endregion
 
             if (checkList.Any(r => r.RequestsRemaining < 0))
             {
@@ -124,11 +170,24 @@ namespace ThrottlingTroll
             try
             {
                 await nextAction();
+
+                #region Telemetry
+                string msg = "Request processed successfully";
+                activity?.AddTag("Result", msg);
+                activity?.SetStatus(ActivityStatusCode.Ok);
+                #endregion
             }
             catch (ThrottlingTrollTooManyRequestsException throttlingEx)
             {
                 // Catching propagated exception from egress
                 checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
+
+                #region Telemetry
+                activity?.AddTag("RetryAfterHeaderFromEgress", throttlingEx.RetryAfterHeaderValue);
+                string msg = "TooManyRequests error propagated from egress";
+                activity?.AddTag("Result", msg);
+                activity?.SetStatus(ActivityStatusCode.Error, msg);
+                #endregion
             }
             catch (AggregateException ex)
             {
@@ -143,6 +202,14 @@ namespace ThrottlingTroll
                     if (throttlingEx != null)
                     {
                         checkList.Add(new LimitCheckResult(throttlingEx.RetryAfterHeaderValue));
+
+                        #region Telemetry
+                        activity?.AddTag("RetryAfterHeaderFromEgress", throttlingEx.RetryAfterHeaderValue);
+                        string msg = "TooManyRequests error propagated from egress";
+                        activity?.AddTag("Result", msg);
+                        activity?.SetStatus(ActivityStatusCode.Error, msg);
+                        #endregion
+
                         break;
                     }
                 }
@@ -190,12 +257,24 @@ namespace ThrottlingTroll
             // Still need to check all limits, so that all counters get updated
             foreach (var limit in config.Rules)
             {
+                #region Telemetry
+                using var activity = ActivitySource.StartActivity($"ThrottlingTroll.Rule.{limit.GetNameForTelemetry()}");
+                limit.AddTagsToActivity(activity);
+                #endregion
+
                 try
                 {
                     // First checking if request allowlisted
                     if (!limit.IgnoreAllowList && config.AllowList != null && config.AllowList.Any(filter => filter.IsMatch(request)))
                     {
                         allowListed = true;
+
+                        #region Telemetry
+                        string msg = "Request allowlisted";
+                        activity?.AddTag("Result", msg);
+                        activity?.SetStatus(ActivityStatusCode.Ok, msg);
+                        #endregion
+
                         continue;
                     }
 
@@ -206,11 +285,27 @@ namespace ThrottlingTroll
                     if (limitCheckResult == null)
                     {
                         // The request did not match this rule
+
+                        #region Telemetry
+                        string msg = "Request did not match this rule";
+                        activity?.AddTag("Result", msg);
+                        activity?.SetStatus(ActivityStatusCode.Ok, msg);
+                        #endregion
+
                         continue;
                     }
 
+                    #region Telemetry
+                    activity?.AddTag("RequestCost", requestCost);
+                    limitCheckResult.AddTagsToActivity(activity);
+                    #endregion
+
                     if ((limitCheckResult.RequestsRemaining < 0) && limit.MaxDelayInSeconds > 0)
                     {
+                        #region Telemetry
+                        using var waitingActivity = ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
+                        #endregion
+
                         // Doing the delay logic
                         while ((DateTimeOffset.UtcNow - dtStart).TotalSeconds <= limit.MaxDelayInSeconds)
                         {
@@ -227,6 +322,17 @@ namespace ThrottlingTroll
 
                             await Task.Delay(this._sleepTimeSpan);
                         }
+
+                        #region Telemetry
+                        if (limitCheckResult.RequestsRemaining >= 0)
+                        {
+                            waitingActivity?.SetStatus(ActivityStatusCode.Ok, "Waiting finished");
+                        }
+                        else
+                        {
+                            waitingActivity?.SetStatus(ActivityStatusCode.Error, "Waiting timed out");
+                        }
+                        #endregion
                     }
 
                     if (limitCheckResult.RequestsRemaining >= 0)
@@ -236,10 +342,35 @@ namespace ThrottlingTroll
                     }
 
                     result.Add(limitCheckResult);
+
+                    #region Telemetry
+                    if (limitCheckResult.RequestsRemaining >= 0)
+                    {
+                        string msg = $"Requests remaining: {limitCheckResult.RequestsRemaining}";
+                        activity?.AddTag("Result", msg);
+                        activity?.SetStatus(ActivityStatusCode.Ok, msg);
+
+                        activity?.SetStatus(ActivityStatusCode.Ok);
+                    }
+                    else
+                    {
+                        string msg = "Request limit exceeded";
+                        activity?.AddTag("Result", msg);
+                        activity?.SetStatus(ActivityStatusCode.Error, msg);
+                    }
+                    #endregion
                 }
                 catch (Exception ex)
                 {
-                    this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+                    string msg = $"ThrottlingTroll failed. {ex}";
+                    this._log(LogLevel.Error, msg);
+
+                    #region Telemetry
+                    activity?.AddTag("Result", msg);
+                    activity?.SetStatus(ActivityStatusCode.Error, msg);
+
+                    FailuresCounter.Add(1, new TagList { { "throttlingtroll.rule", limit.GetNameForTelemetry() } });
+                    #endregion
 
                     if (limit.ShouldThrowOnFailures)
                     {
@@ -284,6 +415,10 @@ namespace ThrottlingTroll
             // Checking all CircuitBreaker rules that this request matches
             foreach (var limit in config.Rules)
             {
+                #region Telemetry
+                Activity activity = null;
+                #endregion
+
                 try
                 {
                     var circuitBreakerMethod = limit.LimitMethod as CircuitBreakerRateLimitMethod;
@@ -293,6 +428,12 @@ namespace ThrottlingTroll
                     }
 
                     string uniqueCacheKey = limit.GetUniqueCacheKey(request, config.UniqueName);
+
+                    #region Telemetry
+                    activity = ActivitySource.StartActivity($"ThrottlingTroll.CircuitBreakerRule.{limit.GetNameForTelemetry()}");
+                    activity?.AddTag($"CounterId", uniqueCacheKey);
+                    limit.AddTagsToActivity(activity);
+                    #endregion
 
                     if (circuitBreakerMethod.IsFailed(response, exception))
                     {
@@ -312,22 +453,56 @@ namespace ThrottlingTroll
                         {
                             // If failure limit is exceeded, placing this limit into Trial mode, which limits request rate to 1 request per trial interval
                             CircuitBreakerRateLimitMethod.PutIntoTrial(uniqueCacheKey);
+
+                            #region Telemetry
+                            string msg = $"Went into trial mode";
+                            activity?.AddTag("Result", msg);
+                            activity?.AddTag($"FailureCount", failureCount);
+                            activity?.SetStatus(ActivityStatusCode.Error, msg);
+                            #endregion
+                        }
+                        else
+                        {
+                            #region Telemetry
+                            string msg = $"Failure count so far: {failureCount}";
+                            activity?.AddTag("Result", msg);
+                            activity?.AddTag($"FailureCount", failureCount);
+                            activity?.SetStatus(ActivityStatusCode.Ok, msg);
+                            #endregion
                         }
                     }
                     else
                     {
                         // Just lifting the trial mode
                         CircuitBreakerRateLimitMethod.ReleaseFromTrial(uniqueCacheKey);
+
+                        #region Telemetry
+                        string msg = "Released from trial mode";
+                        activity?.AddTag("Result", msg);
+                        activity?.SetStatus(ActivityStatusCode.Ok, msg);
+                        #endregion
                     }
                 }
                 catch (Exception ex)
                 {
-                    this._log(LogLevel.Error, $"ThrottlingTroll failed. {ex}");
+                    string msg = $"ThrottlingTroll failed. {ex}";
+                    this._log(LogLevel.Error, msg);
+
+                    #region Telemetry
+                    activity?.AddTag("Result", msg);
+                    activity?.SetStatus(ActivityStatusCode.Error, msg);
+                    #endregion
 
                     if (limit.ShouldThrowOnFailures)
                     {
                         throw;
                     }
+                }
+                finally
+                {
+                    #region Telemetry
+                    activity?.Dispose();
+                    #endregion
                 }
             }
         }
@@ -353,6 +528,17 @@ namespace ThrottlingTroll
 
             task.ContinueWith(async t =>
             {
+                #region Telemetry
+                if (t.IsFaulted)
+                {
+                    GetConfigFuncFailuresCounter.Add(1);
+                }
+                else if (t.IsCompletedSuccessfully)
+                {
+                    GetConfigFuncSuccessesCounter.Add(1);
+                }
+                #endregion
+
                 await Task.Delay(TimeSpan.FromSeconds(intervalToReloadConfigInSeconds));
 
                 this.InitGetConfigTask(getConfigFunc, intervalToReloadConfigInSeconds);

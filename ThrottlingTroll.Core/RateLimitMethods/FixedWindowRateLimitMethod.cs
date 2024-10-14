@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 
@@ -80,5 +81,17 @@ namespace ThrottlingTroll
         {
             return $"{nameof(FixedWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds})";
         }
+
+        #region Telemetry
+        internal override void AddTagsToActivity(Activity activity)
+        {
+            activity?.AddTag($"{nameof(FixedWindowRateLimitMethod)}.{nameof(this.PermitLimit)}", this.PermitLimit);
+            activity?.AddTag($"{nameof(FixedWindowRateLimitMethod)}.{nameof(this.ShouldThrowOnFailures)}", base.ShouldThrowOnFailures);
+            activity?.AddTag($"{nameof(FixedWindowRateLimitMethod)}.{nameof(this.IgnoreAllowList)}", this.IgnoreAllowList);
+            activity?.AddTag($"{nameof(FixedWindowRateLimitMethod)}.{nameof(this.RetryAfterInSeconds)}", this.RetryAfterInSeconds);
+
+            activity?.AddTag($"{nameof(FixedWindowRateLimitMethod)}.{nameof(this.IntervalInSeconds)}", this.IntervalInSeconds);
+        }
+        #endregion
     }
 }
