@@ -6,7 +6,7 @@
         <IncludeSymbols>true</IncludeSymbols>
 
         <PackageId>ThrottlingTroll.CounterStores.Redis</PackageId>
-        <VersionPrefix>7.2.0</VersionPrefix>
+        <VersionPrefix>7.3.0</VersionPrefix>
         <PackageTags>Rate Limiting;Throttling;ThrottlingTroll;Redis</PackageTags>
         <Description>CounterStore for ThrottlingTroll. Stores counters in Redis.</Description>
         <Authors>ThrottlingTroll</Authors>
