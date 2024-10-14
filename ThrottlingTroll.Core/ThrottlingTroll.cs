@@ -26,15 +26,22 @@ namespace ThrottlingTroll
 
         internal static readonly Meter Meter = new Meter("ThrottlingTroll");
 
-        internal static readonly Counter<int> IngressRuleMatchesCounter = Meter.CreateCounter<int>("throttlingtroll.ingress.rule_matches", "Counts how many rate limiting rules were matched by incoming requests");
-        internal static readonly Counter<int> IngressRequestsThrottledCounter = Meter.CreateCounter<int>("throttlingtroll.ingress.rule_matches", "Counts how many incoming requests were throttled (hit the limit)");
+        internal static readonly Counter<int> IngressRuleMatchesCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.ingress.rules_matched", "Counts how many rate limiting rules were matched by incoming requests");
+        internal static readonly Counter<int> IngressRequestsThrottledCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.ingress.requests_throttled", "Counts how many incoming requests were throttled (hit the limit)");
 
-        internal static readonly Counter<int> EgressRuleMatchesCounter = Meter.CreateCounter<int>("throttlingtroll.egress.rule_matches", "Counts how many rate limiting rules were matched by outgoing requests");
-        internal static readonly Counter<int> EgressRequestsThrottledCounter = Meter.CreateCounter<int>("throttlingtroll.egress.rule_matches", "Counts how many outgoing requests were throttled (hit the limit)");
+        internal static readonly Counter<int> EgressRuleMatchesCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.egress.rules_matched", "Counts how many rate limiting rules were matched by outgoing requests");
+        internal static readonly Counter<int> EgressRequestsThrottledCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.egress.requests_throttled", "Counts how many outgoing requests were throttled (hit the limit)");
 
-        internal static readonly Counter<int> FailuresCounter = Meter.CreateCounter<int>("throttlingtroll.internal_failures", "Counts how many internal failures ThrottlingTroll experienced");
-        internal static readonly Counter<int> GetConfigFuncSuccessesCounter = Meter.CreateCounter<int>("throttlingtroll.get_config_func_successes", "Counts how many times ThrottlingTrollOptions.GetConfigFunc was successfully called");
-        internal static readonly Counter<int> GetConfigFuncFailuresCounter = Meter.CreateCounter<int>("throttlingtroll.get_config_func_failures", "Counts how many times ThrottlingTrollOptions.GetConfigFunc failed");
+        internal static readonly Counter<int> FailuresCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.internal_failures", "Counts how many internal failures ThrottlingTroll experienced");
+        internal static readonly Counter<int> GetConfigFuncSuccessesCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.get_config_func_successes", "Counts how many times ThrottlingTrollOptions.GetConfigFunc was successfully called");
+        internal static readonly Counter<int> GetConfigFuncFailuresCounter = 
+            Meter.CreateCounter<int>("throttlingtroll.get_config_func_failures", "Counts how many times ThrottlingTrollOptions.GetConfigFunc failed");
         #endregion
 
         /// <summary>
@@ -129,12 +136,15 @@ namespace ThrottlingTroll
         /// </summary>
         protected internal async Task<List<LimitCheckResult>> IsIngressOrEgressExceededAsync(IHttpRequestProxy request, List<Func<Task>> cleanupRoutines, Func<Task> nextAction)
         {
+            #region Telemetry
+            // Important to create this activity _before_ calling IsExceededAsync
+            using var activity = ActivitySource.StartActivity("ThrottlingTroll.Ingress");
+            #endregion
+
             // First trying ingress
             var checkList = await this.IsExceededAsync(request, cleanupRoutines);
 
             #region Telemetry
-            using var activity = ActivitySource.StartActivity("ThrottlingTroll.Ingress");
-
             foreach (var checkResult in checkList)
             {
                 IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
