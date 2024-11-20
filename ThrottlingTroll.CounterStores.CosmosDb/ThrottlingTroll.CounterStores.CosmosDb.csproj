@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <IncludeSymbols>true</IncludeSymbols>
+
+        <PackageId>ThrottlingTroll.CounterStores.CosmosDb</PackageId>
+        <VersionPrefix>7.3.0</VersionPrefix>
+        <PackageTags>Rate Limiting;Throttling;ThrottlingTroll</PackageTags>
+        <Description>CounterStore for ThrottlingTroll. Stores counters in Cosmos DB.</Description>
+        <Authors>ThrottlingTroll</Authors>
+        <RepositoryUrl>https://github.com/ThrottlingTroll/ThrottlingTroll</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.45.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ThrottlingTroll.Core\ThrottlingTroll.Core.csproj" />
+
+        <Content Include="..\LICENSE">
+            <PackagePath>/</PackagePath>
+            <Pack>true</Pack>
+        </Content>
+    </ItemGroup>
+
+</Project>
