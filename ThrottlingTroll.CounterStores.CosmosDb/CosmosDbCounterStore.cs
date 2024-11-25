@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace ThrottlingTroll.CounterStores.AzureTable
+namespace ThrottlingTroll.CounterStores.CosmosDb
 {
     /// <summary>
     /// Implements Store for rate limit counters using Cosmos DB and its Patch API
@@ -64,7 +64,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
 
             if (createTask.IsCompletedSuccessfully)
             {
-                return resetTask.Result;
+                return createTask.Result;
             }
             if (incrementTask.IsCompletedSuccessfully)
             {
