@@ -75,21 +75,9 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                 return resetTask.Result;
             }
 
-            // Now the assumption is that all these tasks have failed, but let's double-check
-            var exceptionList = new List<Exception>();
-            if (createTask.Exception != null) 
-            {
-                exceptionList.Add(createTask.Exception);
-            }
-            if (incrementTask.Exception != null)
-            {
-                exceptionList.Add(incrementTask.Exception);
-            }
-            if (resetTask.Exception != null)
-            {
-                exceptionList.Add(resetTask.Exception);
-            }
-            throw new AggregateException("CosmosDbCounterStore.IncrementAndGetAsync() failed", exceptionList);
+            // At this point all three tasks should fail (or at least, finish),
+            // so just converting them into an AggregateException
+            throw Task.WhenAll(createTask, incrementTask, resetTask).Exception!;
         }
 
         /// <inheritdoc />
