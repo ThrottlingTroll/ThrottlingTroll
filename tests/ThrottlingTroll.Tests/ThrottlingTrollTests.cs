@@ -1,5 +1,4 @@
 using Moq;
-using StackExchange.Redis;
 
 namespace ThrottlingTroll.Tests;
 
@@ -26,7 +25,7 @@ public class ThrottlingTrollTests
             Assert.IsTrue(msg.StartsWith($"ThrottlingTroll failed to get its config. System.Exception: {errorMsg}"));
         };
 
-        var troll = new ThrottlingTroll(log, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(log, new MemoryCacheCounterStore(), async () =>
         {
             throw new Exception(errorMsg);
         },
@@ -91,7 +90,7 @@ public class ThrottlingTrollTests
             Assert.IsTrue(msg.StartsWith($"ThrottlingTroll failed. System.Exception: {failingRule.ErrorMessage}"));
         };
 
-        var troll = new ThrottlingTroll(log, new MemoryCacheCounterStore(), () =>
+        var troll = new ThrottlingTrollCore(log, new MemoryCacheCounterStore(), () =>
         {
             var rules = new List<ThrottlingTrollRule>
             {
@@ -135,7 +134,7 @@ public class ThrottlingTrollTests
             Assert.IsTrue(msg.StartsWith($"ThrottlingTroll failed. System.Exception: {failingRule.ErrorMessage}"));
         };
 
-        var troll = new ThrottlingTroll(log, new MemoryCacheCounterStore(), () =>
+        var troll = new ThrottlingTrollCore(log, new MemoryCacheCounterStore(), () =>
         {
             var rules = new List<ThrottlingTrollRule>
             {
@@ -181,7 +180,7 @@ public class ThrottlingTrollTests
             Assert.IsTrue(msg.StartsWith($"ThrottlingTroll failed. System.Exception: {failingRule.ErrorMessage}"));
         };
 
-        var troll = new ThrottlingTroll(log, new MemoryCacheCounterStore(), () =>
+        var troll = new ThrottlingTrollCore(log, new MemoryCacheCounterStore(), () =>
         {
             var rules = new List<ThrottlingTrollRule>
             {
@@ -222,7 +221,7 @@ public class ThrottlingTrollTests
             Assert.IsTrue(msg.StartsWith($"ThrottlingTroll failed to get its config. System.Exception: {errorMsg}"));
         };
 
-        var troll = new ThrottlingTroll(log, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(log, new MemoryCacheCounterStore(), async () =>
         {
             throw new Exception(errorMsg);
         },
@@ -242,7 +241,7 @@ public class ThrottlingTrollTests
     {
         // Arrange
 
-        var troll = new ThrottlingTroll(null, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(null, new MemoryCacheCounterStore(), async () =>
         {
             return new ThrottlingTrollConfig();
         },
@@ -268,7 +267,7 @@ public class ThrottlingTrollTests
     {
         // Arrange
 
-        var troll = new ThrottlingTroll(null, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(null, new MemoryCacheCounterStore(), async () =>
         {
             return new ThrottlingTrollConfig 
             {
@@ -302,7 +301,7 @@ public class ThrottlingTrollTests
             }
         };
 
-        var troll = new ThrottlingTroll(null, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(null, new MemoryCacheCounterStore(), async () =>
         {
             return new ThrottlingTrollConfig
             {
@@ -347,7 +346,7 @@ public class ThrottlingTrollTests
             }
         };
 
-        var troll = new ThrottlingTroll(null, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(null, new MemoryCacheCounterStore(), async () =>
         {
             return new ThrottlingTrollConfig
             {
@@ -392,7 +391,7 @@ public class ThrottlingTrollTests
             }
         };
 
-        var troll = new ThrottlingTroll(null, new MemoryCacheCounterStore(), async () =>
+        var troll = new ThrottlingTrollCore(null, new MemoryCacheCounterStore(), async () =>
         {
             return new ThrottlingTrollConfig
             {

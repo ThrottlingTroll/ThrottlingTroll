@@ -38,7 +38,7 @@ namespace ThrottlingTroll
 
             if (opt.Log == null)
             {
-                var logger = builder.ApplicationServices.GetService<ILogger<ThrottlingTroll>>();
+                var logger = builder.ApplicationServices.GetService<ILogger<ThrottlingTrollCore>>();
                 opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
             }
 
@@ -53,7 +53,7 @@ namespace ThrottlingTroll
         /// </summary>
         public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this HttpContext context)
         {
-            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace ThrottlingTroll
         /// </summary>
         public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
         {
-            return (List<LimitCheckResult>)context.Items[ThrottlingTroll.LimitCheckResultsContextKey];
+            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
         }
 
         private static ThrottlingTrollConfig CollectDeclarativeConfig(List<Assembly> assemblies)

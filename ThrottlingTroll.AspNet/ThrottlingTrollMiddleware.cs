@@ -13,7 +13,7 @@ namespace ThrottlingTroll
     /// <summary>
     /// Implements ingress throttling
     /// </summary>
-    public class ThrottlingTrollMiddleware : ThrottlingTroll
+    public class ThrottlingTrollMiddleware : ThrottlingTrollCore
     {
         /// <summary>
         /// Ctor. Shold not be used externally, but needs to be public.

@@ -16,7 +16,7 @@ namespace ThrottlingTroll
     /// <summary>
     /// Implements ingress throttling for Azure Functions
     /// </summary>
-    public class ThrottlingTrollMiddleware : ThrottlingTroll
+    public class ThrottlingTrollMiddleware : ThrottlingTrollCore
     {
         internal ThrottlingTrollMiddleware
         (
