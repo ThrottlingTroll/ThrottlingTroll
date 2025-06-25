@@ -85,6 +85,24 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
+        public async Task WithThrottlingTroll(Func<Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded, string methodName = null)
+        {
+            await this.WithThrottlingTroll
+            (
+                async () =>
+                {
+                    await todo();
+                    return 0;
+                },
+                async ctx =>
+                {
+                    await onLimitExceeded(ctx);
+                    return 0;
+                }
+            );
+        }
+
+        /// <inheritdoc />
         public async Task<T> WithThrottlingTroll<T>(IHttpRequestProxy requestProxy, Func<Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded)
         {
             var cleanupRoutines = new List<Func<Task>>();
@@ -121,6 +139,25 @@ namespace ThrottlingTroll
             {
                 await Task.WhenAll(cleanupRoutines.Select(f => f()));
             }
+        }
+
+        /// <inheritdoc />
+        public async Task WithThrottlingTroll(IHttpRequestProxy requestProxy, Func<Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded)
+        {
+            await this.WithThrottlingTroll
+            (
+                requestProxy,
+                async () =>
+                {
+                    await todo();
+                    return 0;
+                },
+                async ctx =>
+                {
+                    await onLimitExceeded(ctx);
+                    return 0;
+                }
+            );
         }
     }
 }
