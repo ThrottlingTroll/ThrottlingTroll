@@ -87,7 +87,7 @@ namespace ThrottlingTroll
         /// </summary>
         public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this HttpContext context)
         {
-            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace ThrottlingTroll
         /// </summary>
         public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this FunctionContext context)
         {
-            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTroll.ThrottlingTrollConfigsContextKey];
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace ThrottlingTroll
         /// </summary>
         public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
         {
-            return (List<LimitCheckResult>)context.Items[ThrottlingTroll.LimitCheckResultsContextKey];
+            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace ThrottlingTroll
         /// </summary>
         public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this FunctionContext context)
         {
-            return (List<LimitCheckResult>)context.Items[ThrottlingTroll.LimitCheckResultsContextKey];
+            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
         }
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
@@ -120,7 +120,7 @@ namespace ThrottlingTroll
 
             if (opt.Log == null)
             {
-                var logger = context.InstanceServices.GetService<ILogger<ThrottlingTroll>>();
+                var logger = context.InstanceServices.GetService<ILogger<ThrottlingTrollCore>>();
                 opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
             }
 

@@ -115,7 +115,7 @@ namespace ThrottlingTroll
 
         ) : base(innerHttpMessageHandler ?? new HttpClientHandler())
         {
-            this._troll = new ThrottlingTroll(log, counterStore ?? new MemoryCacheCounterStore(), async () => config, identityIdExtractor, costExtractor);
+            this._troll = new ThrottlingTrollCore(log, counterStore ?? new MemoryCacheCounterStore(), async () => config, identityIdExtractor, costExtractor);
             this._propagateToIngress = config.PropagateToIngress;
             this._responseFabric = responseFabric;
         }
@@ -125,7 +125,7 @@ namespace ThrottlingTroll
         /// </summary>
         internal ThrottlingTrollHandler(ThrottlingTrollOptions options)
         {
-            this._troll = new ThrottlingTroll(options.Log, options.CounterStore, async () =>
+            this._troll = new ThrottlingTrollCore(options.Log, options.CounterStore, async () =>
             {
                 var config = await options.GetConfigFunc();
 
@@ -149,7 +149,7 @@ namespace ThrottlingTroll
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             #region Telemetry
-            using var activity = ThrottlingTroll.ActivitySource.StartActivity("ThrottlingTroll.Egress");
+            using var activity = ThrottlingTrollCore.ActivitySource.StartActivity("ThrottlingTroll.Egress");
             string msg;
             #endregion
 
@@ -171,11 +171,11 @@ namespace ThrottlingTroll
                 #region Telemetry
                 foreach (var checkResult in checkList)
                 {
-                    ThrottlingTroll.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                    ThrottlingTrollCore.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
 
                     if (checkResult.RequestsRemaining < 0)
                     {
-                        ThrottlingTroll.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                        ThrottlingTrollCore.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
                     }
                 }
                 #endregion
@@ -281,7 +281,7 @@ namespace ThrottlingTroll
                         var delayTimespan = this.GetRetryAfterTimeSpan(responseProxy.Response.Headers);
 
                         #region Telemetry
-                        using var waitingActivity = ThrottlingTroll.ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
+                        using var waitingActivity = ThrottlingTrollCore.ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
                         waitingActivity?.AddTag("WaitingTime", delayTimespan);
                         #endregion
 
@@ -317,7 +317,7 @@ namespace ThrottlingTroll
         protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             #region Telemetry
-            using var activity = ThrottlingTroll.ActivitySource.StartActivity("ThrottlingTroll.Egress");
+            using var activity = ThrottlingTrollCore.ActivitySource.StartActivity("ThrottlingTroll.Egress");
             string msg;
             #endregion
 
@@ -334,11 +334,11 @@ namespace ThrottlingTroll
                 #region Telemetry
                 foreach (var checkResult in checkList)
                 {
-                    ThrottlingTroll.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                    ThrottlingTrollCore.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
 
                     if (checkResult.RequestsRemaining < 0)
                     {
-                        ThrottlingTroll.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                        ThrottlingTrollCore.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
                     }
                 }
                 #endregion
@@ -427,7 +427,7 @@ namespace ThrottlingTroll
                         var delayTimespan = this.GetRetryAfterTimeSpan(responseProxy.Response.Headers);
 
                         #region Telemetry
-                        using var waitingActivity = ThrottlingTroll.ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
+                        using var waitingActivity = ThrottlingTrollCore.ActivitySource.StartActivity($"ThrottlingTroll.Waiting");
                         waitingActivity?.AddTag("WaitingTime", delayTimespan);
                         #endregion
 
@@ -457,7 +457,7 @@ namespace ThrottlingTroll
 
         private const int DefaultDelayInSeconds = 5;
 
-        private readonly ThrottlingTroll _troll;
+        private readonly ThrottlingTrollCore _troll;
         private bool _propagateToIngress;
 
         private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
@@ -554,7 +554,7 @@ namespace ThrottlingTroll
 
                 if (opt.Log == null)
                 {
-                    var logger = serviceProvider.GetService<ILogger<ThrottlingTroll>>();
+                    var logger = serviceProvider.GetService<ILogger<ThrottlingTrollCore>>();
                     opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
                 }
 

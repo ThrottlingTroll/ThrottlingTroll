@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +12,43 @@ namespace ThrottlingTroll
     /// </summary>
     public static class ThrottlingTrollCoreExtensions
     {
+        /// <summary>
+        /// Adds a generic <see cref="IThrottlingTroll"/> instance to DI container.
+        /// </summary>
+        public static IServiceCollection AddThrottlingTroll(this IServiceCollection services, Action<ThrottlingTrollOptions> options = null)
+        {
+            var opt = new ThrottlingTrollOptions();
+
+            if (options != null)
+            {
+                options(opt);
+            }
+
+            services.AddSingleton<IThrottlingTroll>(serviceProvider =>
+            {
+                opt.GetConfigFunc = MergeAllConfigSources(opt.Config, null, opt.GetConfigFunc, serviceProvider);
+
+                if (opt.Log == null)
+                {
+                    var logger = serviceProvider.GetService<ILogger<ThrottlingTroll>>();
+                    opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
+                }
+
+                // TODO: move default counter store creation into ThrottlingTroll
+                opt.CounterStore ??= serviceProvider.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
+
+                return new ThrottlingTroll(
+                    opt.GetConfigFunc,
+                    opt.IntervalToReloadConfigInSeconds,
+                    opt.CounterStore,
+                    opt.IdentityIdExtractor,
+                    opt.CostExtractor,
+                    opt.Log);
+            });
+
+            return services;
+        }
+
         /// <summary>
         /// Concatenates two nullable lists
         /// </summary>

@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("ThrottlingTroll.Core.Tests")]
+[assembly: InternalsVisibleTo("ThrottlingTroll.AspNet.Tests")]
+[assembly: InternalsVisibleTo("ThrottlingTroll.AzureFunctions.Tests")]
+[assembly: InternalsVisibleTo("ThrottlingTroll.AzureFunctionsAspNet.Tests")]
 
 namespace ThrottlingTroll
 {
