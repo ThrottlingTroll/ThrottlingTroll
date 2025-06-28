@@ -109,9 +109,7 @@ namespace ThrottlingTroll
             try
             {
                 var checkList = await this.IsExceededAsync(requestProxy, cleanupRoutines);
-                var limitsExceeded = checkList.Where(r => r.RequestsRemaining < 0).ToList();
-
-                if (limitsExceeded.Any())
+                if (checkList.Any(r => r.RequestsRemaining < 0))
                 {
                     var ctx = new ThrottlingTrollContext { LimitCheckResults = checkList };
 
