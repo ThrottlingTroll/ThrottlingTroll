@@ -12,7 +12,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll
       run: dotnet build -c Release ThrottlingTroll.AspNet
@@ -31,7 +31,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll.AzureFunctions
       run: dotnet build -c Release ThrottlingTroll.AzureFunctions
@@ -50,7 +50,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll.AzureFunctionsAspNet
       run: dotnet build -c Release ThrottlingTroll.AzureFunctionsAspNet
@@ -69,7 +69,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll.CounterStores.AzureTable
       run: dotnet build -c Release ThrottlingTroll.CounterStores.AzureTable
@@ -88,7 +88,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll.CounterStores.Redis
       run: dotnet build -c Release ThrottlingTroll.CounterStores.Redis
@@ -107,7 +107,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll.CounterStores.DistributedCache
       run: dotnet build -c Release ThrottlingTroll.CounterStores.DistributedCache
@@ -126,7 +126,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 8.0.x
 
     - name: Build ThrottlingTroll.CounterStores.EfCore
       run: dotnet build -c Release ThrottlingTroll.CounterStores.EfCore
