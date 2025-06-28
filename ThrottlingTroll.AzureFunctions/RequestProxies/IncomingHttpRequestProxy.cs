@@ -6,7 +6,7 @@ using System.Linq;
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Abstraction layer on top of <see cref="HttpRequest"/>
+    /// Abstraction layer on top of <see cref="HttpRequestData"/>
     /// </summary>
     public class IncomingHttpRequestProxy : IIncomingHttpRequestProxy
     {
