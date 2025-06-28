@@ -10,17 +10,16 @@
     <tags>Rate Limiting;Throttling;ThrottlingTroll;Redis</tags>
     <repository type="git" url="https://github.com/ThrottlingTroll/ThrottlingTroll" />
     <readme>README.md</readme>
+      
     <dependencies>
-      <group targetFramework="net6.0">
-        <dependency id="StackExchange.Redis" version="2.7.4" exclude="Build,Analyzers" />
-      </group>
+      <dependency id="StackExchange.Redis" version="2.7.4" exclude="Build,Analyzers" />
     </dependencies>
   </metadata>
 
   <files>
     <file src="..\LICENSE" target="LICENSE" />
     <file src=".\README.md" target="README.md" />
-    <file src="bin\Release\net6.0\ThrottlingTroll.*" target="lib/net6.0" />
+    <file src="bin\Release\net8.0\ThrottlingTroll.*" target="lib/net8.0" />
   </files>
 
 </package>
