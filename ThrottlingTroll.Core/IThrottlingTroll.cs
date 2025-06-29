@@ -25,7 +25,7 @@ namespace ThrottlingTroll
         /// and costExtractors.
         /// </param>
         /// <returns>Awaitable task</returns>
-        Task<T> WithThrottlingTroll<T>(Func<Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded, string methodName = null);
+        Task<T> WithThrottlingTroll<T>(Func<ThrottlingTrollContext, Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded, string methodName = null);
 
         /// <summary>
         /// Applies limits to a given arbitrary piece of code. When limit is exceeded, calls onLimitExceeded.
@@ -42,7 +42,7 @@ namespace ThrottlingTroll
         /// and costExtractors.
         /// </param>
         /// <returns>Awaitable task</returns>
-        Task WithThrottlingTroll(Func<Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded, string methodName = null);
+        Task WithThrottlingTroll(Func<ThrottlingTrollContext, Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded, string methodName = null);
 
         /// <summary>
         /// Applies limits to a given arbitrary piece of code. Expects an instance of <see cref="IHttpRequestProxy"/> to be passed.
@@ -56,7 +56,7 @@ namespace ThrottlingTroll
         /// so that your code can see which rule(s) were exceeded.
         /// </param>
         /// <returns>Awaitable task</returns>
-        Task<T> WithThrottlingTroll<T>(IHttpRequestProxy requestProxy, Func<Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded);
+        Task<T> WithThrottlingTroll<T>(IHttpRequestProxy requestProxy, Func<ThrottlingTrollContext, Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded);
 
         /// <summary>
         /// Applies limits to a given arbitrary piece of code. Expects an instance of <see cref="IHttpRequestProxy"/> to be passed.
@@ -69,7 +69,7 @@ namespace ThrottlingTroll
         /// so that your code can see which rule(s) were exceeded.
         /// </param>
         /// <returns>Awaitable task</returns>
-        Task WithThrottlingTroll(IHttpRequestProxy requestProxy, Func<Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded);
+        Task WithThrottlingTroll(IHttpRequestProxy requestProxy, Func<ThrottlingTrollContext, Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded);
 
         /// <summary>
         /// Returns the current <see cref="ThrottlingTrollConfig"/> snapshot, for your code's reference.

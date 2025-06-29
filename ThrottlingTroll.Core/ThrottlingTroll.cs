@@ -77,7 +77,7 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public Task<T> WithThrottlingTroll<T>(Func<Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded, string methodName = null)
+        public Task<T> WithThrottlingTroll<T>(Func<ThrottlingTrollContext, Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded, string methodName = null)
         {
             var requestProxy = new GenericRequestProxy { Method = methodName };
 
@@ -85,13 +85,13 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task WithThrottlingTroll(Func<Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded, string methodName = null)
+        public async Task WithThrottlingTroll(Func<ThrottlingTrollContext, Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded, string methodName = null)
         {
             await this.WithThrottlingTroll
             (
-                async () =>
+                async ctx =>
                 {
-                    await todo();
+                    await todo(ctx);
                     return 0;
                 },
                 async ctx =>
@@ -103,16 +103,16 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<T> WithThrottlingTroll<T>(IHttpRequestProxy requestProxy, Func<Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded)
+        public async Task<T> WithThrottlingTroll<T>(IHttpRequestProxy requestProxy, Func<ThrottlingTrollContext, Task<T>> todo, Func<ThrottlingTrollContext, Task<T>> onLimitExceeded)
         {
             var cleanupRoutines = new List<Func<Task>>();
             try
             {
                 var checkList = await this.IsExceededAsync(requestProxy, cleanupRoutines);
+                var ctx = new ThrottlingTrollContext { LimitCheckResults = checkList };
+
                 if (checkList.Any(r => r.RequestsRemaining < 0))
                 {
-                    var ctx = new ThrottlingTrollContext { LimitCheckResults = checkList };
-
                     var result = await onLimitExceeded(ctx);
 
                     if (!ctx.ShouldContinueAsNormal)
@@ -123,7 +123,7 @@ namespace ThrottlingTroll
 
                 try
                 {
-                    return await todo();
+                    return await todo(ctx);
                 }
                 catch (Exception ex)
                 {
@@ -140,14 +140,14 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task WithThrottlingTroll(IHttpRequestProxy requestProxy, Func<Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded)
+        public async Task WithThrottlingTroll(IHttpRequestProxy requestProxy, Func<ThrottlingTrollContext, Task> todo, Func<ThrottlingTrollContext, Task> onLimitExceeded)
         {
             await this.WithThrottlingTroll
             (
                 requestProxy,
-                async () =>
+                async ctx =>
                 {
-                    await todo();
+                    await todo(ctx);
                     return 0;
                 },
                 async ctx =>

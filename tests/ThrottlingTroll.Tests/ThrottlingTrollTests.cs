@@ -28,7 +28,7 @@ public class ThrottlingTrollTests
 
         // Act
 
-        var result = await troll.WithThrottlingTroll(() => Task.FromResult(normalResult), async ctx =>
+        var result = await troll.WithThrottlingTroll(ctx => Task.FromResult(normalResult), async ctx =>
         {
             Assert.Fail("onLimitExceeded should not be called");
             return "should not be called";
@@ -52,7 +52,7 @@ public class ThrottlingTrollTests
 
         // Act
 
-        var result = await troll.WithThrottlingTroll(() => Task.FromResult("should not be returned"), async ctx => 
+        var result = await troll.WithThrottlingTroll(ctx => Task.FromResult("should not be returned"), async ctx => 
         {
             Assert.AreEqual(ctx.ExceededLimit.Rule, rule);
 
@@ -78,7 +78,7 @@ public class ThrottlingTrollTests
 
         // Act
 
-        var result = await troll.WithThrottlingTroll(() => Task.FromResult(normalResult), async ctx =>
+        var result = await troll.WithThrottlingTroll(ctx => Task.FromResult(normalResult), async ctx =>
         {
             Assert.AreEqual(ctx.ExceededLimit.Rule, rule);
 
