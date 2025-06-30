@@ -26,7 +26,13 @@ namespace ThrottlingTroll
 
             services.AddSingleton<IThrottlingTroll>(serviceProvider =>
             {
-                opt.GetConfigFunc = MergeAllConfigSources(opt.Config, null, opt.GetConfigFunc, serviceProvider);
+                opt.GetConfigFunc = MergeAllConfigSources(
+                    opt.Config,
+                    null,
+                    opt.GetConfigFunc,
+                    serviceProvider,
+                    opt.ConfigSectionName
+                );
 
                 if (opt.Log == null)
                 {
@@ -104,7 +110,7 @@ namespace ThrottlingTroll
             ThrottlingTrollConfig declarativeConfig,
             Func<Task<ThrottlingTrollConfig>> configFunc, 
             IServiceProvider serviceProvider,
-            string configSectionName = IngressConfigSectionName
+            string configSectionName
         )
         {
             config ??= new ThrottlingTrollConfig();
@@ -214,8 +220,6 @@ namespace ThrottlingTroll
 
             return str;
         }
-
-        private const string IngressConfigSectionName = "ThrottlingTrollIngress";
 
         private static void CheckLimitValue(RateLimitAlgorithm algorithm, bool isOk, string message)
         {

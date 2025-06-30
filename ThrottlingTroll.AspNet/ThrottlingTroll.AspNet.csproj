@@ -6,7 +6,7 @@
         <IncludeSymbols>true</IncludeSymbols>
 
         <PackageId>ThrottlingTroll</PackageId>
-        <VersionPrefix>8.0.0-beta2</VersionPrefix>
+        <VersionPrefix>8.0.0-beta3</VersionPrefix>
         <PackageTags>Rate Limiting;Throttling;ASP.NET;Redis</PackageTags>
         <Description>Rate limiting library for .NET/ASP.NET Core</Description>
         <Authors>ThrottlingTroll</Authors>

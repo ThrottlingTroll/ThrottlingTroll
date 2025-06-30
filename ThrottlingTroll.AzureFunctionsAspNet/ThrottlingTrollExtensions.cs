@@ -116,7 +116,13 @@ namespace ThrottlingTroll
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
         {
-            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, CollectDeclarativeConfig(opt.Assemblies), opt.GetConfigFunc, context.InstanceServices);
+            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(
+                opt.Config,
+                CollectDeclarativeConfig(opt.Assemblies),
+                opt.GetConfigFunc,
+                context.InstanceServices,
+                opt.ConfigSectionName
+            );
 
             if (opt.Log == null)
             {

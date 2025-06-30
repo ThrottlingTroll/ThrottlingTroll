@@ -14,6 +14,11 @@ namespace ThrottlingTroll
     public class ThrottlingTrollOptions
     {
         /// <summary>
+        /// Configuration section name to read statically configured rules from. Defaults to "ThrottlingTrollIngress" for ingress and "ThrottlingTrollEgress" for egress.
+        /// </summary>
+        public string ConfigSectionName { get; set; } = "ThrottlingTrollIngress";
+
+        /// <summary>
         /// Static instance of <see cref="ThrottlingTrollConfig"/>
         /// </summary>
         public ThrottlingTrollConfig Config { get; set; }

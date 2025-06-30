@@ -34,7 +34,13 @@ namespace ThrottlingTroll
                 options(opt);
             }
 
-            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, CollectDeclarativeConfig(opt.Assemblies), opt.GetConfigFunc, builder.ApplicationServices);
+            opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(
+                opt.Config,
+                CollectDeclarativeConfig(opt.Assemblies),
+                opt.GetConfigFunc,
+                builder.ApplicationServices,
+                opt.ConfigSectionName
+            );
 
             if (opt.Log == null)
             {

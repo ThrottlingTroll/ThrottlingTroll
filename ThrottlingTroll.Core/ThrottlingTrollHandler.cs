@@ -543,14 +543,20 @@ namespace ThrottlingTroll
         {
             return builder.AddHttpMessageHandler(serviceProvider =>
             {
-                var opt = new ThrottlingTrollOptions();
+                var opt = new ThrottlingTrollOptions { ConfigSectionName = EgressConfigSectionName };
 
                 if (options != null)
                 {
                     options(serviceProvider, opt);
                 }
 
-                opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(opt.Config, null, opt.GetConfigFunc, serviceProvider, EgressConfigSectionName);
+                opt.GetConfigFunc = ThrottlingTrollCoreExtensions.MergeAllConfigSources(
+                    opt.Config,
+                    null,
+                    opt.GetConfigFunc,
+                    serviceProvider,
+                    opt.ConfigSectionName
+                );
 
                 if (opt.Log == null)
                 {
