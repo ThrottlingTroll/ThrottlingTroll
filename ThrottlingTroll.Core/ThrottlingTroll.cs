@@ -123,11 +123,16 @@ namespace ThrottlingTroll
 
                 try
                 {
-                    return await todo(ctx);
+                    var result = await todo(ctx);
+
+                    // Removing internal circuit breaking rules
+                    await this.CheckAndBreakTheCircuit(requestProxy, null, null);
+
+                    return result;
                 }
                 catch (Exception ex)
                 {
-                    // Adding/removing internal circuit breaking rules
+                    // Adding internal circuit breaking rules
                     await this.CheckAndBreakTheCircuit(requestProxy, null, ex);
 
                     throw;
