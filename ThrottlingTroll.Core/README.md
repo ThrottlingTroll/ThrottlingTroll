@@ -72,3 +72,5 @@ static async Task Main(string[] args)
     }
 }
 ```
+
+[All different ways of configuring, all other features and more code snippets are documented in our Wiki](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki).
