@@ -20,7 +20,7 @@ Install from Nuget:
 
 ## Features
 
-* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions (.NET Isolated)](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. Since [v8.0](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0) can be used in any .NET application.
+* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
 * [**Ingress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure), aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
