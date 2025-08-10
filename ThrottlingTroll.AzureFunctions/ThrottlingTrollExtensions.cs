@@ -61,7 +61,6 @@ namespace ThrottlingTroll
 
                     if (middleware == null)
                     {
-                        // Using opt as lock object
                         lock (lockObject)
                         {
                             if (middleware == null)
