@@ -22,10 +22,9 @@ namespace ThrottlingTroll
         /// </summary>
         public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
             this IFunctionsWorkerApplicationBuilder builder,
-            HostBuilderContext builderContext,
             Action<ThrottlingTrollOptions> options = null)
         {
-            return builder.UseThrottlingTroll(builderContext, options == null ? null : (ctx, opt) => options(opt));
+            return builder.UseThrottlingTroll(options == null ? null : (ctx, opt) => options(opt));
         }
 
         /// <summary>
@@ -33,7 +32,6 @@ namespace ThrottlingTroll
         /// </summary>
         public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
             this IFunctionsWorkerApplicationBuilder builder,
-            HostBuilderContext builderContext,
             Action<FunctionContext, ThrottlingTrollOptions> options)
         {
             // Need to create this instance here, so that Assemblies are correctly initialized.
@@ -86,6 +84,28 @@ namespace ThrottlingTroll
                     response.Apply();
                 }
              );
+        }
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
+            this IFunctionsWorkerApplicationBuilder builder,
+            HostBuilderContext builderContext,
+            Action<ThrottlingTrollOptions> options = null)
+        {
+            return builder.UseThrottlingTroll(options);
+        }
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
+            this IFunctionsWorkerApplicationBuilder builder,
+            HostBuilderContext builderContext,
+            Action<FunctionContext, ThrottlingTrollOptions> options)
+        {
+            return builder.UseThrottlingTroll(options);
         }
 
         /// <summary>
