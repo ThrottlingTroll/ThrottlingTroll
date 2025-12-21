@@ -42,25 +42,6 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ThrottlingTroll.AzureFunctions/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
 
-  push-throttlingTroll-azurefunctions-aspnet:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Build ThrottlingTroll.AzureFunctionsAspNet
-      run: dotnet build -c Release ThrottlingTroll.AzureFunctionsAspNet
-    - name: Pack ThrottlingTroll.AzureFunctionsAspNet
-      run: dotnet pack ThrottlingTroll.AzureFunctionsAspNet/ThrottlingTroll.AzureFunctionsAspNet.csproj -p:NuspecFile=nuspec.nuspec -o ThrottlingTroll.AzureFunctionsAspNet/output
-    - name: Push ThrottlingTroll.AzureFunctionsAspNet
-      env:
-        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-      run: dotnet nuget push ThrottlingTroll.AzureFunctionsAspNet/output/ThrottlingTroll.*.*.*.symbols.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
-
   push-throttlingTroll-counterstores-azuretable:
     runs-on: ubuntu-latest
 

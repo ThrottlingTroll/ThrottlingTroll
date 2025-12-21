@@ -12,7 +12,7 @@
     <readme>README.md</readme>
       
     <dependencies>
-      <dependency id="StackExchange.Redis" version="2.7.4" exclude="Build,Analyzers" />
+      <dependency id="StackExchange.Redis" version="2.10.1" exclude="Build,Analyzers" />
     </dependencies>
   </metadata>
 
