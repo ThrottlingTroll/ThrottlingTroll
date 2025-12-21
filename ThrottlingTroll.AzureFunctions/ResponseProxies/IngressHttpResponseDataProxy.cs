@@ -57,7 +57,7 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         internal override async Task ConstructResponse(
             List<LimitCheckResult> checkList,
-            IIncomingHttpRequestProxy requestProxy,
+            IHttpRequestProxy requestProxy,
             Func<Task> callNextOnce,
             Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             CancellationToken cancellationToken)
@@ -78,7 +78,9 @@ namespace ThrottlingTroll
             responseFabric = exceededLimit.Rule?.ResponseFabric ?? responseFabric;
 
             // Need to initialize ResponseData before we're being passed to responseFabric
-            this.ResponseData = requestProxy.RequestData.CreateResponse(HttpStatusCode.OK);
+            this.ResponseData = ((IIncomingHttpRequestDataProxy)requestProxy)
+                .RequestData
+                .CreateResponse(HttpStatusCode.OK);
 
             if (responseFabric == null)
             {

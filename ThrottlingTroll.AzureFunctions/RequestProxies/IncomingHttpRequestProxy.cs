@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
 
@@ -16,9 +15,6 @@ namespace ThrottlingTroll
             this._functionContext = functionContext;
             this.Request = functionContext.GetHttpContext().Request;
         }
-
-        /// <inheritdoc />
-        public HttpRequestData RequestData => null;
 
         /// <inheritdoc />
         public HttpRequest Request { get; private set; }

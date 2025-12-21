@@ -31,7 +31,7 @@ namespace ThrottlingTroll
             FunctionContext context, 
             Func<Task> next)
         {
-            IIncomingHttpRequestProxy requestProxy;
+            IHttpRequestProxy requestProxy;
             IngressHttpResponseProxyBase responseProxy;
 
             var httpContext = context.GetHttpContext();

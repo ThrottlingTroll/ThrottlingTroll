@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Functions.Worker.Http;
+﻿using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +8,7 @@ namespace ThrottlingTroll
     /// <summary>
     /// Abstraction layer on top of <see cref="HttpRequestData"/>
     /// </summary>
-    public class IncomingHttpRequestDataProxy : IIncomingHttpRequestProxy
+    public class IncomingHttpRequestDataProxy : IIncomingHttpRequestDataProxy
     {
         internal IncomingHttpRequestDataProxy(HttpRequestData request)
         {
@@ -18,9 +17,6 @@ namespace ThrottlingTroll
 
         /// <inheritdoc />
         public HttpRequestData RequestData { get; private set; }
-
-        /// <inheritdoc />
-        public HttpRequest Request => null;
 
         /// <inheritdoc />
         public string Uri

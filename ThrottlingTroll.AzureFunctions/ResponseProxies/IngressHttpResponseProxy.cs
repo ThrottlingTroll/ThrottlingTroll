@@ -51,7 +51,7 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         internal override async Task ConstructResponse(
             List<LimitCheckResult> checkList,
-            IIncomingHttpRequestProxy requestProxy,
+            IHttpRequestProxy requestProxy,
             Func<Task> callNextOnce,
             Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> responseFabric,
             CancellationToken cancellationToken)
