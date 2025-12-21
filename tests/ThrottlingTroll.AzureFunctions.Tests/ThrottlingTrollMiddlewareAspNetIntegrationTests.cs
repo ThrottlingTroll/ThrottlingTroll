@@ -1,98 +1,18 @@
+using Azure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Context.Features;
-using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Net.Http.Headers;
 using Moq;
-using System.Collections;
-using System.Net;
-using System.Security.Claims;
 
-namespace ThrottlingTroll.AzureFunctions.Tests
+namespace ThrottlingTroll.AzureFunctionsAspNet.Tests
 {
-    class FakeHttpResponseData : HttpResponseData
-    {
-        public FakeHttpResponseData(FunctionContext functionContext) : base(functionContext)
-        {
-            this.Headers = new HttpHeadersCollection();
-            this.Body = new MemoryStream();
-        }
-
-        public override HttpStatusCode StatusCode { get; set; }
-        public override HttpHeadersCollection Headers { get; set; }
-        public override Stream Body { get; set; }
-
-        public override HttpCookies Cookies { get; }
-    }
-
-    class FakeHttpRequestData : HttpRequestData
-    {
-        public FakeHttpRequestData() : base(new FakeFunctionContext())
-        {
-        }
-
-        public FakeHttpRequestData(FunctionContext ctx) : base(ctx)
-        {
-        }
-
-        public override Stream Body => throw new NotImplementedException();
-
-        public override HttpHeadersCollection Headers { get; }
-
-        public override IReadOnlyCollection<IHttpCookie> Cookies => throw new NotImplementedException();
-
-        public override Uri Url { get; }
-
-        public override IEnumerable<ClaimsIdentity> Identities => throw new NotImplementedException();
-
-        public override string Method { get; }
-
-        public override HttpResponseData CreateResponse()
-        {
-            return new FakeHttpResponseData(this.FunctionContext);
-        }
-    }
-
-    class FakeHttpRequestDataFeature : IHttpRequestDataFeature
-    {
-        public ValueTask<HttpRequestData?> GetHttpRequestDataAsync(FunctionContext context)
-        {
-            HttpRequestData data = new FakeHttpRequestData(context);
-            return ValueTask.FromResult(data)!;
-        }
-    }
-
-    class FakeInvocationFeatures : IInvocationFeatures
-    {
-        public T? Get<T>()
-        {
-            if (typeof(T) == typeof(IHttpRequestDataFeature))
-            {
-                return (T)(object)new FakeHttpRequestDataFeature();
-            }
-
-            throw FakeFunctionContext.GetHttpResponseDataWasCalledException;
-        }
-
-        public IEnumerator<KeyValuePair<Type, object>> GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Set<T>(T instance)
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-    }
 
     class FakeFunctionContext : FunctionContext
     {
-        public override FunctionDefinition FunctionDefinition => throw new NotImplementedException();
-
-        public override IServiceProvider InstanceServices { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override IDictionary<object, object> Items { get; set; } = new Dictionary<object, object>()
+        {
+            { "HttpRequestContext", new DefaultHttpContext() }
+        };
 
         public override string InvocationId => throw new NotImplementedException();
 
@@ -104,36 +24,11 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
         public override RetryContext RetryContext => throw new NotImplementedException();
 
-        public override IDictionary<object, object> Items { get; set; } = new Dictionary<object, object>();
+        public override IServiceProvider InstanceServices { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        public override FunctionDefinition FunctionDefinition => throw new NotImplementedException();
 
-        public static Exception GetHttpResponseDataWasCalledException = new Exception("This indicates that request.FunctionContext.GetHttpResponseData() was called");
-
-        public override IInvocationFeatures Features { get { return new FakeInvocationFeatures(); } }
-    }
-
-    class AlwaysExceededMethod : RateLimitMethod
-    {
-        public override int RetryAfterInSeconds => DateTimeOffset.UtcNow.Second;
-
-        public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
-        {
-            return Task.CompletedTask;
-        }
-
-        public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
-        {
-            return -1;
-        }
-
-        public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
-        {
-            throw new NotImplementedException();
-        }
-        public override string GetCacheKey()
-        {
-            return string.Empty;
-        }
+        public override IInvocationFeatures Features => throw new NotImplementedException();
     }
 
     [TestClass]
@@ -160,23 +55,13 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            try
+            await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
             {
-                await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
-                {
-                    Assert.IsFalse(nextWasCalled);
+                Assert.IsFalse(nextWasCalled);
 
-                    nextWasCalled = true;
+                nextWasCalled = true;
 
-                });
-            }
-            catch (Exception ex)
-            {
-                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
-                // that this particular exception instance was thrown by FakeFunctionContext
-
-                Assert.AreEqual(FakeFunctionContext.GetHttpResponseDataWasCalledException, ex);
-            }
+            });
 
             // Assert
 
@@ -217,7 +102,6 @@ namespace ThrottlingTroll.AzureFunctions.Tests
             Assert.AreEqual(exception, resultException);
         }
 
-
         [TestMethod]
         public async Task InvokeAsyncTest_EgressThrowsTooManyRequestsException_ReturnsRetryAfterResponse()
         {
@@ -240,10 +124,13 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
+            httpContext.Response.Body = new MemoryStream();
+
             // Act
 
-            var ctx = new FakeFunctionContext();
-            var result = (IngressHttpResponseDataProxy)await middleware.InvokeAsync(ctx, async () =>
+            await middleware.InvokeAsync(functionContext, async () =>
             {
                 throw exception;
 
@@ -251,11 +138,11 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Assert
 
-            Assert.AreEqual(HttpStatusCode.TooManyRequests, result.ResponseData.StatusCode);
-            Assert.AreEqual(exception.RetryAfterHeaderValue, result.ResponseData.Headers.GetValues("Retry-After").Single());
+            Assert.AreEqual(StatusCodes.Status429TooManyRequests, httpContext.Response.StatusCode);
+            Assert.AreEqual(exception.RetryAfterHeaderValue, httpContext.Response.Headers[HeaderNames.RetryAfter].ToString());
 
-            result.ResponseData.Body.Seek(0, SeekOrigin.Begin);
-            using (var reader = new StreamReader(result.ResponseData.Body))
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            using (var reader = new StreamReader(httpContext.Response.Body))
             {
                 Assert.AreEqual($"Retry after {exception.RetryAfterHeaderValue}", reader.ReadToEnd());
             }
@@ -283,10 +170,13 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
+            httpContext.Response.Body = new MemoryStream();
+
             // Act
 
-            var ctx = new FakeFunctionContext();
-            var result = (IngressHttpResponseDataProxy)await middleware.InvokeAsync(ctx, async () =>
+            await middleware.InvokeAsync(functionContext, async () =>
             {
                 Task.Run(() => { throw exception; }).Wait();
 
@@ -294,11 +184,11 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Assert
 
-            Assert.AreEqual(HttpStatusCode.TooManyRequests, result.ResponseData.StatusCode);
-            Assert.AreEqual(exception.RetryAfterHeaderValue, result.ResponseData.Headers.GetValues("Retry-After").Single());
+            Assert.AreEqual(StatusCodes.Status429TooManyRequests, httpContext.Response.StatusCode);
+            Assert.AreEqual(exception.RetryAfterHeaderValue, httpContext.Response.Headers[HeaderNames.RetryAfter].ToString());
 
-            result.ResponseData.Body.Seek(0, SeekOrigin.Begin);
-            using (var reader = new StreamReader(result.ResponseData.Body))
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            using (var reader = new StreamReader(httpContext.Response.Body))
             {
                 Assert.AreEqual($"Retry after {exception.RetryAfterHeaderValue}", reader.ReadToEnd());
             }
@@ -326,23 +216,52 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
+            httpContext.Response.Body = new MemoryStream();
+
             // Act
 
-            var ctx = new FakeFunctionContext();
-            var result = (IngressHttpResponseDataProxy)await middleware.InvokeAsync(ctx, async () =>
+            await middleware.InvokeAsync(functionContext, async () =>
             {
                 throw exception;
 
             });
 
             // Assert
-            Assert.AreEqual(HttpStatusCode.TooManyRequests, result.ResponseData.StatusCode);
-            Assert.AreEqual(exception.RetryAfterHeaderValue, result.ResponseData.Headers.GetValues("Retry-After").Single());
 
-            result.ResponseData.Body.Seek(0, SeekOrigin.Begin);
-            using (var reader = new StreamReader(result.ResponseData.Body))
+            Assert.AreEqual(StatusCodes.Status429TooManyRequests, httpContext.Response.StatusCode);
+            Assert.AreEqual(exception.RetryAfterHeaderValue, httpContext.Response.Headers[HeaderNames.RetryAfter].ToString());
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            using (var reader = new StreamReader(httpContext.Response.Body))
             {
                 Assert.AreEqual($"Retry after {exception.RetryAfterHeaderValue} seconds", reader.ReadToEnd());
+            }
+        }
+
+        class AlwaysExceededMethod : RateLimitMethod
+        {
+            public override int RetryAfterInSeconds => DateTimeOffset.UtcNow.Second;
+
+            public override Task DecrementAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
+            {
+                return Task.CompletedTask;
+            }
+
+            public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
+            {
+                return -1;
+            }
+
+            public override Task<bool> IsStillExceededAsync(string limitKey, ICounterStore store, IHttpRequestProxy request)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override string GetCacheKey()
+            {
+                return string.Empty;
             }
         }
 
@@ -374,10 +293,13 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
+            httpContext.Response.Body = new MemoryStream();
+
             // Act
 
-            var ctx = new FakeFunctionContext();
-            var result = (IngressHttpResponseDataProxy)await middleware.InvokeAsync(ctx, async () =>
+            await middleware.InvokeAsync(functionContext, async () =>
             {
                 Assert.Fail("_next() should not be called");
 
@@ -385,13 +307,13 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Assert
 
-            Assert.AreEqual(HttpStatusCode.TooManyRequests, result.ResponseData.StatusCode);
-            Assert.AreEqual(limitMethod.RetryAfterInSeconds.ToString(), result.ResponseData.Headers.GetValues("Retry-After").Single());
+            Assert.AreEqual(StatusCodes.Status429TooManyRequests, httpContext.Response.StatusCode);
+            Assert.AreEqual(limitMethod.RetryAfterInSeconds.ToString(), httpContext.Response.Headers[HeaderNames.RetryAfter].ToString());
 
-            result.ResponseData.Body.Seek(0, SeekOrigin.Begin);
-            using (var reader = new StreamReader(result.ResponseData.Body))
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            using (var reader = new StreamReader(httpContext.Response.Body))
             {
-                Assert.AreEqual($"Retry after {limitMethod.RetryAfterInSeconds.ToString()} seconds", reader.ReadToEnd());
+                Assert.AreEqual($"Retry after {limitMethod.RetryAfterInSeconds} seconds", reader.ReadToEnd());
             }
         }
 
@@ -424,7 +346,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
                 ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
                 {
-                    responseProxy.StatusCode = (int)HttpStatusCode.PaymentRequired;
+                    responseProxy.StatusCode = StatusCodes.Status402PaymentRequired;
 
                     await responseProxy.WriteAsync(responseBody);
                 }
@@ -432,10 +354,13 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var functionContext = new FakeFunctionContext();
+            var httpContext = functionContext.GetHttpContext()!;
+            httpContext.Response.Body = new MemoryStream();
+
             // Act
 
-            var ctx = new FakeFunctionContext();
-            var result = (IngressHttpResponseDataProxy)await middleware.InvokeAsync(ctx, async () =>
+            await middleware.InvokeAsync(functionContext, async () =>
             {
                 Assert.Fail("_next() should not be called");
 
@@ -443,10 +368,10 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Assert
 
-            Assert.AreEqual(HttpStatusCode.PaymentRequired, result.ResponseData.StatusCode);
+            Assert.AreEqual(StatusCodes.Status402PaymentRequired, httpContext.Response.StatusCode);
 
-            result.ResponseData.Body.Seek(0, SeekOrigin.Begin);
-            using (var reader = new StreamReader(result.ResponseData.Body))
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            using (var reader = new StreamReader(httpContext.Response.Body))
             {
                 Assert.AreEqual(responseBody, reader.ReadToEnd());
             }
@@ -479,7 +404,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
                 ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
                 {
-                    ((IngressHttpResponseDataProxy)responseProxy).ShouldContinueAsNormal = true;
+                    ((IngressHttpResponseProxy)responseProxy).ShouldContinueAsNormal = true;
                 }
             };
 
@@ -487,28 +412,20 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var httpContext = new DefaultHttpContext();
+
             // Act
 
-            try
+            await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
             {
-                var ctx = new FakeFunctionContext();
-                await middleware.InvokeAsync(ctx, async () =>
-                {
-                    Assert.IsFalse(nextWasCalled);
-                    nextWasCalled = true;
+                Assert.IsFalse(nextWasCalled);
+                nextWasCalled = true;
 
-                });
-            }
-            catch (Exception ex)
-            {
-                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
-                // that this particular exception instance was thrown by FakeFunctionContext
-
-                Assert.AreEqual(FakeFunctionContext.GetHttpResponseDataWasCalledException, ex);
-            }
+            });
 
             // Assert
 
+            Assert.AreEqual(StatusCodes.Status200OK, httpContext.Response.StatusCode);
             Assert.IsTrue(nextWasCalled);
         }
 
@@ -530,7 +447,7 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
                 ResponseFabric = async (limitExceededResult, requestProxy, responseProxy, requestAborted) =>
                 {
-                    ((IngressHttpResponseDataProxy)responseProxy).ShouldContinueAsNormal = true;
+                    ((IngressHttpResponseProxy)responseProxy).ShouldContinueAsNormal = true;
                 }
             };
 
@@ -538,27 +455,22 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             var middleware = new ThrottlingTrollMiddleware(options);
 
+            var httpContext = new DefaultHttpContext();
+
             // Act
 
-            try
+            await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
             {
-                await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
-                {
-                    Assert.IsFalse(nextWasCalled);
-                    nextWasCalled = true;
+                Assert.IsFalse(nextWasCalled);
+                nextWasCalled = true;
 
-                });
-            }
-            catch (Exception ex) 
-            {
-                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
-                // that this particular exception instance was thrown by FakeFunctionContext
+                throw new ThrottlingTrollTooManyRequestsException();
 
-                Assert.AreEqual(FakeFunctionContext.GetHttpResponseDataWasCalledException, ex);
-            }
+            });
 
             // Assert
 
+            Assert.AreEqual(StatusCodes.Status200OK, httpContext.Response.StatusCode);
             Assert.IsTrue(nextWasCalled);
         }
     }

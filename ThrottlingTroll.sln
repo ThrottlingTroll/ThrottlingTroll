@@ -31,6 +31,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.AzureFuncti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottlingTroll.CounterStores.EfCore", "ThrottlingTroll.CounterStores.EfCore\ThrottlingTroll.CounterStores.EfCore.csproj", "{0F6F7AE0-053D-4CE4-A655-517D427E02F4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTrollSampleAspNetFunction", "..\ThrottlingTroll-AzureFunctions-Samples\ThrottlingTrollSampleAspNetFunction\ThrottlingTrollSampleAspNetFunction.csproj", "{C0A109CC-BFBA-6E68-A1F3-26E06CA68899}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTrollSampleFunction", "..\ThrottlingTroll-AzureFunctions-Samples\ThrottlingTrollSampleFunction\ThrottlingTrollSampleFunction.csproj", "{E8C3D373-59D2-6F55-115C-D8D1A523A75A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottlingTrollSampleWeb", "..\ThrottlingTroll-AspDotNetCore-Samples\ThrottlingTrollSampleWeb\ThrottlingTrollSampleWeb.csproj", "{F4F516BD-3D68-F686-7CFA-66DA793406DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +97,18 @@ Global
 		{0F6F7AE0-053D-4CE4-A655-517D427E02F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F6F7AE0-053D-4CE4-A655-517D427E02F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F6F7AE0-053D-4CE4-A655-517D427E02F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0A109CC-BFBA-6E68-A1F3-26E06CA68899}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0A109CC-BFBA-6E68-A1F3-26E06CA68899}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0A109CC-BFBA-6E68-A1F3-26E06CA68899}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0A109CC-BFBA-6E68-A1F3-26E06CA68899}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8C3D373-59D2-6F55-115C-D8D1A523A75A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8C3D373-59D2-6F55-115C-D8D1A523A75A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8C3D373-59D2-6F55-115C-D8D1A523A75A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8C3D373-59D2-6F55-115C-D8D1A523A75A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4F516BD-3D68-F686-7CFA-66DA793406DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4F516BD-3D68-F686-7CFA-66DA793406DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4F516BD-3D68-F686-7CFA-66DA793406DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4F516BD-3D68-F686-7CFA-66DA793406DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -99,6 +119,9 @@ Global
 		{1018E970-C585-45E9-B170-F670C40466CF} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 		{FCF14C9B-EB92-4255-9853-34B87C82F845} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
 		{48F1C023-FC4D-4E55-AFB3-88D2E2C85BC7} = {EABC27FE-E387-47F1-9BF9-8B6181F98D9F}
+		{C0A109CC-BFBA-6E68-A1F3-26E06CA68899} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{E8C3D373-59D2-6F55-115C-D8D1A523A75A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F4F516BD-3D68-F686-7CFA-66DA793406DD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F213F60D-DF07-4F11-9B94-4143A16E1EE6}

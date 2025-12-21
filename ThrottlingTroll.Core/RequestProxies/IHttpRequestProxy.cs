@@ -39,6 +39,5 @@ namespace ThrottlingTroll
         /// Request context key-value storage
         /// </summary>
         public IDictionary<object, object> RequestContextItems { get; }
-
     }
 }

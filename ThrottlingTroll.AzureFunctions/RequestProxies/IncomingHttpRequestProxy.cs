@@ -1,29 +1,42 @@
-﻿using Microsoft.Azure.Functions.Worker.Http;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Abstraction layer on top of <see cref="HttpRequestData"/>
+    /// Abstraction layer on top of <see cref="HttpRequest"/>
     /// </summary>
     public class IncomingHttpRequestProxy : IIncomingHttpRequestProxy
     {
-        internal IncomingHttpRequestProxy(HttpRequestData request)
+        internal IncomingHttpRequestProxy(FunctionContext functionContext)
         {
-            this.Request = request;
+            this._functionContext = functionContext;
+            this.Request = functionContext.GetHttpContext().Request;
         }
 
         /// <inheritdoc />
-        public HttpRequestData Request { get; private set; }
+        public HttpRequestData RequestData => null;
+
+        /// <inheritdoc />
+        public HttpRequest Request { get; private set; }
 
         /// <inheritdoc />
         public string Uri
         {
             get
             {
-                return this.Request.Url?.ToString();
+                string path = this.Request.Path.ToString().Trim('/');
+                if (!string.IsNullOrEmpty(path))
+                {
+                    path = "/" + path;
+                }
+
+                string url = $"{this.Request.Scheme}://{this.Request.Host}{path}{this.Request.QueryString}";
+
+                return url;
             }
         }
 
@@ -32,7 +45,7 @@ namespace ThrottlingTroll
         {
             get
             {
-                return $"{this.Request.Url?.Scheme}://{this.Request.Url?.Authority}{this.Request.Url?.AbsolutePath}";
+                return $"{this.Request.Scheme}://{this.Request.Host}{this.Request.Path}";
             }
         }
 
@@ -50,26 +63,16 @@ namespace ThrottlingTroll
         {
             get
             {
-                if (this._headers == null)
-                {
-                    var headers = new Dictionary<string, StringValues>();
-
-                    foreach (var header in this.Request.Headers)
-                    {
-                        headers.Add(header.Key, new StringValues(header.Value.ToArray()));
-                    }
-
-                    this._headers = headers;
-                }
-
-                return this._headers;
+                return this.Request.Headers;
             }
         }
 
         /// <inheritdoc />
         public void AppendToContextItem<T>(string key, List<T> list)
         {
-            this.Request.FunctionContext.Items.AddItemsToKey(key, list);
+            // Adding both to FunctionContext and HttpContext
+            this._functionContext.Items.AddItemsToKey(key, list);
+            this.Request.HttpContext.Items[key] = this._functionContext.Items[key];
         }
 
         /// <inheritdoc />
@@ -77,10 +80,10 @@ namespace ThrottlingTroll
         {
             get
             {
-                return this.Request.FunctionContext.Items;
+                return this.Request.HttpContext.Items;
             }
         }
 
-        private IDictionary<string, StringValues> _headers;
+        private readonly FunctionContext _functionContext;
     }
 }

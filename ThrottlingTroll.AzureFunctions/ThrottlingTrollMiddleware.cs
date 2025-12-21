@@ -1,10 +1,7 @@
-﻿using Grpc.Core;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
+﻿using Microsoft.Azure.Functions.Worker;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,10 +27,32 @@ namespace ThrottlingTroll
         /// <summary>
         /// Is invoked by Azure Functions middleware pipeline. Handles ingress throttling.
         /// </summary>
-        public async Task<HttpResponseData> InvokeAsync(HttpRequestData request, Func<Task> next, CancellationToken cancellationToken)
+        public async Task<IngressHttpResponseProxyBase> InvokeAsync(
+            FunctionContext context, 
+            Func<Task> next)
         {
-            var requestProxy = new IncomingHttpRequestProxy(request);
+            IIncomingHttpRequestProxy requestProxy;
+            IngressHttpResponseProxyBase responseProxy;
+
+            var httpContext = context.GetHttpContext();
+            if (httpContext == null)
+            {
+                // "classic" function
+                var requestData = await context.GetHttpRequestDataAsync() ?? throw new ArgumentNullException("HTTP Request is null");
+                requestProxy = new IncomingHttpRequestDataProxy(requestData);
+
+                responseProxy = new IngressHttpResponseDataProxy();
+            }
+            else
+            {
+                // ASP.Net Core Integration
+                requestProxy = new IncomingHttpRequestProxy(context);
+
+                responseProxy = new IngressHttpResponseProxy(httpContext.Response);
+            }
+
             var cleanupRoutines = new List<Func<Task>>();
+
             try
             {
                 // Need to call the rest of the pipeline no more than one time
@@ -47,7 +66,8 @@ namespace ThrottlingTroll
                             await next();
 
                             // Adding/removing internal circuit breaking rules
-                            await this.CheckAndBreakTheCircuit(requestProxy, new IngressHttpResponseProxy(request.FunctionContext.GetHttpResponseData()), null);
+                            await responseProxy.OnResponseCompleted(
+                                () => this.CheckAndBreakTheCircuit(requestProxy, (IHttpResponseProxy)responseProxy, null));
                         }
                         catch (Exception ex)
                         {
@@ -60,7 +80,14 @@ namespace ThrottlingTroll
 
                 var checkList = await this.IsIngressOrEgressExceededAsync(requestProxy, cleanupRoutines, callNextOnce);
 
-                return await this.ConstructResponse(request, checkList, requestProxy, callNextOnce, cancellationToken);
+                await responseProxy.ConstructResponse(
+                    checkList,
+                    requestProxy,
+                    callNextOnce,
+                    this._responseFabric,
+                    context.CancellationToken);
+
+                return responseProxy;
             }
             finally
             {
@@ -69,68 +96,5 @@ namespace ThrottlingTroll
         }
 
         private readonly Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> _responseFabric;
-
-        private async Task<HttpResponseData> ConstructResponse(HttpRequestData request, List<LimitCheckResult> checkList, IHttpRequestProxy requestProxy, Func<Task> callNextOnce, CancellationToken cancellationToken)
-        {
-            var exceededLimit = checkList
-                .Where(r => r.RequestsRemaining < 0)
-                // Sorting by the suggested RetryAfter header value (which is expected to be in seconds) in descending order
-                .OrderByDescending(r => r.RetryAfterInSeconds)
-                .FirstOrDefault();
-
-            if (exceededLimit == null)
-            {
-                return null;
-            }
-
-            // Exceeded rule's ResponseFabric takes precedence.
-            // But 1) it can be null and 2) result.Rule can also be null (when 429 is propagated from egress)
-            var responseFabric = exceededLimit.Rule?.ResponseFabric ?? this._responseFabric;
-
-            var response = request.CreateResponse(HttpStatusCode.OK);
-
-            if (responseFabric == null)
-            {
-                // For Circuit Breaker returning 503 Service Unavailable
-                response.StatusCode = exceededLimit.Rule?.LimitMethod is CircuitBreakerRateLimitMethod ?
-                    HttpStatusCode.ServiceUnavailable :
-                    HttpStatusCode.TooManyRequests;
-
-                // Formatting default Retry-After response
-
-                if (!string.IsNullOrEmpty(exceededLimit.RetryAfterHeaderValue))
-                {
-                    response.Headers.Add("Retry-After", exceededLimit.RetryAfterHeaderValue);
-                }
-
-                string responseString = DateTime.TryParse(exceededLimit.RetryAfterHeaderValue, out var dt) ?
-                    exceededLimit.RetryAfterHeaderValue :
-                    $"{exceededLimit.RetryAfterHeaderValue} seconds";
-
-                await response.WriteStringAsync($"Retry after {responseString}");
-
-                return response;
-            }
-            else
-            {
-                // Using the provided response builder
-
-                var responseProxy = new IngressHttpResponseProxy(response);
-
-                await responseFabric(checkList, requestProxy, responseProxy, cancellationToken);
-
-                if (responseProxy.ShouldContinueAsNormal)
-                {
-                    // Continue with normal request processing
-                    await callNextOnce();
-
-                    return null;
-                }
-                else
-                {
-                    return response;
-                }
-            }
-        }
     }
 }

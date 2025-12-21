@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,40 +13,45 @@ namespace ThrottlingTroll
     /// <summary>
     /// Abstraction layer on top of <see cref="HttpResponseData"/>
     /// </summary>
-    public class IngressHttpResponseProxy : IngressHttpResponseProxyBase, IIngressHttpResponseProxy
+    public class IngressHttpResponseDataProxy : IngressHttpResponseProxyBase, IIngressHttpResponseDataProxy
     {
-        internal IngressHttpResponseProxy(HttpResponse response)
+        internal IngressHttpResponseDataProxy()
         {
-            this.Response = response;
         }
 
         /// <inheritdoc />
-        public HttpResponse Response { get; private set; }
+        public HttpResponseData ResponseData { get; private set; }
 
         /// <inheritdoc />
         public int StatusCode
         {
             get
             {
-                return this.Response.StatusCode;
+                return (int)(this.ResponseData?.StatusCode ?? 0);
             }
             set
             {
-                this.Response.StatusCode = value;
+                if (this.ResponseData != null)
+                {
+                    this.ResponseData.StatusCode = (HttpStatusCode)value;
+                }
             }
         }
 
         /// <inheritdoc />
         public void SetHttpHeader(string headerName, string headerValue)
         {
-            this.Response.Headers.Remove(headerName);
-            this.Response.Headers.Add(headerName, headerValue);
+            this.ResponseData?.Headers.Remove(headerName);
+            this.ResponseData?.Headers.Add(headerName, headerValue);
         }
 
         /// <inheritdoc />
         public async Task WriteAsync(string text)
         {
-            await this.Response.WriteAsync(text);
+            if (this.ResponseData != null)
+            {
+                await this.ResponseData.WriteStringAsync(text);
+            }
         }
 
         /// <inheritdoc />
@@ -71,6 +77,9 @@ namespace ThrottlingTroll
             // But 1) it can be null and 2) result.Rule can also be null (when 429 is propagated from egress)
             responseFabric = exceededLimit.Rule?.ResponseFabric ?? responseFabric;
 
+            // Need to initialize ResponseData before we're being passed to responseFabric
+            this.ResponseData = requestProxy.RequestData.CreateResponse(HttpStatusCode.OK);
+
             if (responseFabric == null)
             {
                 // For Circuit Breaker returning 503 Service Unavailable
@@ -81,7 +90,7 @@ namespace ThrottlingTroll
                 // Formatting default Retry-After response
                 if (!string.IsNullOrEmpty(exceededLimit.RetryAfterHeaderValue))
                 {
-                    this.SetHttpHeader(HeaderNames.RetryAfter, exceededLimit.RetryAfterHeaderValue);
+                    this.SetHttpHeader("Retry-After", exceededLimit.RetryAfterHeaderValue);
                 }
 
                 string responseString = DateTime.TryParse(exceededLimit.RetryAfterHeaderValue, out var dt) ?
@@ -97,6 +106,9 @@ namespace ThrottlingTroll
 
                 if (this.ShouldContinueAsNormal)
                 {
+                    // Resetting ResponseData, so that it does not get applied
+                    this.ResponseData = null;
+
                     // Continue with normal request processing
                     await callNextOnce();
                 }
@@ -106,17 +118,14 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         internal override void Apply()
         {
-            // Doing nothing
+            // Need to explicitly set invocation result to response data at the end of request processing
+            if (this.ResponseData != null)
+            {
+                this.ResponseData.FunctionContext.GetInvocationResult().Value = this.ResponseData;
+            }
         }
 
         /// <inheritdoc />
-        internal override Task OnResponseCompleted(Func<Task> action)
-        {
-            // With ASP.Net Core Integration, at this point context.Response is not yet populated.
-            // So we'll have to add the limit check as response's OnComplete() event
-            this.Response.OnCompleted(action);
-
-            return Task.CompletedTask;
-        }
+        internal override Task OnResponseCompleted(Func<Task> action) => action();
     }
 }
