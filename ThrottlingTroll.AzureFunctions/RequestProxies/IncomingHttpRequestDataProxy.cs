@@ -1,7 +1,6 @@
 ﻿using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ThrottlingTroll
 {
@@ -13,58 +12,26 @@ namespace ThrottlingTroll
         internal IncomingHttpRequestDataProxy(HttpRequestData request)
         {
             this.RequestData = request;
+            this.Headers = new HttpHeadersCollectionToReadOnlyDictionary(request.Headers);
         }
 
         /// <inheritdoc />
         public HttpRequestData RequestData { get; private set; }
 
         /// <inheritdoc />
-        public string Uri
-        {
-            get
-            {
-                return this.RequestData.Url?.ToString();
-            }
-        }
+        public string Uri => this.RequestData.Url?.ToString();
 
         /// <inheritdoc />
-        public string UriWithoutQueryString
-        {
-            get
-            {
-                return $"{this.RequestData.Url?.Scheme}://{this.RequestData.Url?.Authority}{this.RequestData.Url?.AbsolutePath}";
-            }
-        }
+        public string UriWithoutQueryString => $"{this.RequestData.Url?.Scheme}://{this.RequestData.Url?.Authority}{this.RequestData.Url?.AbsolutePath}";
 
         /// <inheritdoc />
-        public string Method
-        {
-            get
-            {
-                return this.RequestData.Method;
-            }
-        }
+        public string Method => this.RequestData.Method;
 
         /// <inheritdoc />
-        public IDictionary<string, StringValues> Headers
-        {
-            get
-            {
-                if (this._headers == null)
-                {
-                    var headers = new Dictionary<string, StringValues>();
+        public IReadOnlyDictionary<string, StringValues> Headers { get; private set; }
 
-                    foreach (var header in this.RequestData.Headers)
-                    {
-                        headers.Add(header.Key, new StringValues(header.Value.ToArray()));
-                    }
-
-                    this._headers = headers;
-                }
-
-                return this._headers;
-            }
-        }
+        /// <inheritdoc />
+        public IReadOnlyDictionary<string, StringValues> Query { get; private set; }
 
         /// <inheritdoc />
         public void AppendToContextItem<T>(string key, List<T> list)
@@ -73,14 +40,6 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public IDictionary<object, object> RequestContextItems
-        {
-            get
-            {
-                return this.RequestData.FunctionContext.Items;
-            }
-        }
-
-        private IDictionary<string, StringValues> _headers;
+        public IDictionary<object, object> RequestContextItems => this.RequestData.FunctionContext.Items;
     }
 }

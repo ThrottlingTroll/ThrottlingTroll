@@ -26,7 +26,12 @@ namespace ThrottlingTroll
         /// <summary>
         /// Request HTTP Headers
         /// </summary>
-        public IDictionary<string, StringValues> Headers { get; }
+        public IReadOnlyDictionary<string, StringValues> Headers { get; }
+
+        /// <summary>
+        /// Request Query String
+        /// </summary>
+        public IReadOnlyDictionary<string, StringValues> Query { get; }
 
         /// <summary>
         /// Appends a list of values to a named entry in the request's context.Items.

@@ -18,7 +18,10 @@ namespace ThrottlingTroll
         public string Method { get; set; }
 
         /// <inheritdoc />
-        public IDictionary<string, StringValues> Headers { get; set; } = new Dictionary<string, StringValues>();
+        public IReadOnlyDictionary<string, StringValues> Headers { get; set; } = new Dictionary<string, StringValues>();
+
+        /// <inheritdoc />
+        public IReadOnlyDictionary<string, StringValues> Query { get; set; } = new Dictionary<string, StringValues>();
 
         /// <inheritdoc />
         public IDictionary<object, object> RequestContextItems { get; set; }

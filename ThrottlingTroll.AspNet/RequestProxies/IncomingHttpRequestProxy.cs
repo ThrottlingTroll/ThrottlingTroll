@@ -12,6 +12,8 @@ namespace ThrottlingTroll
         internal IncomingHttpRequestProxy(HttpRequest request)
         {
             this.Request = request;
+            this.Headers = new HeaderDictionaryToReadOnlyDictionary(request.Headers);
+            this.Query = new QueryCollectionToReadOnlyDictionary(request.Query);
         }
 
         /// <inheritdoc />
@@ -35,31 +37,16 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public string UriWithoutQueryString
-        {
-            get
-            {
-                return $"{this.Request.Scheme}://{this.Request.Host}{this.Request.Path}";
-            }
-        }
+        public string UriWithoutQueryString => $"{this.Request.Scheme}://{this.Request.Host}{this.Request.Path}";
 
         /// <inheritdoc />
-        public string Method
-        {
-            get
-            {
-                return this.Request.Method;
-            }
-        }
+        public string Method => this.Request.Method;
 
         /// <inheritdoc />
-        public IDictionary<string, StringValues> Headers
-        {
-            get
-            {
-                return this.Request.Headers;
-            }
-        }
+        public IReadOnlyDictionary<string, StringValues> Headers { get; private set; }
+
+        /// <inheritdoc />
+        public IReadOnlyDictionary<string, StringValues> Query { get; private set; }
 
         /// <inheritdoc />
         public void AppendToContextItem<T>(string key, List<T> list)
@@ -68,12 +55,6 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public IDictionary<object, object> RequestContextItems
-        {
-            get
-            {
-                return this.Request.HttpContext.Items;
-            }
-        }
+        public IDictionary<object, object> RequestContextItems => this.Request.HttpContext.Items;
     }
 }
