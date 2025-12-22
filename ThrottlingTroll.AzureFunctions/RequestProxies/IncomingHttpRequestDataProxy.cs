@@ -13,6 +13,7 @@ namespace ThrottlingTroll
         {
             this.RequestData = request;
             this.Headers = new HttpHeadersCollectionToReadOnlyDictionary(request.Headers);
+            this.Query = new NameValueCollectionToReadOnlyDictionary(request.Query);
         }
 
         /// <inheritdoc />
