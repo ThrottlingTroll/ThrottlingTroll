@@ -3,6 +3,7 @@ using Microsoft.Azure.Functions.Worker.Context.Features;
 using Microsoft.Azure.Functions.Worker.Http;
 using Moq;
 using System.Collections;
+using System.Collections.Specialized;
 using System.Net;
 using System.Security.Claims;
 
@@ -36,6 +37,8 @@ namespace ThrottlingTroll.AzureFunctions.Tests
         public override Stream Body => throw new NotImplementedException();
 
         public override HttpHeadersCollection Headers { get; }
+
+        public override NameValueCollection Query {  get; }
 
         public override IReadOnlyCollection<IHttpCookie> Cookies => throw new NotImplementedException();
 
