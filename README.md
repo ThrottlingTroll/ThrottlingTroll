@@ -158,9 +158,9 @@ Install from Nuget:
 
 Most concepts and features are the same for all supported platforms. Things that are specific to each platform are highlighted in the relevant READMEs:
 
-| ASP.NET Core                              | Azure Functions                                          | Azure Functions with ASP.NET Core Integration |
-| -                                         | -                                                        | -                                             |
-| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
+| ASP.NET Core                              | Azure Functions                                          |
+| -                                         | -                                                        |
+| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
 
 
 ## Samples
