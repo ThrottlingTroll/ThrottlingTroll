@@ -1,6 +1,6 @@
 # ThrottlingTroll.AzureFunctions
 
-Rate limiting/throttling middleware for Azure Functions.
+Rate limiting/throttling middleware for Azure Functions. Can be used both in InProc and Isolated projects, both with "classic" HTTP-triggered Functions and with [ASP.Net Core Integration](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#aspnet-core-integration).
 
 Install from NuGet:
 ```
