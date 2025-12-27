@@ -15,7 +15,7 @@ var builder = new HostBuilder();
 
 // .....
 
-builder.ConfigureFunctionsWorkerDefaults((hostBuilderContext, workerAppBuilder) => {
+builder.ConfigureFunctionsWebApplication((builderContext, workerAppBuilder) => {
 
     workerAppBuilder.UseThrottlingTroll();
 
