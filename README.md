@@ -14,13 +14,13 @@ Rate limiting/throttling/circuit-breaking middleware for ASP.NET Core and Azure 
 
 Install from Nuget:
 
-| .NET                                      | Azure Functions                                          | Azure Functions with ASP.NET Core Integration                 |
-| -                                         | -                                                        | -                                                             |
-| ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |```dotnet add package ThrottlingTroll.AzureFunctionsAspNet```  |
+| .NET                                      | Azure Functions                                          |
+| -                                         | -                                                        |
+| ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |
 
 ## Features
 
-* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
+* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll) and [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions)** (InProc and Isolated, "classic" and ASP.NET Core Integration). [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
 * [**Ingress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure), aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
