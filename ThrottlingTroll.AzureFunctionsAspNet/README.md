@@ -1,5 +1,7 @@
 # ThrottlingTroll.AzureFunctionsAspNet
 
+DEPRECATED. Use [ThrottlingTroll.AzureFunctions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions) for both "classic" Functions and ASP.NET Core Integration.
+
 Rate limiting/throttling middleware for [Azure Functions with ASP.NET Core Integration](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#aspnet-core-integration).
 
 Install from NuGet:

@@ -7,20 +7,18 @@ Rate limiting/throttling/circuit-breaking middleware for ASP.NET Core and Azure 
 
 [<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll?label=ThrottlingTroll%20downloads">](https://www.nuget.org/packages/ThrottlingTroll)
 [<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.AzureFunctions?label=ThrottlingTroll.AzureFunctions%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.AzureFunctions)
-[<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.AzureFunctionsAspNet?label=ThrottlingTroll.AzureFunctionsAspNet%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.AzureFunctionsAspNet)
-
 [<img alt="Nuget" src="https://img.shields.io/nuget/dt/ThrottlingTroll.CounterStores.Redis?label=ThrottlingTroll.CounterStores.Redis%20downloads">](https://www.nuget.org/packages/ThrottlingTroll.CounterStores.Redis)
 
 
 Install from Nuget:
 
-| .NET                                      | Azure Functions                                          | Azure Functions with ASP.NET Core Integration                 |
-| -                                         | -                                                        | -                                                             |
-| ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |```dotnet add package ThrottlingTroll.AzureFunctionsAspNet```  |
+| .NET                                      | Azure Functions                                          |
+| -                                         | -                                                        |
+| ```dotnet add package ThrottlingTroll```  | ```dotnet add package ThrottlingTroll.AzureFunctions```  |
 
 ## Features
 
-* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll), [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions) and [Azure Functions with ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#throttlingtrollazurefunctionsaspnet)**. [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
+* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll) and [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions)** (InProc and Isolated, "classic" and ASP.NET Core Integration). [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
 * [**Ingress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure), aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
@@ -160,9 +158,9 @@ Install from Nuget:
 
 Most concepts and features are the same for all supported platforms. Things that are specific to each platform are highlighted in the relevant READMEs:
 
-| ASP.NET Core                              | Azure Functions                                          | Azure Functions with ASP.NET Core Integration |
-| -                                         | -                                                        | -                                             |
-| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) | [How to use with Azure Functions ASP.NET Core Integration](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctionsAspNet#how-to-configure) |
+| ASP.NET Core                              | Azure Functions                                          |
+| -                                         | -                                                        |
+| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
 
 
 ## Samples
