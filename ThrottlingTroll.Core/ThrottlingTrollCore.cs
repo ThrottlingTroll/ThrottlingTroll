@@ -13,14 +13,6 @@ namespace ThrottlingTroll
     /// </summary>
     public class ThrottlingTrollCore : IDisposable
     {
-        private readonly Action<LogLevel, string> _log;
-        private readonly ICounterStore _counterStore;
-        private readonly Func<IHttpRequestProxy, string> _identityIdExtractor;
-        private readonly Func<IHttpRequestProxy, long> _costExtractor;
-        private Task<ThrottlingTrollConfig> _getConfigTask;
-        private bool _disposed = false;
-        private TimeSpan _sleepTimeSpan = TimeSpan.FromMilliseconds(50);
-
         #region Telemetry
         internal static readonly ActivitySource ActivitySource = new ActivitySource("ThrottlingTroll");
 
@@ -123,10 +115,7 @@ namespace ThrottlingTroll
             {
                 foreach (var rule in config.AllowList)
                 {
-                    if (rule.IdentityIdExtractor == null)
-                    {
-                        rule.IdentityIdExtractor = this._identityIdExtractor;
-                    }
+                    rule.IdentityIdExtractor ??= this._identityIdExtractor;
                 }
             }
 
@@ -566,6 +555,14 @@ namespace ThrottlingTroll
                 this._log(LogLevel.Warning, $"ThrottlingTroll failed to populate request context with LimitCheckResults. {ex}");
             }
         }
+
+        private readonly Action<LogLevel, string> _log;
+        private readonly ICounterStore _counterStore;
+        private readonly Func<IHttpRequestProxy, string> _identityIdExtractor;
+        private readonly Func<IHttpRequestProxy, long> _costExtractor;
+        private Task<ThrottlingTrollConfig> _getConfigTask;
+        private bool _disposed = false;
+        private TimeSpan _sleepTimeSpan = TimeSpan.FromMilliseconds(50);
 
         /// <summary>
         /// Caching the current config value, so that we don't need to re-apply global settings every time

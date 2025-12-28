@@ -45,8 +45,6 @@ namespace ThrottlingTroll
         [JsonConverter(typeof(ToStringJsonConverter<Func<IHttpRequestProxy, string>>))]
         public Func<IHttpRequestProxy, string> IdentityIdExtractor { get; set; }
 
-        protected Regex _uriRegex;
-
         /// <summary>
         /// Checks whether given request matches this filter
         /// </summary>
@@ -166,5 +164,7 @@ namespace ThrottlingTroll
                 writer.WriteStringValue(val.ToString());
             }
         }
+
+        private Regex _uriRegex;
     }
 }

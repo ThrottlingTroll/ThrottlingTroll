@@ -72,12 +72,6 @@ namespace ThrottlingTroll
         [JsonConverter(typeof(ToStringJsonConverter<Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task>>))]
         public Func<List<LimitCheckResult>, IHttpRequestProxy, IHttpResponseProxy, CancellationToken, Task> ResponseFabric { get; set; }
 
-
-        protected RateLimitMethod _limitMethod { get; set; }
-        protected string _cacheKey;
-
-        private string _nameForTelemetry;
-
         /// <summary>
         /// Whether ThrottlingTroll's internal failures should result in exceptions or in just log entries.
         /// </summary>
@@ -206,6 +200,10 @@ namespace ThrottlingTroll
                 return Convert.ToBase64String(bytes);
             }
         }
+
+        private RateLimitMethod _limitMethod { get; set; }
+        private string _cacheKey;
+        private string _nameForTelemetry;
 
         #region Telemetry
 

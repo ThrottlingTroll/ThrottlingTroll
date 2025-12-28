@@ -10,8 +10,6 @@ namespace ThrottlingTroll
     /// </summary>
     public class FixedWindowRateLimitMethod : RateLimitMethod
     {
-        private readonly MemoryCache _cache = MemoryCache.Default;
-
         /// <summary>
         /// Window size in seconds
         /// </summary>
@@ -81,6 +79,8 @@ namespace ThrottlingTroll
         {
             return $"{nameof(FixedWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds})";
         }
+
+        private readonly MemoryCache _cache = MemoryCache.Default;
 
         #region Telemetry
         internal override void AddTagsToActivity(Activity activity)

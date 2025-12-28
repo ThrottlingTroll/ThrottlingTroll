@@ -12,8 +12,6 @@ namespace ThrottlingTroll
     /// </summary>
     public class SlidingWindowRateLimitMethod : RateLimitMethod
     {
-        private readonly MemoryCache _cache = MemoryCache.Default;
-
         /// <summary>
         /// Window size in seconds
         /// </summary>
@@ -118,6 +116,8 @@ namespace ThrottlingTroll
         {
             return $"{nameof(SlidingWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds},{this.NumOfBuckets})";
         }
+
+        private readonly MemoryCache _cache = MemoryCache.Default;
 
         #region Telemetry
         internal override void AddTagsToActivity(Activity activity)
