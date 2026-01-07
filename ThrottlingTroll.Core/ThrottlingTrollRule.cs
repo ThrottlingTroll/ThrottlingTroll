@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -77,7 +78,7 @@ namespace ThrottlingTroll
         /// </summary>
         protected internal bool ShouldThrowOnFailures 
         { 
-            get { return this._limitMethod?.ShouldThrowOnFailures ?? false; }
+            get { return this.LimitMethod?.ShouldThrowOnFailures ?? false; }
         }
 
         /// <summary>
@@ -85,7 +86,7 @@ namespace ThrottlingTroll
         /// </summary>
         public bool IgnoreAllowList 
         { 
-            get { return this._limitMethod?.IgnoreAllowList ?? false; }
+            get { return this.LimitMethod?.IgnoreAllowList ?? false; }
         }
 
         /// <summary>
@@ -122,7 +123,10 @@ namespace ThrottlingTroll
         {
             try
             {
-                await this.LimitMethod.DecrementAsync(uniqueCacheKey, cost, store, request);
+                if (this.LimitMethod != null)
+                {
+                    await this.LimitMethod.DecrementAsync(uniqueCacheKey, cost, store, request);
+                }
             }
             catch (Exception ex)
             {
@@ -162,12 +166,12 @@ namespace ThrottlingTroll
             // Also adding this prefix, to make sure ingress and egress rules never collide
             string ingressOrEgress = request is IOutgoingHttpRequestProxy ? "Egress" : "Ingress";
 
-            if (this.IdentityIdExtractor == null)
+            if (this.IdentityIdExtractors.Length <= 0)
             {
                 // Our key is static, so calculating its hash only once for optimization purposes
                 if (string.IsNullOrEmpty(this._cacheKey))
                 {
-                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod.GetCacheKey()}>";
+                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.LimitMethod?.GetCacheKey()}>";
 
                     this._cacheKey = this.GetHash(key);
                 }
@@ -176,12 +180,12 @@ namespace ThrottlingTroll
             }
             else
             {
-                // If IdentityExtractor is set, then adding request's identityId to the cache key,
+                // If we have IdentityIdExtractors, then concatenating all extracted IDs abd adding them to the cache key,
                 // so that different identities get different counters.
 
-                string identityId = this.IdentityIdExtractor(request);
+                string identityIds = string.Join("|", this.IdentityIdExtractors.Select(ext => $"<{ext(request)}>"));
 
-                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod.GetCacheKey()}>|<{identityId}>";
+                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.LimitMethod?.GetCacheKey()}>|{identityIds}";
 
                 return $"{configName}|{ingressOrEgress}|{this.GetHash(key)}";
             }
@@ -205,6 +209,34 @@ namespace ThrottlingTroll
         private string _cacheKey;
         private string _nameForTelemetry;
 
+        private const string IdentityIdRegexGroupName = "ThrottlingTrollIdentityId";
+        private Func<IHttpRequestProxy, string>[] _identityIdExtractors;
+
+        private Func<IHttpRequestProxy, string>[] IdentityIdExtractors
+        {
+            get
+            {
+                this._identityIdExtractors ??= this.GetIdentityIdExtractors().ToArray();
+                return this._identityIdExtractors;
+            }
+        }
+
+        private IEnumerable<Func<IHttpRequestProxy, string>> GetIdentityIdExtractors()
+        {
+            // If we have a "classic" extractor configured
+            if (this.IdentityIdExtractor != null)
+            {
+                yield return this.IdentityIdExtractor;
+            }
+
+            // If UriPattern contains our named group
+            if ((!string.IsNullOrEmpty(this.UriPattern)) && this.UriPattern.Contains($"?<{IdentityIdRegexGroupName}>"))
+            {
+                // GroupCollection never throws and just gives an empty string, if not matched
+                yield return r => this.UrlRegex.Match(r.Uri).Groups[IdentityIdRegexGroupName].Value;
+            }
+        }
+
         #region Telemetry
 
         internal string GetNameForTelemetry()
@@ -213,7 +245,7 @@ namespace ThrottlingTroll
             {
                 if (string.IsNullOrEmpty(this.Name))
                 {
-                    string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this._limitMethod?.GetCacheKey()}>";
+                    string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.LimitMethod?.GetCacheKey()}>";
                     this._nameForTelemetry = this.GetHash(name).Substring(0, 10);
                 }
                 else
