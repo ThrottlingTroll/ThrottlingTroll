@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Primitives;
 using Moq;
 using System.Security.Cryptography;
 using System.Text;
@@ -25,7 +26,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Ingress|yy/TSadjPTeFwGf9PoApQrjHIFRtr6ZpKtE6oFf3tGA=", key);
+        Assert.AreEqual("|Ingress|w/iDWn0W6f2VKmmXWEzN/m0hF3dOEO3OMoSrWV9gXgc=", key);
     }
 
     [TestMethod]
@@ -46,7 +47,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Egress|yy/TSadjPTeFwGf9PoApQrjHIFRtr6ZpKtE6oFf3tGA=", key);
+        Assert.AreEqual("|Egress|w/iDWn0W6f2VKmmXWEzN/m0hF3dOEO3OMoSrWV9gXgc=", key);
     }
 
     [TestMethod]
@@ -77,7 +78,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("test-config-name|Ingress|rrfpjbZVnNVjL2D21kpiW/cDPS9zo5iQ4pKXBjVRG3U=", key);
+        Assert.AreEqual("test-config-name|Ingress|0Rz5p6PEVLqBcanRSYWKbBuJIPeuQl65kKuwm4PyrXA=", key);
     }
 
     [TestMethod]
@@ -104,7 +105,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("test-config-name|Ingress|87WmZq3MsWEQ8mrPmLPw3MbC90Ax3N74yTzjXvQMHXw=", key);
+        Assert.AreEqual("test-config-name|Ingress|Ll8oXPxiLzc3o7G72jNYvo1sm1UDX40/0y7jcZMSMOw=", key);
     }
 
     [TestMethod]
@@ -133,7 +134,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
         Assert.AreEqual(expectedKey, key);
     }
 
@@ -164,7 +165,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        string expectedKey = $"|Ingress|{this.GetHash($"<>|<{rule.UriPattern}>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<{rule.UriPattern}>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
         Assert.AreEqual(expectedKey, key);
     }
 
@@ -193,7 +194,76 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Ingress|k3Na1M+rEKOYKqso36NxOQ+zoxZXziB70OJ9PsqMi6Q=", key);
+        Assert.AreEqual("|Ingress|ZWcgAiEl2X3dv4juIuS5n2lL229y+OaDxnoA9GiH1Nc=", key);
+    }
+
+    [TestMethod]
+    public void GetUniqueCacheKey_IdentityIdHeaderValuePlaceholderReturnsGuid_ReturnsCacheKey()
+    {
+        // Arrange
+
+        Guid identityId = Guid.NewGuid();
+
+        var rule = new ThrottlingTrollRule()
+        {
+            LimitMethod = new FixedWindowRateLimitMethod()
+            {
+                PermitLimit = 1,
+                IntervalInSeconds = 2
+            },
+
+            HeaderName = "my-client-id-header",
+            HeaderValuePattern = "client-id-(?<ThrottlingTrollIdentityId>[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12})"
+        };
+
+        var requestMock = new Mock<IIncomingHttpRequestProxy>();
+        requestMock.SetupGet(r => r.Headers).Returns(new Dictionary<string, StringValues>
+        {
+            ["my-client-id-header"] = $"client-id-{identityId}" }
+        );
+
+        // Act
+
+        string key = rule.GetUniqueCacheKey(requestMock.Object, "");
+
+        // Assert
+
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<my-client-id-header>|<>|<{rule.HeaderValuePattern}>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
+        Assert.AreEqual(expectedKey, key);
+    }
+
+
+    [TestMethod]
+    public void GetUniqueCacheKey_IdentityIdHeaderValuePlaceholderDoesNotMatch_ReturnsCacheKey()
+    {
+        // Arrange
+
+        var rule = new ThrottlingTrollRule()
+        {
+            LimitMethod = new FixedWindowRateLimitMethod()
+            {
+                PermitLimit = 1,
+                IntervalInSeconds = 2
+            },
+
+            HeaderName = "my-client-id-header",
+            HeaderValuePattern = "client-id-(?<ThrottlingTrollIdentityId>[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12})"
+        };
+
+        var requestMock = new Mock<IIncomingHttpRequestProxy>();
+        requestMock.SetupGet(r => r.Headers).Returns(new Dictionary<string, StringValues>
+        {
+            ["my-client-id-header"] = $"client-id-not-a-guid"
+        }
+        );
+
+        // Act
+
+        string key = rule.GetUniqueCacheKey(requestMock.Object, "");
+
+        // Assert
+
+        Assert.AreEqual("|Ingress|DKtfpNDejytr8r3H/KYg0zcimNlMNYGDbZRzQV79lWw=", key);
     }
 
     private string GetHash(string str)

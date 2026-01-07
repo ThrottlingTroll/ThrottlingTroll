@@ -171,7 +171,7 @@ namespace ThrottlingTroll
                 // Our key is static, so calculating its hash only once for optimization purposes
                 if (string.IsNullOrEmpty(this._cacheKey))
                 {
-                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.LimitMethod?.GetCacheKey()}>";
+                    string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.HeaderValuePattern}>|<{this.LimitMethod?.GetCacheKey()}>";
 
                     this._cacheKey = this.GetHash(key);
                 }
@@ -185,7 +185,7 @@ namespace ThrottlingTroll
 
                 string identityIds = string.Join("|", this.IdentityIdExtractors.Select(ext => $"<{ext(request)}>"));
 
-                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.LimitMethod?.GetCacheKey()}>|{identityIds}";
+                string key = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.HeaderValuePattern}>|<{this.LimitMethod?.GetCacheKey()}>|{identityIds}";
 
                 return $"{configName}|{ingressOrEgress}|{this.GetHash(key)}";
             }
@@ -235,6 +235,20 @@ namespace ThrottlingTroll
                 // GroupCollection never throws and just gives an empty string, if not matched
                 yield return r => this.UrlRegex.Match(r.Uri).Groups[IdentityIdRegexGroupName].Value;
             }
+
+            // If HeaderValuePattern contains our named group
+            if ((!string.IsNullOrEmpty(this.HeaderValuePattern)) && this.HeaderValuePattern.Contains($"?<{IdentityIdRegexGroupName}>"))
+            {
+                yield return r =>
+                {
+                    if (!r.Headers.TryGetValue(this.HeaderName, out var headerValue))
+                    {
+                        return null;
+                    }
+
+                    return this.HeaderValueRegex.Match(headerValue).Groups[IdentityIdRegexGroupName].Value;
+                };
+            }
         }
 
         #region Telemetry
@@ -245,7 +259,7 @@ namespace ThrottlingTroll
             {
                 if (string.IsNullOrEmpty(this.Name))
                 {
-                    string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.LimitMethod?.GetCacheKey()}>";
+                    string name = $"<{this.Method}>|<{this.UriPattern}>|<{this.HeaderName}>|<{this.HeaderValue}>|<{this.HeaderValuePattern}>|<{this.LimitMethod?.GetCacheKey()}>";
                     this._nameForTelemetry = this.GetHash(name).Substring(0, 10);
                 }
                 else

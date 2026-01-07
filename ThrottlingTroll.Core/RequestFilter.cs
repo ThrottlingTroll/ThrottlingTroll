@@ -12,7 +12,7 @@ namespace ThrottlingTroll
     public class RequestFilter
     {
         /// <summary>
-        /// A Regex pattern to match request URI against. Empty string or null means any URI.
+        /// Regex pattern to match request URI against. Empty string or null means any URI.
         /// </summary>
         public string UriPattern { get; set; }
 
@@ -32,6 +32,12 @@ namespace ThrottlingTroll
         /// If <see cref="HeaderName"/> is specified and <see cref="HeaderValue"/> is not - that matches requests with any value in that header.
         /// </summary>
         public string HeaderValue { get; set; }
+
+        /// <summary>
+        /// Regex pattern for HTTP header identified by <see cref="HeaderName"/>. The rule will only apply to requests with that header matching this pattern.
+        /// Overshadows <see cref="HeaderValue"/>.
+        /// </summary>
+        public string HeaderValuePattern { get; set; }
 
         /// <summary>
         /// Request's custom Identity ID. If specified, the rule will only apply to requests with this Identity ID. Identity IDs are extacted with <see cref="IdentityIdExtractor"/>.
@@ -78,6 +84,27 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
+        /// <see cref="HeaderValuePattern"/> converted into <see cref="Regex"/>
+        /// </summary>
+        protected Regex HeaderValueRegex
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.HeaderValuePattern))
+                {
+                    return null;
+                }
+
+                if (this._headerValueRegex == null)
+                {
+                    this._headerValueRegex = new Regex(this.HeaderValuePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+                }
+
+                return this._headerValueRegex;
+            }
+        }
+
+        /// <summary>
         /// Checks whether given request matches <see cref="UrlRegex"/>
         /// </summary>
         protected virtual bool IsUrlMatch(IHttpRequestProxy request)
@@ -117,17 +144,20 @@ namespace ThrottlingTroll
                 return true;
             }
 
-            if (!request.Headers.ContainsKey(this.HeaderName))
+            if (!request.Headers.TryGetValue(this.HeaderName, out var headerValue))
             {
                 return false;
+            }
+
+            if (this.HeaderValueRegex != null)
+            {
+                return this.HeaderValueRegex.IsMatch(headerValue);
             }
 
             if (string.IsNullOrEmpty(this.HeaderValue))
             {
                 return true;
             }
-
-            var headerValue = request.Headers[this.HeaderName];
 
             return headerValue == this.HeaderValue;
         }
@@ -166,5 +196,6 @@ namespace ThrottlingTroll
         }
 
         private Regex _uriRegex;
+        private Regex _headerValueRegex;
     }
 }
