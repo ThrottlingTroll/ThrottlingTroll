@@ -219,8 +219,8 @@ public class ThrottlingTrollRuleTests
         var requestMock = new Mock<IIncomingHttpRequestProxy>();
         requestMock.SetupGet(r => r.Headers).Returns(new Dictionary<string, StringValues>
         {
-            ["my-client-id-header"] = $"client-id-{identityId}" }
-        );
+            ["my-client-id-header"] = $"client-id-{identityId}"
+        });
 
         // Act
 
@@ -254,8 +254,7 @@ public class ThrottlingTrollRuleTests
         requestMock.SetupGet(r => r.Headers).Returns(new Dictionary<string, StringValues>
         {
             ["my-client-id-header"] = $"client-id-not-a-guid"
-        }
-        );
+        });
 
         // Act
 
@@ -264,6 +263,45 @@ public class ThrottlingTrollRuleTests
         // Assert
 
         Assert.AreEqual("|Ingress|DKtfpNDejytr8r3H/KYg0zcimNlMNYGDbZRzQV79lWw=", key);
+    }
+
+
+    [TestMethod]
+    public void GetUniqueCacheKey_TwoIdentityIdPlaceholders_ReturnsCacheKey()
+    {
+        // Arrange
+
+        Guid identityId1 = Guid.NewGuid();
+        Guid identityId2 = Guid.NewGuid();
+
+        var rule = new ThrottlingTrollRule()
+        {
+            LimitMethod = new FixedWindowRateLimitMethod()
+            {
+                PermitLimit = 1,
+                IntervalInSeconds = 2
+            },
+
+            UriPattern = "/my/path\\?client-id=(?<ThrottlingTrollIdentityId>[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12})",
+            HeaderName = "my-client-id-header",
+            HeaderValuePattern = "client-id-(?<ThrottlingTrollIdentityId>[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12})"
+        };
+
+        var requestMock = new Mock<IIncomingHttpRequestProxy>();
+        requestMock.SetupGet(r => r.Uri).Returns($"/my/path?client-id={identityId1}");
+        requestMock.SetupGet(r => r.Headers).Returns(new Dictionary<string, StringValues>
+        {
+            ["my-client-id-header"] = $"client-id-{identityId2}"
+        });
+
+        // Act
+
+        string key = rule.GetUniqueCacheKey(requestMock.Object, "");
+
+        // Assert
+
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<{rule.UriPattern}>|<my-client-id-header>|<>|<{rule.HeaderValuePattern}>|<FixedWindowRateLimitMethod(1,2)>|<{identityId1.ToString()}>|<{identityId2.ToString()}>")}";
+        Assert.AreEqual(expectedKey, key);
     }
 
     private string GetHash(string str)
