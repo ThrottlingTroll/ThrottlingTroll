@@ -18,7 +18,7 @@ namespace IntegrationTests
         {
             Method = "GET",
 
-            UriPattern = "named-critical-section",
+            UriString = "named-critical-section",
 
             LimitMethod = new SemaphoreRateLimitMethod
             {
@@ -37,7 +37,7 @@ namespace IntegrationTests
         {
             Method = "POST,GET",
 
-            UriPattern = "semaphore-2-concurrent-requests",
+            UriString = "semaphore-2-concurrent-requests",
 
             LimitMethod = new SemaphoreRateLimitMethod
             {
@@ -54,7 +54,7 @@ namespace IntegrationTests
         {
             Method = "post, get, delete",
 
-            UriPattern = "delayed-fixed-window",
+            UriString = "delayed-fixed-window",
 
             LimitMethod = new FixedWindowRateLimitMethod
             {
@@ -72,7 +72,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule FixedWindowFailingMethodRule = new ThrottlingTrollRule
         {
-            UriPattern = "fixed-window-failing-method",
+            UriString = "fixed-window-failing-method",
 
             LimitMethod = new FixedWindowRateLimitMethod
             {
@@ -97,7 +97,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule SemaphoreCrushingMethodRule = new ThrottlingTrollRule
         {
-            UriPattern = "semaphore-crushing-method",
+            UriString = "semaphore-crushing-method",
 
             LimitMethod = new MalfunctioningSemaphoreRateLimitMethod
             {
@@ -115,7 +115,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule SlidingWindowRule = new ThrottlingTrollRule
         {
-            UriPattern = "sliding-window",
+            UriString = "sliding-window",
 
             LimitMethod = new SlidingWindowRateLimitMethod
             {
@@ -140,7 +140,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule ThrowingSemaphoreRule = new ThrottlingTrollRule
         {
-            UriPattern = "throwing-semaphore",
+            UriString = "throwing-semaphore",
 
             LimitMethod = new ThrowingSemaphoreRateLimitMethod
             {
@@ -165,7 +165,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule ThrowingFixedWindowRule = new ThrottlingTrollRule
         {
-            UriPattern = "throwing-fixed-window",
+            UriString = "throwing-fixed-window",
 
             LimitMethod = new ThrowingFixedWindowRateLimitMethod
             {
@@ -181,7 +181,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule DistributedCounterRule = new ThrottlingTrollRule
         {
-            UriPattern = "/distributed-counter",
+            UriString = "/distributed-counter",
 
             LimitMethod = new SemaphoreRateLimitMethod
             {
@@ -200,7 +200,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule DeduplicatingSemaphoreRule = new ThrottlingTrollRule
         {
-            UriPattern = "deduplicating-semaphore",
+            UriString = "deduplicating-semaphore",
 
             LimitMethod = new SemaphoreRateLimitMethod
             {
@@ -216,7 +216,7 @@ namespace IntegrationTests
 
         static ThrottlingTrollRule CircuitBreakerRule = new ThrottlingTrollRule
         {
-            UriPattern = "circuit-breaker",
+            UriString = "circuit-breaker",
 
             LimitMethod = new CircuitBreakerRateLimitMethod
             {
@@ -263,54 +263,54 @@ namespace IntegrationTests
                 };
             });
 
-            WebApp.MapGet(NamedCriticalSectionRule.UriPattern, async () =>
+            WebApp.MapGet(NamedCriticalSectionRule.UriString, async () =>
             {
                 await Task.Delay(3000);
 
                 return Results.StatusCode((int)HttpStatusCode.OK);
             });
 
-            WebApp.MapGet(SemaphoreRule.UriPattern, async () =>
+            WebApp.MapGet(SemaphoreRule.UriString, async () =>
             {
                 await Task.Delay(1000);
 
                 return Results.StatusCode((int)HttpStatusCode.OK);
             });
 
-            WebApp.MapGet(DelayedFixedWindowRule.UriPattern, () =>
+            WebApp.MapGet(DelayedFixedWindowRule.UriString, () =>
             {
                 return Results.StatusCode((int)HttpStatusCode.OK);
             });
 
-            WebApp.MapGet(FixedWindowFailingMethodRule.UriPattern, () =>
+            WebApp.MapGet(FixedWindowFailingMethodRule.UriString, () =>
             {
                 throw new Exception();
             });
 
-            WebApp.MapGet(SemaphoreCrushingMethodRule.UriPattern, () =>
+            WebApp.MapGet(SemaphoreCrushingMethodRule.UriString, () =>
             {
                 return Results.StatusCode((int)HttpStatusCode.OK);
             });
 
-            WebApp.MapGet(SlidingWindowRule.UriPattern, () =>
+            WebApp.MapGet(SlidingWindowRule.UriString, () =>
             {
                 return Results.StatusCode((int)HttpStatusCode.OK);
             });
 
-            WebApp.MapGet(ThrowingSemaphoreRule.UriPattern, () =>
+            WebApp.MapGet(ThrowingSemaphoreRule.UriString, () =>
             {
                 // Should never be called
                 return Results.StatusCode((int)HttpStatusCode.MethodNotAllowed);
             });
 
-            WebApp.MapGet(ThrowingFixedWindowRule.UriPattern, () =>
+            WebApp.MapGet(ThrowingFixedWindowRule.UriString, () =>
             {
                 return Results.StatusCode((int)HttpStatusCode.Accepted);
             });
 
             var counters = new ConcurrentDictionary<string, long>();
 
-            WebApp.MapGet(DistributedCounterRule.UriPattern, ([FromQuery] string id) =>
+            WebApp.MapGet(DistributedCounterRule.UriString, ([FromQuery] string id) =>
             {
                 // The below code is intentionally not thread-safe
 
@@ -331,12 +331,12 @@ namespace IntegrationTests
                 return counter;
             });
 
-            WebApp.MapGet(DeduplicatingSemaphoreRule.UriPattern, ([FromQuery] string id, [FromQuery] string val) =>
+            WebApp.MapGet(DeduplicatingSemaphoreRule.UriString, ([FromQuery] string id, [FromQuery] string val) =>
             {
                 DedupTestValues[id] = val;
             });
 
-            WebApp.MapGet(CircuitBreakerRule.UriPattern, ([FromQuery] string id) =>
+            WebApp.MapGet(CircuitBreakerRule.UriString, ([FromQuery] string id) =>
             {
                 bool isBadRequest = CircuitBreakerFailingRequestIds.ContainsKey(id);
 
@@ -473,20 +473,20 @@ namespace IntegrationTests
 
             // First call
             var sw1 = new Stopwatch(); sw1.Start();
-            var task1 = Client.GetAsync($"{NamedCriticalSectionRule.UriPattern}?id={id}").ContinueWith(_ => sw1.Stop());
+            var task1 = Client.GetAsync($"{NamedCriticalSectionRule.UriString}?id={id}").ContinueWith(_ => sw1.Stop());
 
             // The test endpoint sleeps for 3 seconds. Waiting for 2 seconds before making the next call.
             await Task.Delay(TimeSpan.FromSeconds(2));
 
             // Second call
             var sw2 = new Stopwatch(); sw2.Start();
-            var task2 = Client.GetAsync($"{NamedCriticalSectionRule.UriPattern}?id={id}").ContinueWith(_ => sw2.Stop());
+            var task2 = Client.GetAsync($"{NamedCriticalSectionRule.UriString}?id={id}").ContinueWith(_ => sw2.Stop());
 
             await Task.WhenAll(task1,task2);
 
             // Third call
             var sw3 = new Stopwatch(); sw3.Start();
-            await Client.GetAsync($"{NamedCriticalSectionRule.UriPattern}?id={id}");
+            await Client.GetAsync($"{NamedCriticalSectionRule.UriString}?id={id}");
             sw3.Stop();
 
             string msg = $"First: {sw1.ElapsedMilliseconds} ms, second: {sw2.ElapsedMilliseconds} ms, third: {sw3.ElapsedMilliseconds} ms";
@@ -511,7 +511,7 @@ namespace IntegrationTests
                 sw.Start();
 
                 return Client
-                    .GetAsync($"{NamedCriticalSectionRule.UriPattern}?id={id}")
+                    .GetAsync($"{NamedCriticalSectionRule.UriString}?id={id}")
                     .ContinueWith(_ =>
                     {
                         sw.Stop();
@@ -535,11 +535,11 @@ namespace IntegrationTests
         {
             Guid id = Guid.NewGuid();
 
-            var successfulCallTasks = Enumerable.Range(0, 2).Select(_ => Client.GetAsync($"{SemaphoreRule.UriPattern}?id={id}")).ToArray();
+            var successfulCallTasks = Enumerable.Range(0, 2).Select(_ => Client.GetAsync($"{SemaphoreRule.UriString}?id={id}")).ToArray();
 
             await Task.Delay(TimeSpan.FromMilliseconds(300));
 
-            var throttledCallTasks = Enumerable.Range(0, 5).Select(_ => Client.GetAsync($"{SemaphoreRule.UriPattern}?id={id}")).ToArray();
+            var throttledCallTasks = Enumerable.Range(0, 5).Select(_ => Client.GetAsync($"{SemaphoreRule.UriString}?id={id}")).ToArray();
 
             var successfulCalls = await Task.WhenAll(successfulCallTasks);
 
@@ -569,7 +569,7 @@ namespace IntegrationTests
                 sw.Start();
 
                 return Client
-                    .GetAsync($"{DelayedFixedWindowRule.UriPattern}?id={id}")
+                    .GetAsync($"{DelayedFixedWindowRule.UriString}?id={id}")
                     .ContinueWith(t =>
                     {
                         Assert.AreEqual(HttpStatusCode.OK, t.Result.StatusCode);
@@ -600,7 +600,7 @@ namespace IntegrationTests
                 var tasks = Enumerable.Range(0, 5).Select(_ => {
 
                     return Client
-                        .GetAsync($"{FixedWindowFailingMethodRule.UriPattern}?id={id}")
+                        .GetAsync($"{FixedWindowFailingMethodRule.UriString}?id={id}")
                         .ContinueWith(t => t.Result.StatusCode);
                 });
 
@@ -622,13 +622,13 @@ namespace IntegrationTests
 
             // First call
             var sw1 = new Stopwatch(); sw1.Start();
-            var task1 = Client.GetAsync($"{SemaphoreCrushingMethodRule.UriPattern}?id={id}").ContinueWith(t => { sw1.Stop(); return t.Result.StatusCode; });
+            var task1 = Client.GetAsync($"{SemaphoreCrushingMethodRule.UriString}?id={id}").ContinueWith(t => { sw1.Stop(); return t.Result.StatusCode; });
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
 
             // Second call
             var sw2 = new Stopwatch(); sw2.Start();
-            var task2 = Client.GetAsync($"{SemaphoreCrushingMethodRule.UriPattern}?id={id}").ContinueWith(t => { sw2.Stop(); return t.Result.StatusCode; });
+            var task2 = Client.GetAsync($"{SemaphoreCrushingMethodRule.UriString}?id={id}").ContinueWith(t => { sw2.Stop(); return t.Result.StatusCode; });
 
             await Task.WhenAll(task1, task2);
 
@@ -649,7 +649,7 @@ namespace IntegrationTests
             Guid id = Guid.NewGuid();
 
             // First call - should succeed
-            var result = await Client.GetAsync($"{SlidingWindowRule.UriPattern}?id={id}");
+            var result = await Client.GetAsync($"{SlidingWindowRule.UriString}?id={id}");
 
             Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
 
@@ -658,7 +658,7 @@ namespace IntegrationTests
             {
                 await Task.Delay(300);
 
-                result = await Client.GetAsync($"{SlidingWindowRule.UriPattern}?id={id}");
+                result = await Client.GetAsync($"{SlidingWindowRule.UriString}?id={id}");
 
                 Assert.AreEqual(HttpStatusCode.TooManyRequests, result.StatusCode);
             }
@@ -667,7 +667,7 @@ namespace IntegrationTests
             await Task.Delay(4000);
 
             // Should succeed again
-            result = await Client.GetAsync($"{SlidingWindowRule.UriPattern}?id={id}");
+            result = await Client.GetAsync($"{SlidingWindowRule.UriString}?id={id}");
 
             Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
         }
@@ -681,7 +681,7 @@ namespace IntegrationTests
             {
                 await Task.Delay(100);
 
-                var result = await Client.GetAsync($"{ThrowingSemaphoreRule.UriPattern}?id={id}");
+                var result = await Client.GetAsync($"{ThrowingSemaphoreRule.UriString}?id={id}");
 
                 Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
             }
@@ -696,7 +696,7 @@ namespace IntegrationTests
             {
                 await Task.Delay(100);
 
-                var result = await Client.GetAsync($"{ThrowingFixedWindowRule.UriPattern}?id={id}");
+                var result = await Client.GetAsync($"{ThrowingFixedWindowRule.UriString}?id={id}");
 
                 Assert.AreEqual(HttpStatusCode.Accepted, result.StatusCode);
             }
@@ -714,7 +714,7 @@ namespace IntegrationTests
                 Enumerable.Range(0, attempts)
                     .Select(async _ =>
                     {
-                        var response = await Client.GetAsync($"{DistributedCounterRule.UriPattern}?id={id}");
+                        var response = await Client.GetAsync($"{DistributedCounterRule.UriString}?id={id}");
 
                         long counter = long.Parse(await response.Content.ReadAsStringAsync());
 
@@ -744,7 +744,7 @@ namespace IntegrationTests
 
                         string requestValue = Guid.NewGuid().ToString();
 
-                        var response = await Client.GetAsync($"{DeduplicatingSemaphoreRule.UriPattern}?id={requestId}&val={requestValue}");
+                        var response = await Client.GetAsync($"{DeduplicatingSemaphoreRule.UriString}?id={requestId}&val={requestValue}");
 
                         if (response.IsSuccessStatusCode)
                         {
@@ -772,34 +772,34 @@ namespace IntegrationTests
 
             // Making three failing requests
 
-            var response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            var response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
             CircuitBreakerFailingRequestIds[id.ToString()] = true;
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
             CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
             CircuitBreakerFailingRequestIds[id.ToString()] = true;
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
             CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
             CircuitBreakerFailingRequestIds[id.ToString()] = true;
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
             CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
             // This fourth failing request will turn the rule into Trial mode (yet the client will still get BadRequest, because that switch happens post factum)
 
             CircuitBreakerFailingRequestIds[id.ToString()] = true;
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
 
             // From now on the rule should be in Trial mode - testing it for 5 seconds
@@ -808,7 +808,7 @@ namespace IntegrationTests
             int serviceUnavailableCount = 0;
             for (int i = 0; i < 50; i++)
             {
-                response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+                response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
 
                 if (response.StatusCode == HttpStatusCode.BadRequest)
                 {
@@ -830,13 +830,13 @@ namespace IntegrationTests
 
             // Making a successful request
             CircuitBreakerFailingRequestIds.TryRemove(id.ToString(), out bool _);
-            response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+            response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
             // Now it should be back to normal
             for (int i = 0; i < 5; i++)
             {
-                response = await Client.GetAsync($"{CircuitBreakerRule.UriPattern}?id={id}");
+                response = await Client.GetAsync($"{CircuitBreakerRule.UriString}?id={id}");
                 Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             }
         }

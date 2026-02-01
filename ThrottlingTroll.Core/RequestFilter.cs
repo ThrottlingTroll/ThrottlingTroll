@@ -12,7 +12,12 @@ namespace ThrottlingTroll
     public class RequestFilter
     {
         /// <summary>
-        /// Regex pattern to match request URI against. Empty string or null means any URI.
+        /// String to be found in request URI. Case-insensitive. Empty string or null means any URI.
+        /// </summary>
+        public string UriString { get; set; }
+
+        /// <summary>
+        /// Regex pattern to match request URI against. Overshadows <see cref="UriString"/> Empty string or null means any URI.
         /// </summary>
         public string UriPattern { get; set; }
 
@@ -109,12 +114,17 @@ namespace ThrottlingTroll
         /// </summary>
         protected virtual bool IsUrlMatch(IHttpRequestProxy request)
         {
-            if (this.UrlRegex == null)
+            if (this.UrlRegex != null)
             {
-                return true;
+                return this.UrlRegex.IsMatch(request.Uri);
             }
 
-            return this.UrlRegex.IsMatch(request.Uri);
+            if (!string.IsNullOrEmpty(this.UriString))
+            {
+                return request.Uri.Contains(this.UriString, StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            return true;
         }
 
         /// <summary>

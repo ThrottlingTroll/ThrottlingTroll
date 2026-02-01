@@ -26,7 +26,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Ingress|w/iDWn0W6f2VKmmXWEzN/m0hF3dOEO3OMoSrWV9gXgc=", key);
+        Assert.AreEqual("|Ingress|VxjZk7ZrAKWzszaEeiN+w8WdDQH2PCxR8H49P/WaQvo=", key);
     }
 
     [TestMethod]
@@ -47,7 +47,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Egress|w/iDWn0W6f2VKmmXWEzN/m0hF3dOEO3OMoSrWV9gXgc=", key);
+        Assert.AreEqual("|Egress|VxjZk7ZrAKWzszaEeiN+w8WdDQH2PCxR8H49P/WaQvo=", key);
     }
 
     [TestMethod]
@@ -65,7 +65,7 @@ public class ThrottlingTrollRuleTests
             },
 
             Method = "POST,DELETE",
-            UriPattern = "ab/cd/ef",
+            UriString = "ab/cd/ef",
             HeaderName = "my-header-name",
             HeaderValue = "my-header-value123",
         };
@@ -78,7 +78,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("test-config-name|Ingress|0Rz5p6PEVLqBcanRSYWKbBuJIPeuQl65kKuwm4PyrXA=", key);
+        Assert.AreEqual("test-config-name|Ingress|bDhkUlzedPEOj70xMUq7j0oHVkpYNbdhf17U/lMvK8g=", key);
     }
 
     [TestMethod]
@@ -105,7 +105,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("test-config-name|Ingress|Ll8oXPxiLzc3o7G72jNYvo1sm1UDX40/0y7jcZMSMOw=", key);
+        Assert.AreEqual("test-config-name|Ingress|XN77/FBcJdqBz8MG27cT7KzJzcAL8ZBOBeoREgMNa+I=", key);
     }
 
     [TestMethod]
@@ -134,7 +134,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
         Assert.AreEqual(expectedKey, key);
     }
 
@@ -165,7 +165,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        string expectedKey = $"|Ingress|{this.GetHash($"<>|<{rule.UriPattern}>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<{rule.UriPattern}>|<>|<>|<>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
         Assert.AreEqual(expectedKey, key);
     }
 
@@ -194,7 +194,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Ingress|ZWcgAiEl2X3dv4juIuS5n2lL229y+OaDxnoA9GiH1Nc=", key);
+        Assert.AreEqual("|Ingress|/kVvhwW47h0DInnxJKIiuQ9jTf2yWf/ckNaPgg4zZmY=", key);
     }
 
     [TestMethod]
@@ -228,7 +228,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<my-client-id-header>|<>|<{rule.HeaderValuePattern}>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<>|<my-client-id-header>|<>|<{rule.HeaderValuePattern}>|<FixedWindowRateLimitMethod(1,2)>|<{identityId.ToString()}>")}";
         Assert.AreEqual(expectedKey, key);
     }
 
@@ -262,7 +262,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        Assert.AreEqual("|Ingress|DKtfpNDejytr8r3H/KYg0zcimNlMNYGDbZRzQV79lWw=", key);
+        Assert.AreEqual("|Ingress|Sjlkf+bM2IEYBal5Eou3pnUC9kbEC23STLxUNBUZPP0=", key);
     }
 
 
@@ -300,7 +300,7 @@ public class ThrottlingTrollRuleTests
 
         // Assert
 
-        string expectedKey = $"|Ingress|{this.GetHash($"<>|<{rule.UriPattern}>|<my-client-id-header>|<>|<{rule.HeaderValuePattern}>|<FixedWindowRateLimitMethod(1,2)>|<{identityId1.ToString()}>|<{identityId2.ToString()}>")}";
+        string expectedKey = $"|Ingress|{this.GetHash($"<>|<>|<{rule.UriPattern}>|<my-client-id-header>|<>|<{rule.HeaderValuePattern}>|<FixedWindowRateLimitMethod(1,2)>|<{identityId1.ToString()}>|<{identityId2.ToString()}>")}";
         Assert.AreEqual(expectedKey, key);
     }
 
