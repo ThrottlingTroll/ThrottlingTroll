@@ -6,7 +6,7 @@
         <IncludeSymbols>true</IncludeSymbols>
 
         <PackageId>ThrottlingTroll.CounterStores.EfCore</PackageId>
-        <VersionPrefix>9.1.0</VersionPrefix>
+        <VersionPrefix>9.2.0</VersionPrefix>
         <PackageTags>Rate Limiting;Throttling;ThrottlingTroll;EntityFramework;Entity Framework;EFCore;Entity Framework Core</PackageTags>
         <Description>CounterStore for ThrottlingTroll. Stores counters in any relational database supported by Entity Framework Core.</Description>
         <Authors>ThrottlingTroll</Authors>
