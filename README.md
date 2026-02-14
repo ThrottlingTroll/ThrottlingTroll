@@ -126,6 +126,10 @@ Install from Nuget:
 * [**CostExtractor**s](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/150.-%5BIngress%5D-Personalized-rate-limiting#using-costextractors), that you can use to assign custom *costs* to different requests. Default cost is **1**, but if some of your requests are heavier than the others, you can assign higher costs to them.
   Another typical usecase for this would be to arrange different *pricing tiers* for your service: you set the rate limit to something high - and then "charge" clients differently, based on their pricing tier.
 
+* [**OpenTelemetry**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#telemetry).
+
+   Instrumented with [these traces and metrics](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#telemetry). Just hook up the `ThrottlingTroll` trace/metric source. Also consider using ThrottlingTroll metrics for autoscaling.
+
 
 ## Supported rate limiting algorithms
 
