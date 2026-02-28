@@ -66,8 +66,10 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
+            var ttl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
+
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
 

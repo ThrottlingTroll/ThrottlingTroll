@@ -22,11 +22,11 @@ namespace ThrottlingTroll
         /// </summary>
         /// <param name="key">Counter's key</param>
         /// <param name="cost">Value to increment by</param>
-        /// <param name="ttl">TTL for this counter</param>
+        /// <param name="ttlInTicks">TTL for this counter</param>
         /// <param name="maxCounterValueToSetTtl">TTL will only be set, if the counter value is less or equal to this number</param>
         /// <param name="request">Incoming request, for reference</param>
         /// <returns>New counter value</returns>
-        Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request);
+        Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, long maxCounterValueToSetTtl, IHttpRequestProxy request);
 
         /// <summary>
         /// Decrements counter by its key.

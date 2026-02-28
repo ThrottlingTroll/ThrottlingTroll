@@ -58,9 +58,11 @@ namespace ThrottlingTroll.CounterStores.EfCore
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             this.RunCleanupIfNeeded();
+
+            var ttl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
 
             var retryCount = this._settings.MaxAttempts - 2;
             while (true)

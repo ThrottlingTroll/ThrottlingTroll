@@ -34,12 +34,12 @@ namespace ThrottlingTroll
                 return -1;
             }
 
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
 
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
 
             // Now checking the actual count
-            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl, cost, request);
+            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl.UtcTicks, cost, request);
 
             if (count > this.PermitLimit)
             {

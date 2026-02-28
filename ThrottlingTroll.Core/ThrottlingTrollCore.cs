@@ -434,7 +434,7 @@ namespace ThrottlingTroll
                     {
                         // Checking the failure count
 
-                        var now = DateTime.UtcNow;
+                        var now = DateTimeOffset.UtcNow;
 
                         var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(circuitBreakerMethod.IntervalInSeconds);
 
@@ -442,7 +442,7 @@ namespace ThrottlingTroll
                         // We don't want to count successes as failures, that would distort the picture.
                         string failureCountCacheKey = $"{uniqueCacheKey}|CircuitBreakerFailureCount";
 
-                        long failureCount = await this._counterStore.IncrementAndGetAsync(failureCountCacheKey, 1, ttl, 1, request);
+                        long failureCount = await this._counterStore.IncrementAndGetAsync(failureCountCacheKey, 1, ttl.UtcTicks, 1, request);
 
                         if (failureCount > circuitBreakerMethod.PermitLimit)
                         {

@@ -34,7 +34,7 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             var db = this._redis.GetDatabase();
 
@@ -44,7 +44,7 @@ namespace ThrottlingTroll.CounterStores.Redis
                 $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
             );
 
-            var val = await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, cost, absTtlInMs = ttl.ToUnixTimeMilliseconds(), maxCounterValueToSetTtl });
+            var val = await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, cost, absTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond, maxCounterValueToSetTtl });
 
             return (long)val;
         }

@@ -36,11 +36,11 @@ namespace ThrottlingTroll
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
 
             var ttl = now + TimeSpan.FromSeconds(this.TimeoutInSeconds);
 
-            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl, this.PermitLimit, request);
+            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl.UtcTicks, this.PermitLimit, request);
 
             if (count > this.PermitLimit)
             {

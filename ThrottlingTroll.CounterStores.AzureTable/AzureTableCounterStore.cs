@@ -72,10 +72,11 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, DateTimeOffset ttl, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
             this.RunCleanupIfNeeded();
 
+            var ttl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
             key = this.ConvertKey(key);
 
             var retryCount = MaxRetries - 2;

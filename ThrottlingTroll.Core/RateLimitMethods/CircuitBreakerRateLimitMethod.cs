@@ -47,12 +47,12 @@ namespace ThrottlingTroll
                 return int.MaxValue;
             }
 
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
 
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.TrialIntervalInSeconds);
 
             // Checking the failure count in the last ProbationIntervalInSeconds
-            long count = await Store.IncrementAndGetAsync(limitKey, cost, ttl, cost, request);
+            long count = await Store.IncrementAndGetAsync(limitKey, cost, ttl.UtcTicks, cost, request);
 
             if (count > TrialModePermitLimit)
             {
