@@ -95,9 +95,9 @@ namespace IntegrationTests
             }
         }
 
-        static ThrottlingTrollRule SemaphoreCrushingMethodRule = new ThrottlingTrollRule
+        static ThrottlingTrollRule SemaphoreCrashingMethodRule = new ThrottlingTrollRule
         {
-            UriString = "semaphore-crushing-method",
+            UriString = "semaphore-crashing-method",
 
             LimitMethod = new MalfunctioningSemaphoreRateLimitMethod
             {
@@ -252,7 +252,7 @@ namespace IntegrationTests
                         SemaphoreRule,
                         DelayedFixedWindowRule,
                         FixedWindowFailingMethodRule,
-                        SemaphoreCrushingMethodRule,
+                        SemaphoreCrashingMethodRule,
                         SlidingWindowRule,
                         ThrowingSemaphoreRule,
                         ThrowingFixedWindowRule,
@@ -287,7 +287,7 @@ namespace IntegrationTests
                 throw new Exception();
             });
 
-            WebApp.MapGet(SemaphoreCrushingMethodRule.UriString, () =>
+            WebApp.MapGet(SemaphoreCrashingMethodRule.UriString, () =>
             {
                 return Results.StatusCode((int)HttpStatusCode.OK);
             });
@@ -413,11 +413,11 @@ namespace IntegrationTests
         }
 
         [TestMethod]
-        public async Task TestSemaphoreCrushingMethods()
+        public async Task TestSemaphoreCrashingMethods()
         {
             await Task.WhenAll(
                 Enumerable.Range(0, 16)
-                    .Select(_ => this.TestSemaphoreCrushingMethod())
+                    .Select(_ => this.TestSemaphoreCrashingMethod())
             );
         }
 
@@ -616,19 +616,19 @@ namespace IntegrationTests
             }
         }
 
-        private async Task TestSemaphoreCrushingMethod()
+        private async Task TestSemaphoreCrashingMethod()
         {
             Guid id = Guid.NewGuid();
 
             // First call
             var sw1 = new Stopwatch(); sw1.Start();
-            var task1 = Client.GetAsync($"{SemaphoreCrushingMethodRule.UriString}?id={id}").ContinueWith(t => { sw1.Stop(); return t.Result.StatusCode; });
+            var task1 = Client.GetAsync($"{SemaphoreCrashingMethodRule.UriString}?id={id}").ContinueWith(t => { sw1.Stop(); return t.Result.StatusCode; });
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
 
             // Second call
             var sw2 = new Stopwatch(); sw2.Start();
-            var task2 = Client.GetAsync($"{SemaphoreCrushingMethodRule.UriString}?id={id}").ContinueWith(t => { sw2.Stop(); return t.Result.StatusCode; });
+            var task2 = Client.GetAsync($"{SemaphoreCrashingMethodRule.UriString}?id={id}").ContinueWith(t => { sw2.Stop(); return t.Result.StatusCode; });
 
             await Task.WhenAll(task1, task2);
 
