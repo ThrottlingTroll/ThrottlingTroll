@@ -39,7 +39,13 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
 
             // Now checking the actual count
-            long count = await store.IncrementAndGetAsync(limitKey, cost, ttl.UtcTicks, cost, request);
+            long count = await store.IncrementAndGetAsync(
+                limitKey,
+                cost,
+                ttl.UtcTicks,
+                CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
+                cost,
+                request);
 
             if (count > this.PermitLimit)
             {

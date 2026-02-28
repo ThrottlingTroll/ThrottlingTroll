@@ -52,7 +52,13 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.TrialIntervalInSeconds);
 
             // Checking the failure count in the last ProbationIntervalInSeconds
-            long count = await Store.IncrementAndGetAsync(limitKey, cost, ttl.UtcTicks, cost, request);
+            long count = await Store.IncrementAndGetAsync(
+                limitKey,
+                cost,
+                ttl.UtcTicks,
+                CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
+                cost,
+                request);
 
             if (count > TrialModePermitLimit)
             {

@@ -51,7 +51,14 @@ namespace ThrottlingTroll
             var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds * this.NumOfBuckets);
 
             // Incrementing and getting the current bucket
-            tasks.Add(store.IncrementAndGetAsync(curBucketKey, cost, ttl.UtcTicks, cost, request));
+            tasks.Add(
+                store.IncrementAndGetAsync(
+                    curBucketKey,
+                    cost,
+                    ttl.UtcTicks,
+                    CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
+                    cost,
+                    request));
 
             // Now checking our local memory cache for the "counter exceeded" flag.
             // Need to do that _after_ the current bucket gets incremented, since for a sliding window the correct count in each bucket matters.

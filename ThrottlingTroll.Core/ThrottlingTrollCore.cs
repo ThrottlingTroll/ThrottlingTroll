@@ -442,7 +442,13 @@ namespace ThrottlingTroll
                         // We don't want to count successes as failures, that would distort the picture.
                         string failureCountCacheKey = $"{uniqueCacheKey}|CircuitBreakerFailureCount";
 
-                        long failureCount = await this._counterStore.IncrementAndGetAsync(failureCountCacheKey, 1, ttl.UtcTicks, 1, request);
+                        long failureCount = await this._counterStore.IncrementAndGetAsync(
+                            failureCountCacheKey,
+                            cost: 1,
+                            ttl.UtcTicks,
+                            CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
+                            maxCounterValueToSetTtl: 1,
+                            request);
 
                         if (failureCount > circuitBreakerMethod.PermitLimit)
                         {

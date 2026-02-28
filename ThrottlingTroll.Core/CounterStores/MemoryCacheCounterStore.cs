@@ -32,34 +32,37 @@ namespace ThrottlingTroll
         public Action<LogLevel, string> Log { get; set; }
 
         /// <inheritdoc />
-        public async Task<long> GetAsync(string key, IHttpRequestProxy request)
+        public Task<long> GetAsync(string key, IHttpRequestProxy request)
         {
             var entry = this._cache.Get(key) as CacheEntry;
 
-            return entry == null ? 0 : entry.Count;
+            return Task.FromResult(entry == null ? 0 : entry.Count);
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, CounterStoreIncrementAndGetOptions options, long maxCounterValueToSetTtl, IHttpRequestProxy request)
         {
-            var ttl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
-
             await this._asyncLock.WaitAsync();
 
             try
             {
                 var cacheEntry = this._cache.Get(key) as CacheEntry;
 
+                var expiresAt = cacheEntry?.ExpiresAt ?? DateTimeOffset.UtcNow;
+                var newTtl = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
+                        expiresAt + TimeSpan.FromTicks(ttlInTicks) :
+                        new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
+
                 if (cacheEntry == null)
                 {
-                    cacheEntry = new CacheEntry(0, ttl);
+                    cacheEntry = new CacheEntry(0, newTtl);
                 }
 
                 cacheEntry.Count += cost;
 
                 if (cacheEntry.Count <= maxCounterValueToSetTtl)
                 {
-                    cacheEntry.ExpiresAt = ttl;
+                    cacheEntry.ExpiresAt = newTtl;
                 }
 
                 this._cache.Set
