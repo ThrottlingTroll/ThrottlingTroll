@@ -76,7 +76,6 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         {
             this.RunCleanupIfNeeded();
 
-            var ttl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
             key = this.ConvertKey(key);
 
             var retryCount = MaxRetries - 2;
@@ -86,10 +85,28 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                 {
                     var entity = await this._tableClient.GetEntityIfExistsAsync<CounterEntity>(key, key);
 
+                    // Calculating the new TTL value
+                    DateTimeOffset newTtl;
+                    if (options == CounterStoreIncrementAndGetOptions.IncrementTtl)
+                    {
+                        newTtl = DateTimeOffset.UtcNow;
+
+                        if (entity.Value?.ExpiresAt > newTtl)
+                        {
+                            newTtl = entity.Value.ExpiresAt;
+                        }
+
+                        newTtl += TimeSpan.FromTicks(ttlInTicks);
+                    }
+                    else
+                    {
+                        newTtl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
+                    }
+
                     if (!entity.HasValue)
                     {
                         // Just adding a new record - and that's it
-                        var res = await this._tableClient.AddEntityAsync(new CounterEntity { PartitionKey = key, RowKey = key, Count = cost, ExpiresAt = ttl });
+                        var res = await this._tableClient.AddEntityAsync(new CounterEntity { PartitionKey = key, RowKey = key, Count = cost, ExpiresAt = newTtl });
 
                         return cost;
                     }
@@ -100,7 +117,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                     {
                         // Recreating the entity
                         counter.Count = cost;
-                        counter.ExpiresAt = ttl;
+                        counter.ExpiresAt = newTtl;
                     }
                     else
                     {
@@ -109,7 +126,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
 
                         if (counter.Count <= maxCounterValueToSetTtl)
                         {
-                            counter.ExpiresAt = ttl;
+                            counter.ExpiresAt = newTtl;
                         }
                     }
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
@@ -93,7 +94,9 @@ namespace ThrottlingTroll.CounterStores.EfCore
                         {
                             Id = key,
                             Count = cost,
-                            ExpiresAt = ttl
+                            ExpiresAt = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
+                                DateTimeOffset.UtcNow + TimeSpan.FromTicks(ttlInTicks) :
+                                new DateTimeOffset(ttlInTicks, TimeSpan.Zero)
                         });
 
                         await db.SaveChangesAsync();
@@ -114,7 +117,10 @@ namespace ThrottlingTroll.CounterStores.EfCore
                     // Also updating TTL, if needed
                     if (counter.Count <= maxCounterValueToSetTtl)
                     {
-                        counter.ExpiresAt = ttl;
+                        counter.ExpiresAt = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
+                            counter.ExpiresAt + TimeSpan.FromTicks(ttlInTicks) :
+                            new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
+
                         await db.SaveChangesAsync();
                     }
 

@@ -40,13 +40,43 @@ namespace ThrottlingTroll.CounterStores.Redis
 
             // Doing this with one atomic LUA script
             // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
-            var script = LuaScript.Prepare(
-                $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
-            );
 
-            var val = await db.ScriptEvaluateAsync(script, new { key = (RedisKey)key, cost, absTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond, maxCounterValueToSetTtl });
+            RedisResult res;
+            if (options == CounterStoreIncrementAndGetOptions.IncrementTtl)
+            {
+                var script = LuaScript.Prepare(
+                    $"local c = redis.call('INCRBY', @key, @cost) local ttl = redis.call('PTTL', @key) if ttl < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) elseif c <= tonumber(@maxCounterValueToSetTtl) then redis.call('PEXPIREAT', @key, ttl + @incTtlInMs) end return c"
+                );
 
-            return (long)val;
+                res = await db.ScriptEvaluateAsync(
+                    script,
+                    new
+                    {
+                        key = (RedisKey)key,
+                        cost,
+                        absTtlInMs = (DateTimeOffset.UtcNow.Ticks + ttlInTicks) / TimeSpan.TicksPerMillisecond,
+                        incTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond,
+                        maxCounterValueToSetTtl
+                    });
+            }
+            else
+            {
+                var script = LuaScript.Prepare(
+                    $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
+                );
+
+                res = await db.ScriptEvaluateAsync(
+                    script,
+                    new
+                    {
+                        key = (RedisKey)key,
+                        cost,
+                        absTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond,
+                        maxCounterValueToSetTtl
+                    });
+            }
+
+            return (long)res;
         }
 
         /// <inheritdoc />
