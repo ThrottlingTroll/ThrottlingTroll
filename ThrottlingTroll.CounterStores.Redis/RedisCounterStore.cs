@@ -38,14 +38,12 @@ namespace ThrottlingTroll.CounterStores.Redis
         {
             var db = this._redis.GetDatabase();
 
-            // Doing this with one atomic LUA script
-            // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
-
             RedisResult res;
             if (options == CounterStoreIncrementAndGetOptions.IncrementTtl)
             {
+                // Also reading the current TTL (if any) and incrementing it
                 var script = LuaScript.Prepare(
-                    $"local c = redis.call('INCRBY', @key, @cost) local ttl = redis.call('PTTL', @key) if ttl < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) elseif c <= tonumber(@maxCounterValueToSetTtl) then redis.call('PEXPIREAT', @key, ttl + @incTtlInMs) end return c"
+                    $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) then local ttl = redis.call('PTTL', @key) if ttl < 0 then ttl = 0 end redis.call('PEXPIRE', @key, ttl + @incTtlInMs) end return c"
                 );
 
                 res = await db.ScriptEvaluateAsync(
@@ -54,16 +52,18 @@ namespace ThrottlingTroll.CounterStores.Redis
                     {
                         key = (RedisKey)key,
                         cost,
-                        absTtlInMs = (DateTimeOffset.UtcNow.Ticks + ttlInTicks) / TimeSpan.TicksPerMillisecond,
                         incTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond,
                         maxCounterValueToSetTtl
                     });
             }
             else
             {
+                // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
                 var script = LuaScript.Prepare(
                     $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
                 );
+
+                var absTtl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
 
                 res = await db.ScriptEvaluateAsync(
                     script,
@@ -71,7 +71,7 @@ namespace ThrottlingTroll.CounterStores.Redis
                     {
                         key = (RedisKey)key,
                         cost,
-                        absTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond,
+                        absTtlInMs = absTtl.ToUnixTimeMilliseconds(),
                         maxCounterValueToSetTtl
                     });
             }

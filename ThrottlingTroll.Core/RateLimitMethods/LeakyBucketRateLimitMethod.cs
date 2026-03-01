@@ -10,12 +10,12 @@ namespace ThrottlingTroll
     public class LeakyBucketRateLimitMethod : RateLimitMethod
     {
         /// <summary>
-        /// Window size in seconds
+        /// Window size in seconds. Supports fractions.
         /// </summary>
-        public int IntervalInSeconds { get; set; }
+        public double IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds => this.IntervalInSeconds;
+        public override int RetryAfterInSeconds => (int)Math.Round(this.IntervalInSeconds);
 
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
@@ -25,7 +25,8 @@ namespace ThrottlingTroll
                 return int.MaxValue;
             }
 
-            long leakageInTicks = this.IntervalInSeconds * 10000000 / this.PermitLimit;
+            long intervalInTicks = (long)(this.IntervalInSeconds * 10000000);
+            long leakageInTicks = intervalInTicks / this.PermitLimit;
 
             long count = await store.IncrementAndGetAsync(
                 limitKey,

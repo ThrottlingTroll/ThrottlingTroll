@@ -238,8 +238,8 @@ namespace IntegrationTests
 
             LimitMethod = new LeakyBucketRateLimitMethod
             {
-                PermitLimit = 5,
-                IntervalInSeconds = 1
+                PermitLimit = 4,
+                IntervalInSeconds = 0.8
             },
 
             IdentityIdExtractor = request =>
@@ -881,7 +881,7 @@ namespace IntegrationTests
 
             for (int i = 0; i < 3; i++)
             {
-                var tasks = Enumerable.Range(0, 7).Select(_ => {
+                var tasks = Enumerable.Range(0, 6).Select(_ => {
 
                     var sw = new Stopwatch();
                     sw.Start();
@@ -901,7 +901,7 @@ namespace IntegrationTests
 
                 Trace.WriteLine("Results: " + msg);
 
-                Assert.AreEqual(5, results.Count(r => r.StatusCode == HttpStatusCode.OK), msg);
+                Assert.AreEqual(4, results.Count(r => r.StatusCode == HttpStatusCode.OK), msg);
                 Assert.AreEqual(2, results.Count(r => r.StatusCode == HttpStatusCode.TooManyRequests), msg);
 
                 var lats = results
@@ -910,11 +910,12 @@ namespace IntegrationTests
                     .Select(r => r.ElapsedMilliseconds)
                     .ToArray();
 
+                Assert.AreEqual(4, lats.Length);
+
                 Assert.IsTrue(lats[0] >=   0 && lats[0] <=  50, $"0: {lats[0]}ms");
                 Assert.IsTrue(lats[1] >= 190 && lats[1] <= 250, $"1: {lats[1]}ms");
                 Assert.IsTrue(lats[2] >= 390 && lats[2] <= 450, $"2: {lats[2]}ms");
                 Assert.IsTrue(lats[3] >= 590 && lats[3] <= 650, $"3: {lats[3]}ms");
-                Assert.IsTrue(lats[4] >= 790 && lats[4] <= 850, $"4: {lats[4]}ms");
 
                 await Task.Delay(300);
             }
