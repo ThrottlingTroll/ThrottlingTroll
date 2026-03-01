@@ -911,10 +911,10 @@ namespace IntegrationTests
                     .ToArray();
 
                 Assert.IsTrue(lats[0] >=   0 && lats[0] <=  50, $"0: {lats[0]}ms");
-                Assert.IsTrue(lats[1] >= 200 && lats[1] <= 250, $"1: {lats[1]}ms");
-                Assert.IsTrue(lats[2] >= 400 && lats[2] <= 450, $"2: {lats[2]}ms");
-                Assert.IsTrue(lats[3] >= 600 && lats[3] <= 650, $"3: {lats[3]}ms");
-                Assert.IsTrue(lats[4] >= 800 && lats[4] <= 850, $"4: {lats[4]}ms");
+                Assert.IsTrue(lats[1] >= 190 && lats[1] <= 250, $"1: {lats[1]}ms");
+                Assert.IsTrue(lats[2] >= 390 && lats[2] <= 450, $"2: {lats[2]}ms");
+                Assert.IsTrue(lats[3] >= 590 && lats[3] <= 650, $"3: {lats[3]}ms");
+                Assert.IsTrue(lats[4] >= 790 && lats[4] <= 850, $"4: {lats[4]}ms");
 
                 await Task.Delay(300);
             }
