@@ -32,7 +32,7 @@ namespace ThrottlingTroll
                 cost,
                 leakageInTicks,
                 CounterStoreIncrementAndGetOptions.IncrementTtl,
-                this.PermitLimit,
+                maxCounterValueToSetTtl: this.PermitLimit, // bumping up the TTL only so long as the queue is not overflown
                 request);
 
             if (count > this.PermitLimit)
