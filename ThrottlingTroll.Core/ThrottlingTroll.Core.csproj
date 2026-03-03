@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <IncludeSymbols>true</IncludeSymbols>
-        <VersionPrefix>10.0.0-beta1</VersionPrefix>
+        <VersionPrefix>10.0.0-beta2</VersionPrefix>
     </PropertyGroup>
 
     <ItemGroup>
