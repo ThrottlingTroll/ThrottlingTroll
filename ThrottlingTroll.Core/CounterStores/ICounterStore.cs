@@ -4,6 +4,12 @@ using System.Threading.Tasks;
 
 namespace ThrottlingTroll
 {
+    public abstract record CounterTtl(long MaxCounterValueToSetTtl);
+
+    public record CounterAbsoluteTtl(DateTimeOffset Ttl, long MaxCounterValueToSetTtl) : CounterTtl(MaxCounterValueToSetTtl);
+
+    public record CounterIncrementalTtl(TimeSpan Ttl, long MaxCounterValueToSetTtl): CounterTtl(MaxCounterValueToSetTtl);
+
     /// <summary>
     /// Represents a Store for request counters
     /// </summary>
@@ -30,9 +36,7 @@ namespace ThrottlingTroll
         Task<long> IncrementAndGetAsync(
             string key,
             long cost,
-            long ttlInTicks,
-            CounterStoreIncrementAndGetOptions options,
-            long maxCounterValueToSetTtl,
+            CounterTtl ttl,
             IHttpRequestProxy request);
 
         /// <summary>

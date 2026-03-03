@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -59,11 +60,9 @@ namespace ThrottlingTroll.CounterStores.EfCore
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, CounterStoreIncrementAndGetOptions options, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, CounterTtl ttl, IHttpRequestProxy request)
         {
             this.RunCleanupIfNeeded();
-
-            var ttl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
 
             var retryCount = this._settings.MaxAttempts - 2;
             while (true)
@@ -80,6 +79,8 @@ namespace ThrottlingTroll.CounterStores.EfCore
                         $"UPDATE {this.GetTableName(db)} SET Count = Count + {cost} WHERE Id = '{key}'"
                     );
 
+                    ThrottlingTrollCounter counter;
+
                     if (rowsAffected > 1)
                     {
                         // Failing quickly
@@ -89,15 +90,20 @@ namespace ThrottlingTroll.CounterStores.EfCore
                     else if (rowsAffected < 1)
                     {
                         // The counter doesn't exist - creating it
+                        counter = new ThrottlingTrollCounter { Id = key, Count = cost };
 
-                        db.ThrottlingTrollCounters.Add(new ThrottlingTrollCounter
+                        switch (ttl)
                         {
-                            Id = key,
-                            Count = cost,
-                            ExpiresAt = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
-                                DateTimeOffset.UtcNow + TimeSpan.FromTicks(ttlInTicks) :
-                                new DateTimeOffset(ttlInTicks, TimeSpan.Zero)
-                        });
+                            case CounterAbsoluteTtl absTtl:
+                                counter.ExpiresAt = absTtl.Ttl;
+                                break;
+
+                            case CounterIncrementalTtl incTtl:
+                                counter.ExpiresAt = DateTimeOffset.UtcNow + incTtl.Ttl;
+                                break;
+                        }
+
+                        db.ThrottlingTrollCounters.Add(counter);
 
                         await db.SaveChangesAsync();
                         await tx.CommitAsync();
@@ -106,20 +112,27 @@ namespace ThrottlingTroll.CounterStores.EfCore
                     }
 
                     // Reading the new value
-                    var counter = db.ThrottlingTrollCounters.Single(c => c.Id == key);
+                    counter = db.ThrottlingTrollCounters.Single(c => c.Id == key);
 
                     // If expired - resetting the count
                     if (counter.ExpiresAt < DateTimeOffset.UtcNow)
                     {
-                        counter.Count = 1;
+                        counter.Count = cost;
                     }
 
                     // Also updating TTL, if needed
-                    if (counter.Count <= maxCounterValueToSetTtl)
+                    if (counter.Count <= ttl.MaxCounterValueToSetTtl)
                     {
-                        counter.ExpiresAt = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
-                            counter.ExpiresAt + TimeSpan.FromTicks(ttlInTicks) :
-                            new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
+                        switch (ttl)
+                        {
+                            case CounterAbsoluteTtl absTtl:
+                                counter.ExpiresAt = absTtl.Ttl;
+                                break;
+
+                            case CounterIncrementalTtl incTtl:
+                                counter.ExpiresAt += incTtl.Ttl;
+                                break;
+                        }
 
                         await db.SaveChangesAsync();
                     }

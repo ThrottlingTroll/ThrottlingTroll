@@ -22,17 +22,14 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
             public long Count;
             public DateTimeOffset ExpiresAt;
 
-            public CacheEntry(long count, DateTimeOffset expiresAt)
-            {
-                this.Count = count;
-                this.ExpiresAt = expiresAt;
-            }
-
             public CacheEntry(byte[] bytes)
             {
-                this.Count = BitConverter.ToInt64(bytes, 0);
-                var ticks = BitConverter.ToInt64(bytes, sizeof(long));
-                this.ExpiresAt = new DateTimeOffset(ticks, TimeSpan.Zero);
+                if (bytes != null)
+                {
+                    this.Count = BitConverter.ToInt64(bytes, 0);
+                    var ticks = BitConverter.ToInt64(bytes, sizeof(long));
+                    this.ExpiresAt = new DateTimeOffset(ticks, TimeSpan.Zero);
+                }
             }
 
             public byte[] ToBytes()
@@ -66,37 +63,39 @@ namespace ThrottlingTroll.CounterStores.DistributedCache
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, CounterStoreIncrementAndGetOptions options, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, CounterTtl ttl, IHttpRequestProxy request)
         {
             // This is just a local lock, but it's the best we can do with IDistributedCache
             await this._asyncLock.WaitAsync();
 
             try
             {
-                var bytes = await this._cache.GetAsync(key);
+                var cacheEntry = new CacheEntry(await this._cache.GetAsync(key));
 
-                CacheEntry cacheEntry;
-
-                if (bytes == null)
-                {
-                    cacheEntry = new CacheEntry(
-                        0,
-                        options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
-                            DateTimeOffset.UtcNow + TimeSpan.FromTicks(ttlInTicks) :
-                            new DateTimeOffset(ttlInTicks, TimeSpan.Zero));
-                }
-                else
-                {
-                    cacheEntry = new CacheEntry(bytes);
-                }
-
+                // Incrementing the counter. For newly created CacheEntry it will be set to cost.
                 cacheEntry.Count += cost;
 
-                if (cacheEntry.Count <= maxCounterValueToSetTtl)
+                if (cacheEntry.Count <= ttl.MaxCounterValueToSetTtl)
                 {
-                    cacheEntry.ExpiresAt = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
-                        cacheEntry.ExpiresAt + TimeSpan.FromTicks(ttlInTicks) :
-                        new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
+                    switch (ttl)
+                    {
+                        case CounterAbsoluteTtl absTtl:
+
+                            cacheEntry.ExpiresAt = absTtl.Ttl;
+
+                            break;
+
+                        case CounterIncrementalTtl incTtl:
+
+                            if (cacheEntry.ExpiresAt == default)
+                            {
+                                cacheEntry.ExpiresAt = DateTimeOffset.UtcNow;
+                            }
+
+                            cacheEntry.ExpiresAt += incTtl.Ttl;
+
+                            break;
+                    }
                 }
 
                 await this.SetAsync(key, cacheEntry);

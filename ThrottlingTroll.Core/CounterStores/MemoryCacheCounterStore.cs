@@ -20,12 +20,6 @@ namespace ThrottlingTroll
         {
             public long Count;
             public DateTimeOffset ExpiresAt;
-
-            public CacheEntry(long count, DateTimeOffset expiresAt)
-            {
-                this.Count = count;
-                this.ExpiresAt = expiresAt;
-            }
         }
 
         /// <inheritdoc />
@@ -40,29 +34,38 @@ namespace ThrottlingTroll
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, CounterStoreIncrementAndGetOptions options, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, CounterTtl ttl, IHttpRequestProxy request)
         {
             await this._asyncLock.WaitAsync();
 
             try
             {
-                var cacheEntry = this._cache.Get(key) as CacheEntry;
+                var cacheEntry = this._cache.Get(key) as CacheEntry ?? new CacheEntry();
 
-                var expiresAt = cacheEntry?.ExpiresAt ?? DateTimeOffset.UtcNow;
-                var newTtl = options == CounterStoreIncrementAndGetOptions.IncrementTtl ?
-                        expiresAt + TimeSpan.FromTicks(ttlInTicks) :
-                        new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
-
-                if (cacheEntry == null)
-                {
-                    cacheEntry = new CacheEntry(0, newTtl);
-                }
-
+                // Incrementing the counter. For newly created CacheEntry it will be set to cost.
                 cacheEntry.Count += cost;
 
-                if (cacheEntry.Count <= maxCounterValueToSetTtl)
+                if (cacheEntry.Count <= ttl.MaxCounterValueToSetTtl)
                 {
-                    cacheEntry.ExpiresAt = newTtl;
+                    switch (ttl)
+                    {
+                        case CounterAbsoluteTtl absTtl:
+
+                            cacheEntry.ExpiresAt = absTtl.Ttl;
+
+                            break;
+
+                        case CounterIncrementalTtl incTtl:
+
+                            if (cacheEntry.ExpiresAt == default)
+                            {
+                                cacheEntry.ExpiresAt = DateTimeOffset.UtcNow;
+                            }
+
+                            cacheEntry.ExpiresAt += incTtl.Ttl;
+
+                            break;
+                    }
                 }
 
                 this._cache.Set

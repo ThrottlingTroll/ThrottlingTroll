@@ -42,9 +42,7 @@ namespace ThrottlingTroll
             long count = await store.IncrementAndGetAsync(
                 limitKey,
                 cost,
-                ttl.UtcTicks,
-                CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
-                cost,
+                new CounterAbsoluteTtl(ttl, cost),
                 request);
 
             if (count > this.PermitLimit)

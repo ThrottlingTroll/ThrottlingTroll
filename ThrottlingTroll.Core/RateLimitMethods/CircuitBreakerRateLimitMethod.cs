@@ -55,9 +55,7 @@ namespace ThrottlingTroll
             long count = await Store.IncrementAndGetAsync(
                 limitKey,
                 cost,
-                ttl.UtcTicks,
-                CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
-                cost,
+                new CounterAbsoluteTtl(ttl, cost),
                 request);
 
             if (count > TrialModePermitLimit)

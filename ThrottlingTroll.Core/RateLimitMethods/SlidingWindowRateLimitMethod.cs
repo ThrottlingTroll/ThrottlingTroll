@@ -55,9 +55,7 @@ namespace ThrottlingTroll
                 store.IncrementAndGetAsync(
                     curBucketKey,
                     cost,
-                    ttl.UtcTicks,
-                    CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
-                    cost,
+                    new CounterAbsoluteTtl(ttl, cost),
                     request));
 
             // Now checking our local memory cache for the "counter exceeded" flag.

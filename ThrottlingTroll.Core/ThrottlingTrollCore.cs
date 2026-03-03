@@ -445,9 +445,12 @@ namespace ThrottlingTroll
                         long failureCount = await this._counterStore.IncrementAndGetAsync(
                             failureCountCacheKey,
                             cost: 1,
-                            ttl.UtcTicks,
-                            CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
-                            maxCounterValueToSetTtl: 1,
+
+                            new CounterAbsoluteTtl(ttl, MaxCounterValueToSetTtl: 1),
+//                            ttl.UtcTicks,
+//                            CounterStoreIncrementAndGetOptions.SetAbsoluteTtl,
+//                            maxCounterValueToSetTtl: 1,
+
                             request);
 
                         if (failureCount > circuitBreakerMethod.PermitLimit)

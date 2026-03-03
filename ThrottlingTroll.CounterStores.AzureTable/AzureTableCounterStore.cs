@@ -72,7 +72,7 @@ namespace ThrottlingTroll.CounterStores.AzureTable
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, CounterStoreIncrementAndGetOptions options, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, CounterTtl ttl, IHttpRequestProxy request)
         {
             this.RunCleanupIfNeeded();
 
@@ -85,28 +85,29 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                 {
                     var entity = await this._tableClient.GetEntityIfExistsAsync<CounterEntity>(key, key);
 
-                    // Calculating the new TTL value
-                    DateTimeOffset newTtl;
-                    if (options == CounterStoreIncrementAndGetOptions.IncrementTtl)
-                    {
-                        newTtl = DateTimeOffset.UtcNow;
-
-                        if (entity.Value?.ExpiresAt > newTtl)
-                        {
-                            newTtl = entity.Value.ExpiresAt;
-                        }
-
-                        newTtl += TimeSpan.FromTicks(ttlInTicks);
-                    }
-                    else
-                    {
-                        newTtl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
-                    }
-
                     if (!entity.HasValue)
                     {
                         // Just adding a new record - and that's it
-                        var res = await this._tableClient.AddEntityAsync(new CounterEntity { PartitionKey = key, RowKey = key, Count = cost, ExpiresAt = newTtl });
+
+                        var newCounter = new CounterEntity
+                        {
+                            PartitionKey = key,
+                            RowKey = key,
+                            Count = cost,
+                        };
+
+                        switch (ttl)
+                        {
+                            case CounterAbsoluteTtl absTtl:
+                                newCounter.ExpiresAt = absTtl.Ttl;
+                                break;
+
+                            case CounterIncrementalTtl incTtl:
+                                newCounter.ExpiresAt = DateTimeOffset.UtcNow + incTtl.Ttl;
+                                break;
+                        }
+
+                        await this._tableClient.AddEntityAsync(newCounter);
 
                         return cost;
                     }
@@ -117,16 +118,36 @@ namespace ThrottlingTroll.CounterStores.AzureTable
                     {
                         // Recreating the entity
                         counter.Count = cost;
-                        counter.ExpiresAt = newTtl;
+
+                        switch (ttl)
+                        {
+                            case CounterAbsoluteTtl absTtl:
+                                counter.ExpiresAt = absTtl.Ttl;
+                                break;
+
+                            case CounterIncrementalTtl incTtl:
+                                counter.ExpiresAt = DateTimeOffset.UtcNow + incTtl.Ttl;
+                                break;
+                        }
                     }
                     else
                     {
                         // Incrementing the counter
                         counter.Count += cost;
 
-                        if (counter.Count <= maxCounterValueToSetTtl)
+                        if (counter.Count <= ttl.MaxCounterValueToSetTtl)
                         {
-                            counter.ExpiresAt = newTtl;
+                            switch (ttl)
+                            {
+                                case CounterAbsoluteTtl absTtl:
+                                    counter.ExpiresAt = absTtl.Ttl;
+                                    break;
+
+                                case CounterIncrementalTtl incTtl:
+                                    counter.ExpiresAt += incTtl.Ttl;
+                                    break;
+                            }
+
                         }
                     }
 

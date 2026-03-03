@@ -25,15 +25,12 @@ namespace ThrottlingTroll
                 return int.MaxValue;
             }
 
-            long intervalInTicks = (long)(this.IntervalInSeconds * 10000000);
-            long leakageInTicks = intervalInTicks / this.PermitLimit;
+            var leakage = TimeSpan.FromSeconds(this.IntervalInSeconds / this.PermitLimit);
 
             long count = await store.IncrementAndGetAsync(
                 limitKey,
                 cost,
-                leakageInTicks,
-                CounterStoreIncrementAndGetOptions.IncrementTtl,
-                maxCounterValueToSetTtl: this.PermitLimit, // bumping up the TTL only so long as the queue is not overflown
+                new CounterIncrementalTtl(leakage, this.PermitLimit), // bumping up the TTL only so long as the queue is not overflown
                 request);
 
             if (count > this.PermitLimit)
@@ -43,8 +40,7 @@ namespace ThrottlingTroll
             else
             {
                 // Adding a delay, according to this request's position in the queue
-                long delayInTicks = leakageInTicks * (count - 1);
-                await Task.Delay(TimeSpan.FromTicks(delayInTicks));
+                await Task.Delay(leakage * (count - 1));
 
                 return this.PermitLimit - (int)count;
             }

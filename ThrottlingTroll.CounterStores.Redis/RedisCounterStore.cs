@@ -34,49 +34,55 @@ namespace ThrottlingTroll.CounterStores.Redis
         }
 
         /// <inheritdoc />
-        public async Task<long> IncrementAndGetAsync(string key, long cost, long ttlInTicks, CounterStoreIncrementAndGetOptions options, long maxCounterValueToSetTtl, IHttpRequestProxy request)
+        public async Task<long> IncrementAndGetAsync(string key, long cost, CounterTtl ttl, IHttpRequestProxy request)
         {
             var db = this._redis.GetDatabase();
 
-            RedisResult res;
-            if (options == CounterStoreIncrementAndGetOptions.IncrementTtl)
+            switch (ttl)
             {
-                // Also reading the current TTL (if any) and incrementing it
-                var script = LuaScript.Prepare(
-                    $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) then local ttl = redis.call('PTTL', @key) if ttl < 0 then ttl = 0 end redis.call('PEXPIRE', @key, ttl + @incTtlInMs) end return c"
-                );
+                case CounterAbsoluteTtl absTtl:
+                {
+                    // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
+                    var script = LuaScript.Prepare(
+                        $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
+                    );
 
-                res = await db.ScriptEvaluateAsync(
-                    script,
-                    new
-                    {
-                        key = (RedisKey)key,
-                        cost,
-                        incTtlInMs = ttlInTicks / TimeSpan.TicksPerMillisecond,
-                        maxCounterValueToSetTtl
-                    });
+                    var res = await db.ScriptEvaluateAsync(
+                        script,
+                        new
+                        {
+                            key = (RedisKey)key,
+                            cost,
+                            absTtlInMs = absTtl.Ttl.ToUnixTimeMilliseconds(),
+                            maxCounterValueToSetTtl = absTtl.MaxCounterValueToSetTtl
+                        });
+
+                    return (long)res;
+                }
+
+                case CounterIncrementalTtl incTtl:
+                {
+                    // Also reading the current TTL (if any) and incrementing it
+                    var script = LuaScript.Prepare(
+                        $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) then local ttl = redis.call('PTTL', @key) if ttl < 0 then ttl = 0 end redis.call('PEXPIRE', @key, ttl + @incTtlInMs) end return c"
+                    );
+
+                    var res = await db.ScriptEvaluateAsync(
+                        script,
+                        new
+                        {
+                            key = (RedisKey)key,
+                            cost,
+                            incTtlInMs = incTtl.Ttl.TotalMilliseconds,
+                            maxCounterValueToSetTtl = incTtl.MaxCounterValueToSetTtl
+                        });
+
+                    return (long)res;
+                }
             }
-            else
-            {
-                // Need to also check if TTL was set at all (that's because some people reported that INCR might not be atomic)
-                var script = LuaScript.Prepare(
-                    $"local c = redis.call('INCRBY', @key, @cost) if c <= tonumber(@maxCounterValueToSetTtl) or redis.call('PTTL', @key) < 0 then redis.call('PEXPIREAT', @key, @absTtlInMs) end return c"
-                );
 
-                var absTtl = new DateTimeOffset(ttlInTicks, TimeSpan.Zero);
-
-                res = await db.ScriptEvaluateAsync(
-                    script,
-                    new
-                    {
-                        key = (RedisKey)key,
-                        cost,
-                        absTtlInMs = absTtl.ToUnixTimeMilliseconds(),
-                        maxCounterValueToSetTtl
-                    });
-            }
-
-            return (long)res;
+            // Should never happen
+            throw new NotSupportedException($"Unknown TTL type {ttl.GetType().Name}");
         }
 
         /// <inheritdoc />
