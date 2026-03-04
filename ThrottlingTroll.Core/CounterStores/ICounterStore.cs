@@ -4,12 +4,6 @@ using System.Threading.Tasks;
 
 namespace ThrottlingTroll
 {
-    public abstract record CounterTtl(long MaxCounterValueToSetTtl);
-
-    public record CounterAbsoluteTtl(DateTimeOffset Ttl, long MaxCounterValueToSetTtl) : CounterTtl(MaxCounterValueToSetTtl);
-
-    public record CounterIncrementalTtl(TimeSpan Ttl, long MaxCounterValueToSetTtl): CounterTtl(MaxCounterValueToSetTtl);
-
     /// <summary>
     /// Represents a Store for request counters
     /// </summary>
@@ -23,14 +17,11 @@ namespace ThrottlingTroll
         Task<long> GetAsync(string key, IHttpRequestProxy request);
 
         /// <summary>
-        /// Increments and gets counter by its key.
-        /// Also sets/increments TTL for it, but only if the resulting counter is less or equal than maxCounterValueToSetTtl.
+        /// Increments and gets counter by its key. Also sets/increments TTL for it.
         /// </summary>
         /// <param name="key">Counter's key</param>
         /// <param name="cost">Value to increment by</param>
-        /// <param name="ttlInTicks">TTL for this counter</param>
-        /// <param name="options">Defines how ttlInTicks are handled</param>
-        /// <param name="maxCounterValueToSetTtl">TTL will only be set, if the counter value is less or equal to this number</param>
+        /// <param name="ttl">Either <see cref="CounterAbsoluteTtl"/> or <see cref="CounterIncrementalTtl"/> for this counter.</param>
         /// <param name="request">Incoming request, for reference</param>
         /// <returns>New counter value</returns>
         Task<long> IncrementAndGetAsync(
