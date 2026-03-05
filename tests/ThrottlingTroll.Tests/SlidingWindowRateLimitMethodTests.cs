@@ -18,8 +18,7 @@ public class SlidingWindowRateLimitMethodTests
 
         var limiter = new SlidingWindowRateLimitMethod
         {
-            // Even though IntervalInSeconds is set to 4, the window size will still be 3 seconds (because (4 / 3) * 3 = 3)
-            IntervalInSeconds = 4,
+            IntervalInSeconds = 1.5,
             NumOfBuckets = 3
         };
 
@@ -28,7 +27,7 @@ public class SlidingWindowRateLimitMethodTests
         // Act
 
         // Five buckets will be created, but 2 of them should expire
-        var stopAt = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        var stopAt = DateTime.UtcNow + TimeSpan.FromSeconds(2.6);
         while (DateTime.UtcNow < stopAt)
         {
             await limiter.IsExceededAsync(key, 1, store, null);
@@ -46,14 +45,20 @@ public class SlidingWindowRateLimitMethodTests
         Assert.IsTrue(items.ContainsKey($"{key}-1"));
         Assert.IsTrue(items.ContainsKey($"{key}-2"));
 
-        Assert.AreEqual(0, items[$"{key}-0"].ExpiresAt.Millisecond, "Buckets should be aligned to a 0 second boundary");
-        Assert.AreEqual(0, items[$"{key}-1"].ExpiresAt.Millisecond, "Buckets should be aligned to a 0 second boundary");
-        Assert.AreEqual(0, items[$"{key}-2"].ExpiresAt.Millisecond, "Buckets should be aligned to a 0 second boundary");
-
         var minTtl = items.Values.Select(v => v.ExpiresAt).Min();
         var maxTtl = items.Values.Select(v => v.ExpiresAt).Max();
 
-        Assert.AreEqual(2, Math.Ceiling((maxTtl - minTtl).TotalSeconds), "Buckets should span a 3 seconds interval");
+        Assert.AreEqual(1, Math.Round((maxTtl - minTtl).TotalSeconds), "Buckets should span a 1.5 seconds interval");
+
+        if (minTtl.Millisecond == 500)
+        {
+            Assert.AreEqual(500, maxTtl.Millisecond, "Buckets should be aligned to the bucket size");
+        }
+        else
+        {
+            Assert.AreEqual(0, minTtl.Millisecond, "Buckets should be aligned to the bucket size");
+            Assert.AreEqual(0, maxTtl.Millisecond, "Buckets should be aligned to the bucket size");
+        }
     }
 
     [TestMethod]
@@ -81,7 +86,7 @@ public class SlidingWindowRateLimitMethodTests
         int ms = DateTime.UtcNow.Millisecond;
         while (DateTime.UtcNow.Millisecond > ms)
         {
-            await Task.Delay(100);
+            await Task.Delay(10);
         }
 
         // Act
@@ -133,27 +138,27 @@ public class SlidingWindowRateLimitMethodTests
         var limiter = new SlidingWindowRateLimitMethod
         {
             PermitLimit = 6,
-            IntervalInSeconds = 3,
+            IntervalInSeconds = 2.4,
             NumOfBuckets = 3
         };
 
         MemoryCache.Default.Flush();
 
-        var results = new List<Tuple<int, int>>();
+        var results = new List<Tuple<string, int>>();
 
         // Act
 
         var stopAt = DateTime.UtcNow + TimeSpan.FromSeconds(6);
         while (DateTime.UtcNow < stopAt)
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
 
-            results.Add(new Tuple<int, int>(DateTime.UtcNow.Millisecond, await limiter.IsExceededAsync(key, 1, store, null)));
+            results.Add(new Tuple<string, int>(DateTime.UtcNow.ToString("o"), await limiter.IsExceededAsync(key, 1, store, null)));
         }
 
         // Assert
 
-        Trace.WriteLine("Counts: " + string.Join(',', results.Select(r => $"{r.Item1}-{r.Item2}")));
+        Trace.WriteLine(string.Join('\n', results.Select(r => $"{r.Item1}|{r.Item2}")));
 
         var items = MemoryCache.Default
             .Where(i => !i.Key.EndsWith("-exceeded"))
@@ -165,7 +170,7 @@ public class SlidingWindowRateLimitMethodTests
         Assert.IsTrue(firstSixResults.All(r => r.Item2 >= 0), "First six requests should not exceed the limit");
 
         var otherResults = results.Skip(6);
-        Assert.IsTrue(otherResults.All(r => r.Item2 == -1), "Requests starting from the sixth should exceed the limit");
+        Assert.IsTrue(otherResults.All(r => r.Item2 == -1), "Requests starting from the seventh should exceed the limit");
     }
 
     [TestMethod]

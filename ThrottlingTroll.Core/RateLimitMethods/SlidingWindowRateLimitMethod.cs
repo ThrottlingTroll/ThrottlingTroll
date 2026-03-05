@@ -15,7 +15,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Window size in seconds
         /// </summary>
-        public int IntervalInSeconds { get; set; }
+        public double IntervalInSeconds { get; set; }
 
         /// <summary>
         /// Number of intervals to divide the window into. Should not be less than <see cref="IntervalInSeconds"/>.
@@ -23,7 +23,7 @@ namespace ThrottlingTroll
         public int NumOfBuckets { get; set; }
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds => this.NumOfBuckets == 0 ? 0 : this.IntervalInSeconds / this.NumOfBuckets;
+        public override int RetryAfterInSeconds => this.NumOfBuckets == 0 ? 0 : (int)Math.Ceiling(this.IntervalInSeconds / this.NumOfBuckets);
 
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
@@ -33,22 +33,25 @@ namespace ThrottlingTroll
                 return int.MaxValue;
             }
 
-            int bucketSizeInSeconds = this.IntervalInSeconds / this.NumOfBuckets;
+            int bucketSizeInMilliseconds = (int)(this.IntervalInSeconds * 1000 / this.NumOfBuckets);
 
-            if (bucketSizeInSeconds <= 0)
+            if (bucketSizeInMilliseconds <= 0)
             {
                 return int.MaxValue;
             }
 
-            var now = DateTimeOffset.UtcNow;
-
-            long curBucketId = (now.ToUnixTimeSeconds() / bucketSizeInSeconds) % this.NumOfBuckets;
+            long unixTimeInBuckets = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / bucketSizeInMilliseconds;
+            long curBucketId = unixTimeInBuckets % this.NumOfBuckets;
             string curBucketKey = $"{limitKey}-{curBucketId}";
 
             // Will load contents of all buckets in parallel
             var tasks = new List<Task<long>>();
 
-            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds * this.NumOfBuckets);
+            // We need bucket's TTL to be aligned to the bucket size (not e.g. just to the nearest second).
+            // Otherwize we might be "reusing" an old bucket (due to misalignment it might get dropped later than we expect,
+            // so its old contents would add up to the current timeframe - which would result in overlimiting.
+            var bucketAlignedNow = DateTimeOffset.FromUnixTimeMilliseconds(unixTimeInBuckets * bucketSizeInMilliseconds);
+            var ttl = bucketAlignedNow + TimeSpan.FromSeconds(this.IntervalInSeconds);
 
             // Incrementing and getting the current bucket
             tasks.Add(
@@ -81,7 +84,7 @@ namespace ThrottlingTroll
             if (count > this.PermitLimit)
             {
                 // Remember the fact that this counter exceeded in local cache
-                var limitKeyExceededTtl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(bucketSizeInSeconds);
+                var limitKeyExceededTtl = bucketAlignedNow + TimeSpan.FromMilliseconds(bucketSizeInMilliseconds);
                 this._cache.Set(limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = limitKeyExceededTtl });
 
                 return -1;
