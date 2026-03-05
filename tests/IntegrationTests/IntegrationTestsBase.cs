@@ -57,7 +57,7 @@ namespace IntegrationTests
             LimitMethod = new FixedWindowRateLimitMethod
             {
                 PermitLimit = 1,
-                IntervalInSeconds = 2
+                IntervalInSeconds = 1.5
             },
 
             MaxDelayInSeconds = 120,
@@ -75,7 +75,7 @@ namespace IntegrationTests
             LimitMethod = new FixedWindowRateLimitMethod
             {
                 PermitLimit = 2,
-                IntervalInSeconds = 1
+                IntervalInSeconds = 0.5
             },
 
             IdentityIdExtractor = request =>
@@ -616,10 +616,10 @@ namespace IntegrationTests
             Trace.WriteLine(msg);
 
             Assert.IsTrue(times.Single(t => t >= 0 && t < 500) >= 0, msg);
-            Assert.IsTrue(times.Single(t => t >= 1000 && t < 2500) > 0, msg);
-            Assert.IsTrue(times.Single(t => t >= 3000 && t < 4500) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 500 && t < 2000) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 2000 && t < 3500) > 0, msg);
+            Assert.IsTrue(times.Single(t => t >= 3500 && t < 5000) > 0, msg);
             Assert.IsTrue(times.Single(t => t >= 5000 && t < 6500) > 0, msg);
-            Assert.IsTrue(times.Single(t => t >= 7000 && t < 8500) > 0, msg);
         }
 
         private async Task TestFixedWindowFailingMethod()
@@ -643,7 +643,7 @@ namespace IntegrationTests
                 Assert.AreEqual(2, statusCodes.Count(c => c == HttpStatusCode.InternalServerError), msg);
                 Assert.AreEqual(3, statusCodes.Count(c => c == HttpStatusCode.TooManyRequests), msg);
 
-                await Task.Delay(1000);
+                await Task.Delay(600);
             }
         }
 

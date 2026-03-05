@@ -11,12 +11,12 @@ namespace ThrottlingTroll
     public class FixedWindowRateLimitMethod : RateLimitMethod
     {
         /// <summary>
-        /// Window size in seconds
+        /// Window size in seconds. Supports fractions.
         /// </summary>
-        public int IntervalInSeconds { get; set; }
+        public double IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds => this.IntervalInSeconds;
+        public override int RetryAfterInSeconds => (int)Math.Ceiling(this.IntervalInSeconds);
 
         /// <inheritdoc />
         public override async Task<int> IsExceededAsync(string limitKey, long cost, ICounterStore store, IHttpRequestProxy request)
@@ -36,7 +36,7 @@ namespace ThrottlingTroll
 
             var now = DateTimeOffset.UtcNow;
 
-            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.IntervalInSeconds);
+            var ttl = now + TimeSpan.FromSeconds(this.IntervalInSeconds);
 
             // Now checking the actual count
             long count = await store.IncrementAndGetAsync(

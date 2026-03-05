@@ -15,16 +15,10 @@ public class FixedWindowRateLimitMethodTests
         var limiter = new FixedWindowRateLimitMethod
         {
             PermitLimit = 3,
-            IntervalInSeconds = 1,
+            IntervalInSeconds = 0.1,
         };
 
-        // If too close to the end of current second, need to wait
-        if (DateTime.UtcNow.Millisecond > 800)
-        {
-            Thread.Sleep(200);
-        }
-
-        Trace.WriteLine($"{DateTime.Now.ToString("o")} Started");
+        Trace.WriteLine($"{DateTime.Now:o} Started");
 
         for (int i = 0; i < limiter.PermitLimit; i++) 
         {
@@ -34,19 +28,10 @@ public class FixedWindowRateLimitMethodTests
         // Now we should exceed
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
+        await Task.Delay(Random.Shared.Next(0, 30));
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
 
-        // Now waiting for the next second to start
-        Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting till next second");
-
-        int ms = DateTime.UtcNow.Millisecond;
-        do
-        {
-            Thread.Sleep(100);
-        }
-        while (DateTime.UtcNow.Millisecond > ms);
-
-        Trace.WriteLine($"{DateTime.Now.ToString("o")} Reached next second");
+        await Task.Delay(110);
 
         // Now we should be good again
         for (int i = 0; i < limiter.PermitLimit; i++)
