@@ -11,18 +11,18 @@ namespace ThrottlingTroll
     public class CircuitBreakerRateLimitMethod : RateLimitMethod
     {
         /// <summary>
-        /// Window size in seconds
+        /// Window size in seconds. Supports fractions.
         /// </summary>
-        public int IntervalInSeconds { get; set; }
+        public double IntervalInSeconds { get; set; }
 
         /// <summary>
         /// How often to check whether the endpoint has healed itself.
         /// Once a failure limit is exceeded, the request rate will be limited to 1 request per this timeframe.
         /// </summary>
-        public int TrialIntervalInSeconds { get; set; } = 100;
+        public double TrialIntervalInSeconds { get; set; } = 100;
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds => this.IntervalInSeconds;
+        public override int RetryAfterInSeconds => (int)Math.Ceiling(this.IntervalInSeconds);
 
         /// <summary>
         /// ctor
@@ -49,7 +49,7 @@ namespace ThrottlingTroll
 
             var now = DateTimeOffset.UtcNow;
 
-            var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(this.TrialIntervalInSeconds);
+            var ttl = now + TimeSpan.FromSeconds(this.TrialIntervalInSeconds);
 
             // Checking the failure count in the last ProbationIntervalInSeconds
             long count = await Store.IncrementAndGetAsync(

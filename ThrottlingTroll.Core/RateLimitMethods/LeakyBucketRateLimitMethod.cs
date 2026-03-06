@@ -39,7 +39,11 @@ namespace ThrottlingTroll
             }
             else
             {
-                // Adding a delay, according to this request's position in the queue
+                // Adding a delay, according to this request's position in the queue.
+                // This would be an "estimate", of course.
+                // But to calculate the delay precisely, we would need to know the beginning of the current
+                // timeframe (aka when exactly the first request came) - and we don't know that, and storing
+                // that extra value would complicate things. So claiming this "good enough".
                 await Task.Delay(leakage * (count - 1));
 
                 return this.PermitLimit - (int)count;

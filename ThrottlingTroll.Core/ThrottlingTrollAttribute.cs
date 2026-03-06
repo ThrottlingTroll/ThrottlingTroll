@@ -15,7 +15,7 @@ namespace ThrottlingTroll
         public int PermitLimit { get; set; }
 
         /// <inheritdoc />
-        public int IntervalInSeconds { get; set; }
+        public double IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
         public int TrialIntervalInSeconds { get; set; }

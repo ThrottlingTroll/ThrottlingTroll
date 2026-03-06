@@ -66,7 +66,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// Window size in seconds
         /// </summary>
-        public int IntervalInSeconds { get; set; }
+        public double IntervalInSeconds { get; set; }
 
         /// <summary>
         /// How often to check whether the endpoint has healed itself.

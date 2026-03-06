@@ -436,7 +436,7 @@ namespace ThrottlingTroll
 
                         var now = DateTimeOffset.UtcNow;
 
-                        var ttl = now - TimeSpan.FromMilliseconds(now.Millisecond) + TimeSpan.FromSeconds(circuitBreakerMethod.IntervalInSeconds);
+                        var ttl = now + TimeSpan.FromSeconds(circuitBreakerMethod.IntervalInSeconds);
 
                         // Better to use a separate counter for failures, because Trial mode increments the counter regardless of the output.
                         // We don't want to count successes as failures, that would distort the picture.

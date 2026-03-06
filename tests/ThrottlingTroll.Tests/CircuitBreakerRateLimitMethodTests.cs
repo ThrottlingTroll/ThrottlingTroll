@@ -22,12 +22,6 @@ public class CircuitBreakerRateLimitMethodTests
         // Placing this limit into trial mode
         CircuitBreakerRateLimitMethod.PutIntoTrial(key);
 
-        // If too close to the end of current second, need to wait
-        if (DateTime.UtcNow.Millisecond > 800)
-        {
-            Thread.Sleep(200);
-        }
-
         Trace.WriteLine($"{DateTime.Now.ToString("o")} Started");
 
         // CircuitBreaker allows 1 request per TrialIntervalInSeconds in trial mode
@@ -38,17 +32,9 @@ public class CircuitBreakerRateLimitMethodTests
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
         Assert.AreEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
 
-        // Now waiting for the next second to start
-        Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting till next second");
-
-        int ms = DateTime.UtcNow.Millisecond;
-        do
-        {
-            Thread.Sleep(100);
-        }
-        while (DateTime.UtcNow.Millisecond > ms);
-
-        Trace.WriteLine($"{DateTime.Now.ToString("o")} Reached next second");
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} Waiting for a second");
+        Thread.Sleep(1000);
+        Trace.WriteLine($"{DateTime.Now.ToString("o")} After waiting for a second");
 
         // Now we should be good again
         Assert.AreNotEqual(-1, await limiter.IsExceededAsync(key, 1, store, null));
