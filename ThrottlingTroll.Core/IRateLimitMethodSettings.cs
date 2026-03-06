@@ -24,7 +24,12 @@ namespace ThrottlingTroll
         /// <summary>
         /// Use <see cref="CircuitBreakerRateLimitMethod"/>
         /// </summary>
-        CircuitBreaker
+        CircuitBreaker,
+
+        /// <summary>
+        /// Use <see cref="LeakyBucketRateLimitMethod"/>
+        /// </summary>
+        LeakyBucket,
     }
 
     /// <summary>
@@ -72,7 +77,7 @@ namespace ThrottlingTroll
         /// How often to check whether the endpoint has healed itself.
         /// Once a failure limit is exceeded, the request rate will be limited to 1 request per this timeframe.
         /// </summary>
-        public int TrialIntervalInSeconds { get; set; }
+        public double TrialIntervalInSeconds { get; set; }
 
         /// <summary>
         /// (Specific to <see cref="SlidingWindowRateLimitMethod"/>) Number of intervals to divide the window into. Should not be less than <see cref="IntervalInSeconds"/>.
@@ -82,7 +87,7 @@ namespace ThrottlingTroll
         /// <summary>
         /// (Specific to <see cref="SemaphoreRateLimitMethod"/>) Timeout in seconds. Defaults to 100.
         /// </summary>
-        public int TimeoutInSeconds { get; set; }
+        public double TimeoutInSeconds { get; set; }
 
         /// <summary>
         /// (Specific to <see cref="SemaphoreRateLimitMethod"/>)
@@ -90,11 +95,16 @@ namespace ThrottlingTroll
         /// upon request completion, but after this number of seconds.
         /// This allows to implement request deduplication.
         /// </summary>
-        public int ReleaseAfterSeconds { get; set; }
+        public double ReleaseAfterSeconds { get; set; }
 
         /// <summary>
         /// What to do on ThrottlingTroll's internal errors
         /// </summary>
         public ErrorHandlingBehavior ErrorHandlingBehavior { get; set; }
+
+        /// <summary>
+        /// Whether <see cref="ThrottlingTrollConfig.AllowList"/> should be ignored when evaluating a matching request.
+        /// </summary>
+        public bool IgnoreAllowList { get; set; }
     }
 }

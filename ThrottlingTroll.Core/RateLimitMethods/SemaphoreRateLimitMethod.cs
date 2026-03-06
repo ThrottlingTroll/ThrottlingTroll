@@ -13,10 +13,10 @@ namespace ThrottlingTroll
         /// <summary>
         /// Timeout in seconds. Defaults to 100.
         /// </summary>
-        public int TimeoutInSeconds { get; set; } = 100;
+        public double TimeoutInSeconds { get; set; } = 100;
 
         /// <inheritdoc />
-        public override int RetryAfterInSeconds => this.TimeoutInSeconds;
+        public override int RetryAfterInSeconds => (int)Math.Ceiling(this.TimeoutInSeconds);
 
         /// <summary>
         /// When set to something > 0, the semaphore will be released not immediately 

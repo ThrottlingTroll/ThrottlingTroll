@@ -18,16 +18,19 @@ namespace ThrottlingTroll
         public double IntervalInSeconds { get; set; }
 
         /// <inheritdoc />
-        public int TrialIntervalInSeconds { get; set; }
+        public double TrialIntervalInSeconds { get; set; }
 
         /// <inheritdoc />
         public int NumOfBuckets { get; set; }
 
         /// <inheritdoc />
-        public int TimeoutInSeconds { get; set; } = 100;
+        public double TimeoutInSeconds { get; set; } = 100;
 
         /// <inheritdoc />
-        public int ReleaseAfterSeconds { get; set; }
+        public double ReleaseAfterSeconds { get; set; }
+
+        /// <inheritdoc />
+        public bool IgnoreAllowList { get; set; }
 
         /// <inheritdoc />
         public ErrorHandlingBehavior ErrorHandlingBehavior { get; set; }

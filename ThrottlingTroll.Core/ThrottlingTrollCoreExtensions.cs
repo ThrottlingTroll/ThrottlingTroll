@@ -145,7 +145,8 @@ namespace ThrottlingTroll
                     {
                         PermitLimit = settings.PermitLimit,
                         IntervalInSeconds = settings.IntervalInSeconds,
-                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions,
+                        IgnoreAllowList = settings.IgnoreAllowList,
                     };
 
                 case RateLimitAlgorithm.SlidingWindow:
@@ -159,7 +160,8 @@ namespace ThrottlingTroll
                         PermitLimit = settings.PermitLimit,
                         IntervalInSeconds = settings.IntervalInSeconds,
                         NumOfBuckets = settings.NumOfBuckets,
-                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions,
+                        IgnoreAllowList = settings.IgnoreAllowList,
                     };
 
                 case RateLimitAlgorithm.Semaphore:
@@ -174,7 +176,8 @@ namespace ThrottlingTroll
                         // Intentionally setting this to true by default for SemaphoreRateLimitMethod
                         ShouldThrowOnFailures = 
                             settings.ErrorHandlingBehavior == ErrorHandlingBehavior.Unspecified || 
-                            settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
+                            settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions,
+                        IgnoreAllowList = settings.IgnoreAllowList,
                     };
 
                 case RateLimitAlgorithm.CircuitBreaker:
@@ -188,7 +191,21 @@ namespace ThrottlingTroll
                         PermitLimit = settings.PermitLimit,
                         IntervalInSeconds = settings.IntervalInSeconds,
                         TrialIntervalInSeconds = settings.TrialIntervalInSeconds,
-                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions,
+                        IgnoreAllowList = settings.IgnoreAllowList,
+                    };
+
+                case RateLimitAlgorithm.LeakyBucket:
+
+                    CheckLimitValue(settings.Algorithm, settings.PermitLimit > 0, "PermitLimit should be more than 0.");
+                    CheckLimitValue(settings.Algorithm, settings.IntervalInSeconds > 0, "IntervalInSeconds should be more than 0.");
+
+                    return new LeakyBucketRateLimitMethod
+                    {
+                        PermitLimit = settings.PermitLimit,
+                        IntervalInSeconds = settings.IntervalInSeconds,
+                        ShouldThrowOnFailures = settings.ErrorHandlingBehavior == ErrorHandlingBehavior.ThrowExceptions,
+                        IgnoreAllowList = settings.IgnoreAllowList,
                     };
             }
 
