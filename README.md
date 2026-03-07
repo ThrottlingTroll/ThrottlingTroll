@@ -144,7 +144,11 @@ Install from Nuget:
      <img src="https://github.com/ThrottlingTroll/ThrottlingTroll/assets/5447190/e18abb9c-d1dd-4b64-a007-220605ed03e9" height="300px"/>  
 
   In other words, with SlidingWindow your service gets a *smoother request rate*.
-          
+
+* [**LeakyBucket**]([https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-circuitbreaker](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-leakybucket)). No more than **PermitLimit** failures are allowed in **IntervalInSeconds**, and the allowed requests get evenly distributed across the given time frame (a delay is added according to the request's position in the "queue"). Eliminates spikes whatsoever.
+
+    [video is coming]
+
 * [**Semaphore**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-semaphore) aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Here is an illustration for the case of no more than 3 concurrent requests:
 
      <img src="https://github.com/ThrottlingTroll/ThrottlingTroll/assets/5447190/0beeac73-5d35-482a-a790-a3fe9ea6e38b" height="300px"/>  
