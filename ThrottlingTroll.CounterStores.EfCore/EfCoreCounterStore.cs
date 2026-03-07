@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -79,6 +77,7 @@ namespace ThrottlingTroll.CounterStores.EfCore
                         $"UPDATE {this.GetTableName(db)} SET Count = Count + {cost} WHERE Id = '{key}'"
                     );
 
+                    var now = DateTimeOffset.UtcNow;
                     ThrottlingTrollCounter counter;
 
                     if (rowsAffected > 1)
@@ -99,7 +98,7 @@ namespace ThrottlingTroll.CounterStores.EfCore
                                 break;
 
                             case CounterIncrementalTtl incTtl:
-                                counter.ExpiresAt = DateTimeOffset.UtcNow + incTtl.Ttl;
+                                counter.ExpiresAt = now + incTtl.Ttl;
                                 break;
                         }
 
@@ -115,9 +114,10 @@ namespace ThrottlingTroll.CounterStores.EfCore
                     counter = db.ThrottlingTrollCounters.Single(c => c.Id == key);
 
                     // If expired - resetting the count
-                    if (counter.ExpiresAt < DateTimeOffset.UtcNow)
+                    if (counter.ExpiresAt < now)
                     {
                         counter.Count = cost;
+                        counter.ExpiresAt = now;
                     }
 
                     // Also updating TTL, if needed
