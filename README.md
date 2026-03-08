@@ -147,7 +147,8 @@ Install from Nuget:
 
 * [**LeakyBucket**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-leakybucket). No more than **PermitLimit** failures are allowed in **IntervalInSeconds**, and the allowed requests get evenly distributed across the given time frame (a delay is added according to the request's position in the "queue"). Eliminates spikes whatsoever.
 
-    [video is coming]
+    <img width="986" height="1149" alt="image" src="https://github.com/user-attachments/assets/e82acd62-6d8d-49f2-8ad9-950123f9aa09" />
+
 
 * [**Semaphore**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki/410.-Rate-Limiting-Algorithms#-semaphore) aka Concurrency Limiter. No more than **PermitLimit** requests are allowed to be executed **concurrently**. Here is an illustration for the case of no more than 3 concurrent requests:
 
