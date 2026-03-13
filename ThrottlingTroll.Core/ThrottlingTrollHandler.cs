@@ -171,11 +171,11 @@ namespace ThrottlingTroll
                 #region Telemetry
                 foreach (var checkResult in checkList)
                 {
-                    ThrottlingTrollCore.IngressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                    ThrottlingTrollCore.EgressRuleMatchesCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
 
                     if (checkResult.RequestsRemaining < 0)
                     {
-                        ThrottlingTrollCore.IngressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
+                        ThrottlingTrollCore.EgressRequestsThrottledCounter.Add(1, new TagList { { "throttlingtroll.rule", checkResult.Rule.GetNameForTelemetry() }, { "throttlingtroll.counter_id", checkResult.CounterId } });
                     }
                 }
                 #endregion
