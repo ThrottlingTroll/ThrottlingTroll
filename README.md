@@ -18,7 +18,7 @@ Install from Nuget:
 
 ## Features
 
-* **Supports [ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll) and [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions)** (InProc and Isolated, "classic" and ASP.NET Core Integration). [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
+* **Supports [ASP.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#throttlingtroll) and [Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#throttlingtrollazurefunctions)** (InProc and Isolated, "classic" and ASP.NET Core Integration). [Since v8.0 can be used in any .NET application](https://github.com/ThrottlingTroll/ThrottlingTroll/releases/tag/v8.0).
 * [**Ingress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#ingress-how-to-initialize-and-configure), aka let your service automatically respond with `429 TooManyRequests` to some obtrusive clients. 
 
    ```mermaid
