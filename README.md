@@ -30,7 +30,7 @@ Install from Nuget:
               YourService-->>-Client:✅ 200 OK
           end
    ```
-   Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET Core) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
+   Implemented as an [ASP.NET Core Middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware) (for ASP.NET) and as an [Azure Functions Middleware](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide#middleware) (for Azure Functions). 
      
 * [**Egress throttling**](https://github.com/ThrottlingTroll/ThrottlingTroll/wiki#egress-how-to-initialize-and-configure), aka limit the number of calls your code is making against some external endpoint. 
 
@@ -167,14 +167,14 @@ Install from Nuget:
 
 Most concepts and features are the same for all supported platforms. Things that are specific to each platform are highlighted in the relevant READMEs:
 
-| ASP.NET Core                              | Azure Functions                                          |
+| ASP.NET                                   | Azure Functions                                          |
 | -                                         | -                                                        |
-| [How to use with ASP.NET Core](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
+| [How to use with ASP.NET](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AspNet#how-to-configure) | [How to use with Azure Functions](https://github.com/ThrottlingTroll/ThrottlingTroll/tree/main/ThrottlingTroll.AzureFunctions#how-to-configure) |
 
 
 ## Samples
 
-Full minimalistic sample using ASP.NET Core Minimal API:
+Full minimalistic sample using ASP.NET Minimal API:
 
 ```
 using ThrottlingTroll;
