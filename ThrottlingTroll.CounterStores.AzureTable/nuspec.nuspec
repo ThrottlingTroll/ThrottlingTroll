@@ -18,7 +18,7 @@
   <files>
     <file src="..\LICENSE" target="LICENSE" />
     <file src=".\README.md" target="README.md" />
-    <file src="bin\Release\net8.0\ThrottlingTroll.*" target="lib/net8.0" />
+    <file src="bin\Release\net10.0\ThrottlingTroll.*" target="lib/net10.0" />
   </files>
 
 </package>
