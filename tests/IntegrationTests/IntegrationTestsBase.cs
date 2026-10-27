@@ -1,4 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OtelTap;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
@@ -11,6 +17,7 @@ namespace IntegrationTests
     {
         static WebApplication? WebApp;
         static HttpClient? Client;
+        static OtelTapHttpProtobufReceiver? OtelTap;
 
         static ThrottlingTrollRule NamedCriticalSectionRule = new ThrottlingTrollRule
         {
@@ -254,7 +261,49 @@ namespace IntegrationTests
         {
             Client = new HttpClient { BaseAddress = new Uri(localhostUrl) };
 
-            WebApp = WebApplication.Create();
+            var telemetryEndpoint = new Uri($"http://127.0.0.1:{new Uri(localhostUrl).Port + 100}/");
+            OtelTap = OtelTapHttpProtobufReceiver.Start(new OtelTapHttpProtobufReceiverSettings(
+                HttpPort: telemetryEndpoint.Port,
+                PrintTracesAsNdjson: true,
+                PrintLogsAsNdjson: true,
+                PrintMetricsAsNdjson: true,
+                Log: (message, exception) => Console.Error.WriteLine($"OtelTap: {message} {exception}")));
+
+            var resource = ResourceBuilder.CreateDefault()
+                .AddService($"IntegrationTests.{counterStore.GetType().Name}");
+            var builder = WebApplication.CreateBuilder();
+            builder.Services.AddOpenTelemetry()
+                .WithTracing(tracing => tracing
+                    .SetResourceBuilder(resource)
+                    .AddSource("ThrottlingTroll")
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri(telemetryEndpoint, "v1/traces");
+                        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    }))
+                .WithMetrics(metrics => metrics
+                    .SetResourceBuilder(resource)
+                    .AddMeter("ThrottlingTroll")
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri(telemetryEndpoint, "v1/metrics");
+                        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    }));
+            builder.Logging.AddOpenTelemetry(logging =>
+            {
+                logging.SetResourceBuilder(resource);
+                logging.IncludeFormattedMessage = true;
+                logging.IncludeScopes = true;
+                logging.AddOtlpExporter(options =>
+                {
+                    options.Endpoint = new Uri(telemetryEndpoint, "v1/logs");
+                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                });
+            });
+
+            WebApp = builder.Build();
             WebApp.Urls.Add(localhostUrl);
 
             WebApp.UseThrottlingTroll(options =>
@@ -369,9 +418,21 @@ namespace IntegrationTests
             WebApp.Start();
         }
 
-        public static void TearDown()
+        public static async Task TearDown()
         {
-            WebApp?.DisposeAsync();
+            try
+            {
+                if (WebApp != null)
+                {
+                    await WebApp.StopAsync();
+                    await WebApp.DisposeAsync();
+                }
+            }
+            finally
+            {
+                Client?.Dispose();
+                OtelTap?.Dispose();
+            }
         }
 
         [TestMethod]

@@ -27,11 +27,16 @@ namespace IntegrationTests
         }
 
         [ClassCleanup]
-        public static void Cleanup()
+        public static async Task Cleanup()
         {
-            TearDown();
-
-            GarnetServer?.Dispose();
+            try
+            {
+                await TearDown();
+            }
+            finally
+            {
+                GarnetServer?.Dispose();
+            }
         }
     }
 }

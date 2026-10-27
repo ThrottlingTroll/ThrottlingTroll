@@ -12,9 +12,9 @@ namespace IntegrationTests
         }
 
         [ClassCleanup]
-        public static void Cleanup()
+        public static async Task Cleanup()
         {
-            TearDown();
+            await TearDown();
         }
     }
 }
