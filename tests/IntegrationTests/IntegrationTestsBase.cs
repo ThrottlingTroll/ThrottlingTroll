@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using ThrottlingTroll;
+using TraceStatusCode = OpenTelemetry.Proto.Trace.V1.Status.Types.StatusCode;
 
 namespace IntegrationTests
 {
@@ -262,38 +263,44 @@ namespace IntegrationTests
             Client = new HttpClient { BaseAddress = new Uri(localhostUrl) };
 
             var telemetryEndpoint = new Uri($"http://127.0.0.1:{new Uri(localhostUrl).Port + 100}/");
+
+            // Starting OtelTap, to listen to telemetry
             OtelTap = OtelTapHttpProtobufReceiver.Start(new OtelTapHttpProtobufReceiverSettings(
                 HttpPort: telemetryEndpoint.Port,
                 PrintTracesAsNdjson: true,
                 PrintLogsAsNdjson: true,
                 PrintMetricsAsNdjson: true,
-                Log: (message, exception) => Console.Error.WriteLine($"OtelTap: {message} {exception}")));
+                Log: (msg, ex) => Console.Error.WriteLine($"OtelTap failed: {msg} {ex}")));
 
-            var resource = ResourceBuilder.CreateDefault()
+            // Configuring telemetry exporters
+            var telemetryResource = ResourceBuilder.CreateDefault()
                 .AddService($"IntegrationTests.{counterStore.GetType().Name}");
+
             var builder = WebApplication.CreateBuilder();
+
             builder.Services.AddOpenTelemetry()
                 .WithTracing(tracing => tracing
-                    .SetResourceBuilder(resource)
+                    .SetResourceBuilder(telemetryResource)
                     .AddSource("ThrottlingTroll")
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
                     .AddOtlpExporter(options =>
                     {
                         options.Endpoint = new Uri(telemetryEndpoint, "v1/traces");
                         options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        options.BatchExportProcessorOptions.MaxQueueSize = 65536;
+                        options.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 100;
                     }))
                 .WithMetrics(metrics => metrics
-                    .SetResourceBuilder(resource)
+                    .SetResourceBuilder(telemetryResource)
                     .AddMeter("ThrottlingTroll")
                     .AddOtlpExporter(options =>
                     {
                         options.Endpoint = new Uri(telemetryEndpoint, "v1/metrics");
                         options.Protocol = OtlpExportProtocol.HttpProtobuf;
                     }));
+
             builder.Logging.AddOpenTelemetry(logging =>
             {
-                logging.SetResourceBuilder(resource);
+                logging.SetResourceBuilder(telemetryResource);
                 logging.IncludeFormattedMessage = true;
                 logging.IncludeScopes = true;
                 logging.AddOtlpExporter(options =>
@@ -306,6 +313,7 @@ namespace IntegrationTests
             WebApp = builder.Build();
             WebApp.Urls.Add(localhostUrl);
 
+            // Configuring ThrottlingTroll
             WebApp.UseThrottlingTroll(options =>
             {
                 options.CounterStore = counterStore;
@@ -806,11 +814,64 @@ namespace IntegrationTests
                 Enumerable.Range(0, attempts)
                     .Select(async _ =>
                     {
-                        var response = await Client.GetAsync($"{DistributedCounterRule.UriString}?id={id}");
+                        // Generating a trace ID to propagate through this request's traceparent header.
+                        var requestTraceId = ActivityTraceId.CreateRandom();
+                        byte[] traceId = Convert.FromHexString(requestTraceId.ToHexString());
 
-                        long counter = long.Parse(await response.Content.ReadAsStringAsync());
+                        using var telemetryTimeout = new CancellationTokenSource(
+                            TimeSpan.FromSeconds(DistributedCounterRule.MaxDelayInSeconds + 60));
 
-                        bag.Add(counter);
+                        // Checking the matched ThrottlingTroll.Rule, by subscribing to its trace span
+                        var ruleSpanTask = OtelTap!.AwaitTraceAsync(span =>
+                            span.TraceId.Span.SequenceEqual(traceId) &&
+                            span.Name.StartsWith("ThrottlingTroll.Rule.") &&
+                            span.Attributes.Any(attribute => attribute.Key == "ThrottlingTrollRule.UriString" &&
+                                attribute.Value.StringValue == DistributedCounterRule.UriString),
+                            telemetryTimeout.Token);
+
+                        // Also checking ThrottlingTroll.Waiting span, to see if the request went through immediately or had to wait
+                        var waitingSpanTask = OtelTap!.AwaitTraceAsync(span =>
+                            span.TraceId.Span.SequenceEqual(traceId) && span.Name == "ThrottlingTroll.Waiting", telemetryTimeout.Token);
+
+                        try
+                        {
+                            using var request = new HttpRequestMessage(HttpMethod.Get, $"{DistributedCounterRule.UriString}?id={id}");
+                            request.Headers.Add("traceparent", $"00-{requestTraceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+
+                            using var response = await Client!.SendAsync(request);
+                            long counter = long.Parse(await response.Content.ReadAsStringAsync());
+                            bag.Add(counter);
+
+                            // Checking the matched ThrottlingTroll.Rule. All requests should eventually succeed.
+                            var ruleSpan = await ruleSpanTask;
+
+                            Assert.AreEqual(TraceStatusCode.Ok, ruleSpan.Status?.Code);
+
+                            string ruleCheckResult = ruleSpan.Attributes.Single(attribute => attribute.Key == "Result").Value.StringValue;
+                            Assert.AreEqual("Requests remaining: 0", ruleCheckResult);
+
+                            long permitLimit = ruleSpan.Attributes.Single(attribute => attribute.Key == "SemaphoreRateLimitMethod.PermitLimit").Value.IntValue;
+                            Assert.AreEqual(1L, permitLimit);
+
+                            // One request should go in immediately, others have to wait. Checking that.
+                            long requestsRemaining = ruleSpan.Attributes.Single(attribute => attribute.Key == "LimitCheckResult.RequestsRemaining").Value.IntValue;
+                            Assert.IsTrue(requestsRemaining == 0 || requestsRemaining == -1);
+
+                            if (requestsRemaining < 0)
+                            {
+                                // This request had to wait. Checking that its waiting time was within the limits.
+                                var waitingSpan = await waitingSpanTask;
+                                Assert.AreEqual(ruleSpan.SpanId, waitingSpan.ParentSpanId);
+                                Assert.AreEqual(TraceStatusCode.Ok, waitingSpan.Status?.Code);
+                                Assert.IsTrue(waitingSpan.StartTimeUnixNano >= ruleSpan.StartTimeUnixNano &&
+                                    waitingSpan.EndTimeUnixNano <= ruleSpan.EndTimeUnixNano);
+                            }
+                        }
+                        finally
+                        {
+                            // Unregister remaining waiters, including an unused waiting-span waiter.
+                            await telemetryTimeout.CancelAsync();
+                        }
                     })
             );
 
