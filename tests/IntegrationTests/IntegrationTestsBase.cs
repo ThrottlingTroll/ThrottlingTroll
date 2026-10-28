@@ -18,7 +18,7 @@ namespace IntegrationTests
     {
         static WebApplication? WebApp;
         static HttpClient? Client;
-        static OtelTapHttpProtobufReceiver? OtelTap;
+        static OtelTapHttpProtobufReceiver? OtelTap => IntegrationTestsAssembly.OtelTap;
 
         static ThrottlingTrollRule NamedCriticalSectionRule = new ThrottlingTrollRule
         {
@@ -262,15 +262,7 @@ namespace IntegrationTests
         {
             Client = new HttpClient { BaseAddress = new Uri(localhostUrl) };
 
-            var telemetryEndpoint = new Uri($"http://127.0.0.1:{new Uri(localhostUrl).Port + 100}/");
-
-            // Starting OtelTap, to listen to telemetry
-            OtelTap = OtelTapHttpProtobufReceiver.Start(new OtelTapHttpProtobufReceiverSettings(
-                HttpPort: telemetryEndpoint.Port,
-                PrintTracesAsNdjson: true,
-                PrintLogsAsNdjson: true,
-                PrintMetricsAsNdjson: true,
-                Log: (msg, ex) => Console.Error.WriteLine($"OtelTap failed: {msg} {ex}")));
+            var telemetryEndpoint = IntegrationTestsAssembly.TelemetryEndpoint;
 
             // Configuring telemetry exporters
             var telemetryResource = ResourceBuilder.CreateDefault()
@@ -439,7 +431,6 @@ namespace IntegrationTests
             finally
             {
                 Client?.Dispose();
-                OtelTap?.Dispose();
             }
         }
 
