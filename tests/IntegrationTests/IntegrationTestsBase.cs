@@ -740,27 +740,63 @@ namespace IntegrationTests
             Guid id = Guid.NewGuid();
 
             // First call - should succeed
-            var result = await Client.GetAsync($"{SlidingWindowRule.UriString}?id={id}");
-
-            Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+            await SendAndAssert(shouldBeThrottled: false);
 
             // Now keep trying for 6 seconds
             for (int i = 0; i < 20; i++)
             {
                 await Task.Delay(300);
 
-                result = await Client.GetAsync($"{SlidingWindowRule.UriString}?id={id}");
-
-                Assert.AreEqual(HttpStatusCode.TooManyRequests, result.StatusCode);
+                await SendAndAssert(shouldBeThrottled: true);
             }
 
             // Now waiting till the window expires entirely
             await Task.Delay(4000);
 
             // Should succeed again
-            result = await Client.GetAsync($"{SlidingWindowRule.UriString}?id={id}");
+            await SendAndAssert(shouldBeThrottled: false);
 
-            Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+            async Task SendAndAssert(bool shouldBeThrottled)
+            {
+                // Propagate a unique trace ID for each request, including retries.
+                var requestTraceId = ActivityTraceId.CreateRandom();
+                byte[] traceId = Convert.FromHexString(requestTraceId.ToHexString());
+
+                using var telemetryTimeout = new CancellationTokenSource(
+                    TimeSpan.FromSeconds(SlidingWindowRule.MaxDelayInSeconds + 60));
+
+                // Subscribe before sending, checking only the rule that matches this request.
+                var ruleSpanTask = OtelTap!.AwaitTraceAsync(span =>
+                    span.TraceId.Span.SequenceEqual(traceId) &&
+                    span.Name.StartsWith("ThrottlingTroll.Rule.") &&
+                    span.Attributes.Any(attribute => attribute.Key == "ThrottlingTrollRule.UriString" &&
+                        attribute.Value.StringValue == SlidingWindowRule.UriString),
+                    telemetryTimeout.Token);
+
+                try
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{SlidingWindowRule.UriString}?id={id}");
+                    request.Headers.Add("traceparent", $"00-{requestTraceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+
+                    using var response = await Client!.SendAsync(request);
+                    Assert.AreEqual(shouldBeThrottled ? HttpStatusCode.TooManyRequests : HttpStatusCode.OK, response.StatusCode);
+
+                    // The matching rule should report success or throttling, just like the HTTP response.
+                    var ruleSpan = await ruleSpanTask;
+                    Assert.AreEqual(shouldBeThrottled ? TraceStatusCode.Error : TraceStatusCode.Ok, ruleSpan.Status?.Code);
+
+                    string ruleCheckResult = ruleSpan.Attributes.Single(attribute => attribute.Key == "Result").Value.StringValue;
+                    Assert.AreEqual(shouldBeThrottled ? "Request limit exceeded" : "Requests remaining: 0", ruleCheckResult);
+
+                    long requestsRemaining = ruleSpan.Attributes.Single(attribute => attribute.Key == "LimitCheckResult.RequestsRemaining").Value.IntValue;
+                    Assert.AreEqual(shouldBeThrottled ? -1L : 0L, requestsRemaining);
+                }
+                finally
+                {
+                    // Unregister the waiter if the request or an assertion fails.
+                    await telemetryTimeout.CancelAsync();
+                }
+            }
         }
 
         private async Task TestThrowingSemaphore()
