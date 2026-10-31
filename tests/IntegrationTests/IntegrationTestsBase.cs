@@ -1,3 +1,4 @@
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -654,23 +655,73 @@ namespace IntegrationTests
         {
             Guid id = Guid.NewGuid();
 
-            var tasks = Enumerable.Range(0, 5).Select(_ => {
+            var tasks = Enumerable.Range(0, 5).Select(async _ => {
 
-                var sw = new Stopwatch();
-                sw.Start();
+                // Generating a trace ID to propagate through this request's traceparent header.
+                var traceId = GenerateTraceId();
 
-                return Client
-                    .GetAsync($"{DelayedFixedWindowRule.UriString}?id={id}")
-                    .ContinueWith(t =>
+                using var telemetryTimeout = new CancellationTokenSource(
+                    TimeSpan.FromSeconds(DelayedFixedWindowRule.MaxDelayInSeconds + 60));
+
+                // Subscribe before sending, checking the matching rule and its optional waiting span.
+                var ruleSpanTask = OtelTap!.AwaitTraceAsync(span =>
+                    span.TraceId.Span.SequenceEqual(traceId.AsBytes) &&
+                    span.Name.StartsWith("ThrottlingTroll.Rule.") &&
+                    span.Attributes.Any(attribute => attribute.Key == "ThrottlingTrollRule.UriString" &&
+                        attribute.Value.StringValue == DelayedFixedWindowRule.UriString),
+                    telemetryTimeout.Token);
+
+                var waitingSpanTask = OtelTap!.AwaitTraceAsync(span =>
+                    span.TraceId.Span.SequenceEqual(traceId.AsBytes) && span.Name == "ThrottlingTroll.Waiting",
+                    telemetryTimeout.Token);
+
+                try
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{DelayedFixedWindowRule.UriString}?id={id}")
+                        .WithTraceId(traceId.AsString);
+
+                    var sw = Stopwatch.StartNew();
+                    using var response = await Client!.SendAsync(request);
+                    Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+                    sw.Stop();
+
+                    // Await telemetry after stopping the clock, so export delays do not affect the timings.
+                    var ruleSpan = await ruleSpanTask;
+                    Assert.AreEqual(TraceStatusCode.Ok, ruleSpan.Status?.Code);
+
+                    string ruleCheckResult = ruleSpan.Attributes.Single(attribute => attribute.Key == "Result").Value.StringValue;
+                    Assert.AreEqual("Requests remaining: 0", ruleCheckResult);
+
+                    // This tag records the initial check, before waiting for a permit.
+                    long requestsRemaining = ruleSpan.Attributes.Single(attribute => attribute.Key == "LimitCheckResult.RequestsRemaining").Value.IntValue;
+                    Assert.IsTrue(requestsRemaining == 0 || requestsRemaining == -1);
+
+                    if (requestsRemaining < 0)
                     {
-                        Assert.AreEqual(HttpStatusCode.OK, t.Result.StatusCode);
+                        // This request had to wait. Asserting that, and also that it eventually succeeded.
+                        var waitingSpan = await waitingSpanTask;
+                        Assert.AreEqual(ruleSpan.SpanId, waitingSpan.ParentSpanId);
+                        Assert.AreEqual(TraceStatusCode.Ok, waitingSpan.Status?.Code);
+                        Assert.IsTrue(waitingSpan.StartTimeUnixNano >= ruleSpan.StartTimeUnixNano &&
+                            waitingSpan.EndTimeUnixNano <= ruleSpan.EndTimeUnixNano);
+                    }
 
-                        sw.Stop();
-                        return sw.ElapsedMilliseconds;
-                    });
+                    return (ElapsedMilliseconds: sw.ElapsedMilliseconds, RequestsRemaining: requestsRemaining);
+                }
+                finally
+                {
+                    // Unregister remaining waiters, including the immediate request's unused waiting-span waiter.
+                    await telemetryTimeout.CancelAsync();
+                }
             });
 
-            var times = await Task.WhenAll(tasks);
+            var results = await Task.WhenAll(tasks);
+
+            // Exactly one request should enter immediately; the other four must wait.
+            Assert.AreEqual(1, results.Count(r => r.RequestsRemaining == 0));
+            Assert.AreEqual(4, results.Count(r => r.RequestsRemaining == -1));
+
+            var times = results.Select(r => r.ElapsedMilliseconds).ToArray();
 
             string msg = "Milliseconds: " + string.Join(", ", times);
             Trace.WriteLine(msg);
@@ -759,15 +810,14 @@ namespace IntegrationTests
             async Task SendAndAssert(bool shouldBeThrottled)
             {
                 // Propagate a unique trace ID for each request, including retries.
-                var requestTraceId = ActivityTraceId.CreateRandom();
-                byte[] traceId = Convert.FromHexString(requestTraceId.ToHexString());
+                var traceId = GenerateTraceId();
 
                 using var telemetryTimeout = new CancellationTokenSource(
                     TimeSpan.FromSeconds(SlidingWindowRule.MaxDelayInSeconds + 60));
 
                 // Subscribe before sending, checking only the rule that matches this request.
                 var ruleSpanTask = OtelTap!.AwaitTraceAsync(span =>
-                    span.TraceId.Span.SequenceEqual(traceId) &&
+                    span.TraceId.Span.SequenceEqual(traceId.AsBytes) &&
                     span.Name.StartsWith("ThrottlingTroll.Rule.") &&
                     span.Attributes.Any(attribute => attribute.Key == "ThrottlingTrollRule.UriString" &&
                         attribute.Value.StringValue == SlidingWindowRule.UriString),
@@ -775,8 +825,8 @@ namespace IntegrationTests
 
                 try
                 {
-                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{SlidingWindowRule.UriString}?id={id}");
-                    request.Headers.Add("traceparent", $"00-{requestTraceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{SlidingWindowRule.UriString}?id={id}")
+                        .WithTraceId(traceId.AsString);
 
                     using var response = await Client!.SendAsync(request);
                     Assert.AreEqual(shouldBeThrottled ? HttpStatusCode.TooManyRequests : HttpStatusCode.OK, response.StatusCode);
@@ -793,7 +843,7 @@ namespace IntegrationTests
                 }
                 finally
                 {
-                    // Unregister the waiter if the request or an assertion fails.
+                    // Unregister the telemetry waiter, so that it .
                     await telemetryTimeout.CancelAsync();
                 }
             }
@@ -829,6 +879,7 @@ namespace IntegrationTests
             }
         }
 
+
         private async Task TestCounter()
         {
             Guid id = Guid.NewGuid();
@@ -842,15 +893,14 @@ namespace IntegrationTests
                     .Select(async _ =>
                     {
                         // Generating a trace ID to propagate through this request's traceparent header.
-                        var requestTraceId = ActivityTraceId.CreateRandom();
-                        byte[] traceId = Convert.FromHexString(requestTraceId.ToHexString());
+                        var traceId = GenerateTraceId();
 
                         using var telemetryTimeout = new CancellationTokenSource(
                             TimeSpan.FromSeconds(DistributedCounterRule.MaxDelayInSeconds + 60));
 
                         // Checking the matched ThrottlingTroll.Rule, by subscribing to its trace span
                         var ruleSpanTask = OtelTap!.AwaitTraceAsync(span =>
-                            span.TraceId.Span.SequenceEqual(traceId) &&
+                            span.TraceId.Span.SequenceEqual(traceId.AsBytes) &&
                             span.Name.StartsWith("ThrottlingTroll.Rule.") &&
                             span.Attributes.Any(attribute => attribute.Key == "ThrottlingTrollRule.UriString" &&
                                 attribute.Value.StringValue == DistributedCounterRule.UriString),
@@ -858,12 +908,12 @@ namespace IntegrationTests
 
                         // Also checking ThrottlingTroll.Waiting span, to see if the request went through immediately or had to wait
                         var waitingSpanTask = OtelTap!.AwaitTraceAsync(span =>
-                            span.TraceId.Span.SequenceEqual(traceId) && span.Name == "ThrottlingTroll.Waiting", telemetryTimeout.Token);
+                            span.TraceId.Span.SequenceEqual(traceId.AsBytes) && span.Name == "ThrottlingTroll.Waiting", telemetryTimeout.Token);
 
                         try
                         {
-                            using var request = new HttpRequestMessage(HttpMethod.Get, $"{DistributedCounterRule.UriString}?id={id}");
-                            request.Headers.Add("traceparent", $"00-{requestTraceId.ToHexString()}-{ActivitySpanId.CreateRandom().ToHexString()}-01");
+                            using var request = new HttpRequestMessage(HttpMethod.Get, $"{DistributedCounterRule.UriString}?id={id}")
+                                .WithTraceId(traceId.AsString);
 
                             using var response = await Client!.SendAsync(request);
                             long counter = long.Parse(await response.Content.ReadAsStringAsync());
@@ -1068,6 +1118,12 @@ namespace IntegrationTests
 
                 await Task.Delay(300);
             }
+        }
+
+        public static (string AsString, byte[] AsBytes) GenerateTraceId()
+        {
+            var traceId = ActivityTraceId.CreateRandom().ToHexString();
+            return (traceId, Convert.FromHexString(traceId));
         }
     }
 }
