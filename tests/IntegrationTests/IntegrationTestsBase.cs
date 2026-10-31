@@ -480,6 +480,9 @@ namespace IntegrationTests
         [TestMethod]
         public async Task TestDelayedFixedWindows()
         {
+            // Warm up HTTP and the counter store with a separate counter ID.
+            await Client!.GetAsync($"{DelayedFixedWindowRule.UriString}?id={Guid.NewGuid()}");
+
             await Task.WhenAll(
                 Enumerable.Range(0, 8)
                     .Select(_ => this.TestDelayedFixedWindow())
@@ -677,12 +680,8 @@ namespace IntegrationTests
 
                 try
                 {
-                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{DelayedFixedWindowRule.UriString}?id={id}")
-                        .WithTraceId(traceId.AsString);
-
                     var sw = Stopwatch.StartNew();
-                    using var response = await Client!.SendAsync(request);
-                    Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+                    await Client!.GetWithTraceIdAsync($"{DelayedFixedWindowRule.UriString}?id={id}", traceId.AsString);
                     sw.Stop();
 
                     // Await telemetry after stopping the clock, so export delays do not affect the timings.
@@ -825,10 +824,7 @@ namespace IntegrationTests
 
                 try
                 {
-                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{SlidingWindowRule.UriString}?id={id}")
-                        .WithTraceId(traceId.AsString);
-
-                    using var response = await Client!.SendAsync(request);
+                    using var response = await Client!.GetWithTraceIdAsync($"{SlidingWindowRule.UriString}?id={id}", traceId.AsString);
                     Assert.AreEqual(shouldBeThrottled ? HttpStatusCode.TooManyRequests : HttpStatusCode.OK, response.StatusCode);
 
                     // The matching rule should report success or throttling, just like the HTTP response.
@@ -912,10 +908,7 @@ namespace IntegrationTests
 
                         try
                         {
-                            using var request = new HttpRequestMessage(HttpMethod.Get, $"{DistributedCounterRule.UriString}?id={id}")
-                                .WithTraceId(traceId.AsString);
-
-                            using var response = await Client!.SendAsync(request);
+                            using var response = await Client!.GetWithTraceIdAsync($"{DistributedCounterRule.UriString}?id={id}", traceId.AsString);
                             long counter = long.Parse(await response.Content.ReadAsStringAsync());
                             bag.Add(counter);
 
