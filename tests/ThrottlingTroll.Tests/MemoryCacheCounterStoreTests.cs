@@ -1,9 +1,21 @@
 
+using Microsoft.Extensions.Caching.Memory;
+
 namespace ThrottlingTroll.Tests;
 
 [TestClass]
 public class MemoryCacheCounterStoreTests
 {
+    [TestMethod]
+    public void SizeLimitedCachesAreRejected()
+    {
+        using var cache = new MemoryCache(new MemoryCacheOptions { SizeLimit = 100 });
+
+        var exception = Assert.ThrowsException<ArgumentException>(() => new MemoryCacheCounterStore(cache));
+
+        Assert.AreEqual("cache", exception.ParamName);
+    }
+
     [TestMethod]
     public async Task IncrementAndGetAsyncIsThreadSafe()
     {
@@ -15,7 +27,8 @@ public class MemoryCacheCounterStoreTests
 
         // Act
 
-        var store = new MemoryCacheCounterStore();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var store = new MemoryCacheCounterStore(cache);
 
         Parallel.For(0, numOfTries, new ParallelOptions { MaxDegreeOfParallelism = numOfTries }, i => {
 

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Caching;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -85,7 +85,7 @@ namespace ThrottlingTroll
             {
                 // Remember the fact that this counter exceeded in local cache
                 var limitKeyExceededTtl = bucketAlignedNow + TimeSpan.FromMilliseconds(bucketSizeInMilliseconds);
-                this._cache.Set(limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = limitKeyExceededTtl });
+                this._cache.Set(limitKeyExceededKey, true, limitKeyExceededTtl);
 
                 return -1;
             }
@@ -125,7 +125,7 @@ namespace ThrottlingTroll
             return $"{nameof(SlidingWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds},{this.NumOfBuckets})";
         }
 
-        private readonly MemoryCache _cache = MemoryCache.Default;
+        private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
         #region Telemetry
         internal override void AddTagsToActivity(Activity activity)

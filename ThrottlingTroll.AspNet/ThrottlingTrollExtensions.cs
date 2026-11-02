@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -49,7 +50,11 @@ namespace ThrottlingTroll
             }
 
             // TODO: move default counter store creation into ThrottlingTroll
-            opt.CounterStore ??= builder.ApplicationServices.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
+            opt.CounterStore ??=
+                builder.ApplicationServices.GetService<ICounterStore>() ??
+                (builder.ApplicationServices.GetService<IMemoryCache>() is IMemoryCache memoryCache
+                    ? new MemoryCacheCounterStore(memoryCache)
+                    : new MemoryCacheCounterStore());
 
             return builder.UseMiddleware<ThrottlingTrollMiddleware>(opt);
         }

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Diagnostics;
-using System.Runtime.Caching;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
@@ -48,7 +48,7 @@ namespace ThrottlingTroll
             if (count > this.PermitLimit)
             {
                 // Remember the fact that this counter exceeded in local cache
-                this._cache.Set( limitKeyExceededKey, true, new CacheItemPolicy { AbsoluteExpiration = ttl } );
+                this._cache.Set(limitKeyExceededKey, true, ttl);
 
                 return -1;
             }
@@ -84,7 +84,7 @@ namespace ThrottlingTroll
             return $"{nameof(FixedWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds})";
         }
 
-        private readonly MemoryCache _cache = MemoryCache.Default;
+        private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
         #region Telemetry
         internal override void AddTagsToActivity(Activity activity)

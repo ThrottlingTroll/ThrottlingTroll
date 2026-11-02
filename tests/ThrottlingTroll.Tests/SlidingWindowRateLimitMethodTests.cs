@@ -1,6 +1,6 @@
+using Microsoft.Extensions.Caching.Memory;
 using StackExchange.Redis;
 using System.Diagnostics;
-using System.Runtime.Caching;
 
 namespace ThrottlingTroll.Tests;
 
@@ -14,15 +14,14 @@ public class SlidingWindowRateLimitMethodTests
 
         string key = Guid.NewGuid().ToString();
 
-        var store = new MemoryCacheCounterStore();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var store = new MemoryCacheCounterStore(cache);
 
         var limiter = new SlidingWindowRateLimitMethod
         {
             IntervalInSeconds = 1.5,
             NumOfBuckets = 3
         };
-
-        MemoryCache.Default.Flush();
 
         // Act
 
@@ -35,9 +34,9 @@ public class SlidingWindowRateLimitMethodTests
 
         // Assert
 
-        var items = MemoryCache.Default
-            .Where(i => !i.Key.EndsWith("-exceeded"))
-            .ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
+        var items = cache.Keys
+            .OfType<string>()
+            .ToDictionary(key => key, key => cache.Get<MemoryCacheCounterStore.CacheEntry>(key)!);
 
         Assert.AreEqual(3, items.Count, "There should be exactly three buckets created");
 
@@ -68,7 +67,8 @@ public class SlidingWindowRateLimitMethodTests
 
         string key = Guid.NewGuid().ToString();
 
-        var store = new MemoryCacheCounterStore();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var store = new MemoryCacheCounterStore(cache);
 
         var limiter = new SlidingWindowRateLimitMethod
         {
@@ -76,8 +76,6 @@ public class SlidingWindowRateLimitMethodTests
             IntervalInSeconds = 2,
             NumOfBuckets = 2
         };
-
-        MemoryCache.Default.Flush();
 
         var results = new List<int>();
 
@@ -111,9 +109,9 @@ public class SlidingWindowRateLimitMethodTests
 
         // Assert
 
-        var items = MemoryCache.Default
-            .Where(i => !i.Key.EndsWith("-exceeded"))
-            .ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
+        var items = cache.Keys
+            .OfType<string>()
+            .ToDictionary(key => key, key => cache.Get<MemoryCacheCounterStore.CacheEntry>(key)!);
 
         Trace.WriteLine("Counts: " + String.Join(',', items.Values.Select(v => v.Count)));
 
@@ -133,7 +131,8 @@ public class SlidingWindowRateLimitMethodTests
 
         string key = Guid.NewGuid().ToString();
 
-        var store = new MemoryCacheCounterStore();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var store = new MemoryCacheCounterStore(cache);
 
         var limiter = new SlidingWindowRateLimitMethod
         {
@@ -141,8 +140,6 @@ public class SlidingWindowRateLimitMethodTests
             IntervalInSeconds = 2.4,
             NumOfBuckets = 3
         };
-
-        MemoryCache.Default.Flush();
 
         var results = new List<Tuple<string, int>>();
 
@@ -160,9 +157,9 @@ public class SlidingWindowRateLimitMethodTests
 
         Trace.WriteLine(string.Join('\n', results.Select(r => $"{r.Item1}|{r.Item2}")));
 
-        var items = MemoryCache.Default
-            .Where(i => !i.Key.EndsWith("-exceeded"))
-            .ToDictionary(i => i.Key, i => i.Value as MemoryCacheCounterStore.CacheEntry);
+        var items = cache.Keys
+            .OfType<string>()
+            .ToDictionary(key => key, key => cache.Get<MemoryCacheCounterStore.CacheEntry>(key)!);
 
         Assert.AreEqual(3, items.Count, "There should be exactly three buckets created");
 

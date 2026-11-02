@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -183,7 +184,11 @@ namespace ThrottlingTroll
                 opt.Log = logger == null ? null : (l, s) => logger.Log(l, s);
             }
 
-            opt.CounterStore ??= context.InstanceServices.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
+            opt.CounterStore ??=
+                context.InstanceServices.GetService<ICounterStore>() ??
+                (context.InstanceServices.GetService<IMemoryCache>() is IMemoryCache memoryCache
+                    ? new MemoryCacheCounterStore(memoryCache)
+                    : new MemoryCacheCounterStore());
 
             return new ThrottlingTrollMiddleware(opt);
         }

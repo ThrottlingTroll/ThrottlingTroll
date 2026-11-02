@@ -1,18 +1,18 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThrottlingTroll
 {
     /// <summary>
-    /// Implements Store for rate limit counters with System.Runtime.Caching.MemoryCache
+    /// Implements Store for rate limit counters with <see cref="IMemoryCache"/>
     /// </summary>
     public class MemoryCacheCounterStore : ICounterStore
     {
         /// <summary>
-        /// In MemoryCache there's no way to set TTL once.
+        /// In IMemoryCache there's no way to get an entry's TTL.
         /// So we have to remember each item's expiration time separately. 
         /// This is what this class is for.
         /// </summary>
@@ -20,6 +20,30 @@ namespace ThrottlingTroll
         {
             public long Count;
             public DateTimeOffset ExpiresAt;
+        }
+
+        /// <summary>
+        /// Creates a counter store backed by a new in-memory cache.
+        /// </summary>
+        public MemoryCacheCounterStore()
+            : this(new MemoryCache(new MemoryCacheOptions()))
+        {
+        }
+
+        /// <summary>
+        /// Creates a counter store backed by the specified in-memory cache.
+        /// The passed <see cref="IMemoryCache"/> instance must not be size-limited.
+        /// </summary>
+        public MemoryCacheCounterStore(IMemoryCache cache)
+        {
+            if (cache == null)
+            {
+                throw new ArgumentNullException(nameof(cache));
+            }
+
+            this.ThrowIfCacheIsSizeLimited(cache);
+
+            this._cache = cache;
         }
 
         /// <inheritdoc />
@@ -68,12 +92,7 @@ namespace ThrottlingTroll
                     }
                 }
 
-                this._cache.Set
-                (
-                    key, 
-                    cacheEntry, 
-                    new CacheItemPolicy { AbsoluteExpiration = cacheEntry.ExpiresAt }
-                );
+                this._cache.Set(key, cacheEntry, cacheEntry.ExpiresAt);
 
                 return cacheEntry.Count;
             }
@@ -101,12 +120,7 @@ namespace ThrottlingTroll
 
                 if (cacheEntry.Count > 0)
                 {
-                    this._cache.Set
-                    (
-                        key,
-                        cacheEntry,
-                        new CacheItemPolicy { AbsoluteExpiration = cacheEntry.ExpiresAt }
-                    );
+                    this._cache.Set(key, cacheEntry, cacheEntry.ExpiresAt);
                 }
                 else
                 {
@@ -119,7 +133,25 @@ namespace ThrottlingTroll
             }
         }
 
-        private readonly MemoryCache _cache = MemoryCache.Default;
+        private void ThrowIfCacheIsSizeLimited(IMemoryCache cache)
+        {
+            // Trying to create an entry with a value, but no size - just to see if it throws.
+            var testKey = new object();
+            try
+            {
+                using (var entry = cache.CreateEntry(testKey))
+                {
+                    entry.Value = testKey;
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new ArgumentException("Size-limited caches are not supported.", nameof(cache), ex);
+            }
+            cache.Remove(testKey);
+        }
+
+        private readonly IMemoryCache _cache;
 
         private readonly SemaphoreSlim _asyncLock = new SemaphoreSlim(1, 1);
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,11 @@ namespace ThrottlingTroll
                 }
 
                 // TODO: move default counter store creation into ThrottlingTroll
-                opt.CounterStore ??= serviceProvider.GetService<ICounterStore>() ?? new MemoryCacheCounterStore();
+                opt.CounterStore ??=
+                    serviceProvider.GetService<ICounterStore>() ??
+                    (serviceProvider.GetService<IMemoryCache>() is IMemoryCache memoryCache
+                        ? new MemoryCacheCounterStore(memoryCache)
+                        : new MemoryCacheCounterStore());
 
                 return new ThrottlingTroll(
                     opt.GetConfigFunc,
