@@ -11,7 +11,7 @@
     <repository type="git" url="https://github.com/ThrottlingTroll/ThrottlingTroll" />
     <readme>README.md</readme>
     <dependencies>
-      <dependency id="Azure.Data.Tables" version="12.8.0" exclude="Build,Analyzers" />
+      <dependency id="Azure.Data.Tables" version="12.13.0" exclude="Build,Analyzers" />
       <dependency id="Microsoft.Extensions.Configuration.Binder" version="10.0.14" exclude="Build,Analyzers" />
       <dependency id="Microsoft.Extensions.Http" version="10.0.14" exclude="Build,Analyzers" />
       <dependency id="Microsoft.Extensions.Caching.Memory" version="10.0.14" exclude="Build,Analyzers" />
