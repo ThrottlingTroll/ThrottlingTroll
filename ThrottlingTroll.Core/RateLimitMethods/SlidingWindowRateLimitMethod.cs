@@ -125,7 +125,7 @@ namespace ThrottlingTroll
             return $"{nameof(SlidingWindowRateLimitMethod)}({this.PermitLimit},{this.IntervalInSeconds},{this.NumOfBuckets})";
         }
 
-        private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+        private readonly IMemoryCache _cache = MemoryCacheCounterStore.SharedCache;
 
         #region Telemetry
         internal override void AddTagsToActivity(Activity activity)

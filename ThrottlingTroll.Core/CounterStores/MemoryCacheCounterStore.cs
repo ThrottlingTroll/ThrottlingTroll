@@ -23,15 +23,15 @@ namespace ThrottlingTroll
         }
 
         /// <summary>
-        /// Creates a counter store backed by a new in-memory cache.
+        /// Creates a counter store backed by the shared <see cref="MemoryCache"/> instance.
         /// </summary>
         public MemoryCacheCounterStore()
-            : this(new MemoryCache(new MemoryCacheOptions()))
+            : this(SharedCache)
         {
         }
 
         /// <summary>
-        /// Creates a counter store backed by the specified in-memory cache.
+        /// Creates a counter store backed by the specified <see cref="IMemoryCache"/> instance.
         /// The passed <see cref="IMemoryCache"/> instance must not be size-limited.
         /// </summary>
         public MemoryCacheCounterStore(IMemoryCache cache)
@@ -150,6 +150,8 @@ namespace ThrottlingTroll
             }
             cache.Remove(testKey);
         }
+
+        internal static readonly MemoryCache SharedCache = new MemoryCache(new MemoryCacheOptions());
 
         private readonly IMemoryCache _cache;
 
