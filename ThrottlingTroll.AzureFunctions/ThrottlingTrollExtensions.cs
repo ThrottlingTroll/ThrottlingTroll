@@ -23,22 +23,116 @@ namespace ThrottlingTroll
         /// </summary>
         public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
             this IFunctionsWorkerApplicationBuilder builder,
-            Action<ThrottlingTrollOptions> options = null)
-        {
-            return builder.UseThrottlingTroll(options == null ? null : (ctx, opt) => options(opt));
-        }
+            Action<ThrottlingTrollOptions> options = null) => 
+                UseThrottlingTrollInternal(
+                    builder,
+                    options == null ? null : (ctx, opt) => options(opt),
+                    Assembly.GetCallingAssembly());
 
         /// <summary>
         /// Configures ThrottlingTroll ingress throttling
         /// </summary>
         public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
             this IFunctionsWorkerApplicationBuilder builder,
+            Action<FunctionContext, ThrottlingTrollOptions> options) =>
+                UseThrottlingTrollInternal(
+                    builder,
+                    options,
+                    Assembly.GetCallingAssembly());
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
+            this IFunctionsWorkerApplicationBuilder builder,
+            HostBuilderContext builderContext,
+            Action<ThrottlingTrollOptions> options = null) =>
+                UseThrottlingTrollInternal(
+                    builder,
+                    options == null ? null : (ctx, opt) => options(opt),
+                    Assembly.GetCallingAssembly());
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
+            this IFunctionsWorkerApplicationBuilder builder,
+            HostBuilderContext builderContext,
+            Action<FunctionContext, ThrottlingTrollOptions> options) =>
+                UseThrottlingTrollInternal(
+                    builder,
+                    options,
+                    Assembly.GetCallingAssembly());
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IHostBuilder UseThrottlingTroll(
+            this IHostBuilder hostBuilder,
+            Action<ThrottlingTrollOptions> options = null)
+        {
+            var callingAssembly = Assembly.GetCallingAssembly();
+            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
+            {
+                UseThrottlingTrollInternal(builder, options == null ? null : (ctx, opt) => options(opt), callingAssembly);
+            });
+        }
+
+        /// <summary>
+        /// Configures ThrottlingTroll ingress throttling
+        /// </summary>
+        public static IHostBuilder UseThrottlingTroll(
+            this IHostBuilder hostBuilder, 
             Action<FunctionContext, ThrottlingTrollOptions> options)
+        {
+            var callingAssembly = Assembly.GetCallingAssembly();
+            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
+            {
+                UseThrottlingTrollInternal(builder, options, callingAssembly);
+            });
+        }
+
+        /// <summary>
+        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
+        /// </summary>
+        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this HttpContext context)
+        {
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
+        }
+
+        /// <summary>
+        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
+        /// </summary>
+        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this FunctionContext context)
+        {
+            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
+        }
+
+        /// <summary>
+        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
+        /// </summary>
+        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
+        {
+            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
+        }
+
+        /// <summary>
+        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
+        /// </summary>
+        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this FunctionContext context)
+        {
+            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
+        }
+
+        private static IFunctionsWorkerApplicationBuilder UseThrottlingTrollInternal(
+            IFunctionsWorkerApplicationBuilder builder,
+            Action<FunctionContext, ThrottlingTrollOptions> options,
+            Assembly callingAssembly)
         {
             // Need to create this instance here, so that Assemblies are correctly initialized.
             var opt = new ThrottlingTrollOptions
             {
-                Assemblies = new List<Assembly> { Assembly.GetCallingAssembly() }
+                Assemblies = new List<Assembly> { callingAssembly }
             };
 
             // Need to create a single instance, yet still allow for multiple copies of ThrottlingTrollMiddleware with different settings
@@ -85,86 +179,6 @@ namespace ThrottlingTroll
                     response.Apply();
                 }
              );
-        }
-
-        /// <summary>
-        /// Configures ThrottlingTroll ingress throttling
-        /// </summary>
-        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
-            this IFunctionsWorkerApplicationBuilder builder,
-            HostBuilderContext builderContext,
-            Action<ThrottlingTrollOptions> options = null)
-        {
-            return builder.UseThrottlingTroll(options);
-        }
-
-        /// <summary>
-        /// Configures ThrottlingTroll ingress throttling
-        /// </summary>
-        public static IFunctionsWorkerApplicationBuilder UseThrottlingTroll(
-            this IFunctionsWorkerApplicationBuilder builder,
-            HostBuilderContext builderContext,
-            Action<FunctionContext, ThrottlingTrollOptions> options)
-        {
-            return builder.UseThrottlingTroll(options);
-        }
-
-        /// <summary>
-        /// Configures ThrottlingTroll ingress throttling
-        /// </summary>
-        public static IHostBuilder UseThrottlingTroll(
-            this IHostBuilder hostBuilder,
-            Action<ThrottlingTrollOptions> options = null)
-        {
-            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
-            {
-                builder.UseThrottlingTroll(builderContext, options);
-            });
-        }
-
-        /// <summary>
-        /// Configures ThrottlingTroll ingress throttling
-        /// </summary>
-        public static IHostBuilder UseThrottlingTroll(
-            this IHostBuilder hostBuilder, 
-            Action<FunctionContext, ThrottlingTrollOptions> options)
-        {
-            return hostBuilder.ConfigureFunctionsWorkerDefaults((HostBuilderContext builderContext, IFunctionsWorkerApplicationBuilder builder) =>
-            {
-                builder.UseThrottlingTroll(builderContext, options);
-            });
-        }
-
-        /// <summary>
-        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
-        /// </summary>
-        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this HttpContext context)
-        {
-            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
-        }
-
-        /// <summary>
-        /// Returns the current (active) ThrottlingTroll configuration (all rules and limits collected from all config sources)
-        /// </summary>
-        public static List<ThrottlingTrollConfig> GetThrottlingTrollConfig(this FunctionContext context)
-        {
-            return (List<ThrottlingTrollConfig>)context.Items[ThrottlingTrollCore.ThrottlingTrollConfigsContextKey];
-        }
-
-        /// <summary>
-        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
-        /// </summary>
-        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this HttpContext context)
-        {
-            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
-        }
-
-        /// <summary>
-        /// Returns the results of checking ThrottlingTroll rules (all that apply to current request)
-        /// </summary>
-        public static List<LimitCheckResult> GetThrottlingTrollLimitCheckResults(this FunctionContext context)
-        {
-            return (List<LimitCheckResult>)context.Items[ThrottlingTrollCore.LimitCheckResultsContextKey];
         }
 
         private static ThrottlingTrollMiddleware CreateMiddleware(FunctionContext context, ThrottlingTrollOptions opt)
