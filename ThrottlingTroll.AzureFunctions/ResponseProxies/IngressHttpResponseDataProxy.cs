@@ -15,8 +15,9 @@ namespace ThrottlingTroll
     /// </summary>
     public class IngressHttpResponseDataProxy : IngressHttpResponseProxyBase, IIngressHttpResponseDataProxy
     {
-        internal IngressHttpResponseDataProxy()
+        internal IngressHttpResponseDataProxy(FunctionContext context)
         {
+            this._functionContext = context;
         }
 
         /// <inheritdoc />
@@ -27,7 +28,16 @@ namespace ThrottlingTroll
         {
             get
             {
-                return (int)(this.ResponseData?.StatusCode ?? 0);
+                if (this.ResponseData != null)
+                {
+                    return (int)this.ResponseData.StatusCode;
+                }
+
+                // this.ResponseData is only populated for throttled requests.
+                // For normal requests we need to fallback to what the Function
+                // actually returned, because this status code will then be analyzed
+                // by the circuit breaking logic.
+                return (int)(this._functionContext.GetHttpResponseData()?.StatusCode ?? 0);
             }
             set
             {
@@ -129,5 +139,7 @@ namespace ThrottlingTroll
 
         /// <inheritdoc />
         internal override Task OnResponseCompleted(Func<Task> action) => action();
+
+        private readonly FunctionContext _functionContext;
     }
 }

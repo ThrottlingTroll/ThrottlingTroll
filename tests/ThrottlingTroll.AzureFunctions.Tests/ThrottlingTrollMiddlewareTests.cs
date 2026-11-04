@@ -163,27 +163,21 @@ namespace ThrottlingTroll.AzureFunctions.Tests
 
             // Act
 
-            try
+            var result = (IngressHttpResponseDataProxy)await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
             {
-                await middleware.InvokeAsync(new FakeFunctionContext(), async () =>
-                {
-                    Assert.IsFalse(nextWasCalled);
+                Assert.IsFalse(nextWasCalled);
 
-                    nextWasCalled = true;
+                nextWasCalled = true;
 
-                });
-            }
-            catch (Exception ex)
-            {
-                // Couldn't find a way to mock FunctionContext.GetHttpResponseData(), so instead just checking
-                // that this particular exception instance was thrown by FakeFunctionContext
-
-                Assert.AreEqual(FakeFunctionContext.GetHttpResponseDataWasCalledException, ex);
-            }
+            });
 
             // Assert
 
             Assert.IsTrue(nextWasCalled);
+
+            // The fake throws when the worker response is requested.
+            var exception = Assert.ThrowsException<Exception>(() => { _ = result.StatusCode; });
+            Assert.AreSame(FakeFunctionContext.GetHttpResponseDataWasCalledException, exception);
         }
 
         [TestMethod]

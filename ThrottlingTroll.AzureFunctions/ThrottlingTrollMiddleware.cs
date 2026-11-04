@@ -39,9 +39,10 @@ namespace ThrottlingTroll
             {
                 // "classic" function
                 var requestData = await context.GetHttpRequestDataAsync() ?? throw new ArgumentNullException("HTTP Request is null");
+
                 requestProxy = new IncomingHttpRequestDataProxy(requestData);
 
-                responseProxy = new IngressHttpResponseDataProxy();
+                responseProxy = new IngressHttpResponseDataProxy(context);
             }
             else
             {
